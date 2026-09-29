@@ -1,23 +1,27 @@
-# Factibilidad y experimentos
+# Factibilidad del corte web de octubre
 
-**Datos aportados:** presentación 31-10-2026 y 10 h semanales. **Supuesto:** 10 h por integrante. Inicio de planificación: 29-09; implementación/evidencia hasta 30-10, 32 días ≈ 4.57 semanas. Tres personas dan ≈ 137.1 h brutas; reserva 25 % = 34.3 h; capacidad planificable ≈ **102.9 h**. Si las 10 h son del equipo completo, la capacidad baja a ≈ 34.3 h netas y debe recortarse a UI mínima + pipeline offline.
+Fecha 29-09-2026. **Datos confirmados:** presentación 31-10-2026; César, Diego y Jhojan disponen de 10 h semanales **cada uno**; prototipo web privado desplegado para el equipo es la meta deseada; Nmap XML autorizado sí está disponible; fuente OSINT pasiva/dataset correspondiente todavía no. React/TypeScript, PostgreSQL/Prisma y GitHub OAuth son elecciones del propietario. Vercel/Railway son plataformas a las que se tiene acceso, no infraestructura configurada ni presupuesto aprobado.
 
-Distribución propuesta: core/fixtures 21 h, web/contratos 34 h, calidad/demo 25 h, integración 12 h, spike Burp 6 h: 98 h; holgura ≈ 4.9 h. Estimaciones de trabajo restante se recalibran tras revisar el incremento automatizado; no representan horas reales trabajadas por el equipo.
+## Capacidad y desfase
 
-## Viabilidad
+Periodo de trabajo 29-09 a 30-10, ~4.57 semanas. Tres personas × 10 h/semana ≈ **137.1 h brutas**. Reservar 25 % (34.3 h) para reviews, integración, ensayos e imprevistos deja **102.9 h netas** de planificación. Ceremonias y revisiones se cuentan dentro de la disponibilidad, no como trabajo invisible. Horas previas invertidas en núcleo/CLI no se vuelven a cargar; tampoco equivalen a web terminada.
 
-Un grafo que crece por lotes con 1 000 entidades y evidencia acotada es una meta razonable para el calendario; no se ha medido la UI. Evitar layout completo en cada evento. Empezar con importación completa y luego batches de 100 con 100–250 ms de coalescing. Un grafo ilimitado en tiempo real no es compromiso viable con estas horas.
+Estimación inicial basada en historias del [Product Backlog](../plan/backlog.md), **no benchmark de implementación**: vertical web local con Nmap + fixture pasivo sintético + relación/UI/DB **110–160 h** incrementales; OAuth, aislamiento, despliegue privado y operación **70–120 h adicionales**. El objetivo completo ronda **180–280 h** antes de ampliar proveedores o activo. Frente a 102.9 h hay déficit de al menos **77 h** para el mínimo privado, mayor si hay retrabajo, credenciales o curva de despliegue. No prometer que cabe por repartir tareas en sprints; Scrum inspecciona y adapta, no crea horas.
 
-Una BApp Java autónoma es técnicamente plausible para selección HTTP, reglas pequeñas y exportación. React no se convierte automáticamente en Swing ni TypeScript en JVM. Plan posterior necesita entre 40–70 h estimadas para persistencia, conformidad de reglas, pruebas reales de Burp, packaging y revisión. No fijar fecha de submission antes de superar gates.
+Opciones a decidir en gate 05-10: (A) mantener 31-10 y recortar a web local/sintética explicada, reconociendo que no cumple prototipo privado; (B) añadir capacidad real suficiente y revisar tamaño tras spikes; (C) mantener alcance privado y mover fecha. El propietario eligió B como **objetivo de producto** (web privada), no ha confirmado horas adicionales ni fecha nueva; por tanto la viabilidad del compromiso sigue abierta. No bajar silenciosamente a CLI ni simular una fuente OSINT viva.
 
-Costos operativos previstos: núcleo y demo sin APIs pagas ni hosting. GitHub Actions público puede usar runners estándar sujeto a políticas de GitHub. Burp Community para pruebas manuales de selección; Pro solo para funcionalidades exclusivas. No se ha comprado licencia ni verificado costo monetario. Dependencias y hardware ya instalados reducen setup, pero falta validar Burp y JDK adecuado.
+## Incertidumbres a medir primero
 
-## Experimentos de primera semana
+1. **Fuente/dataset:** [Common Crawl Index](https://index.commoncrawl.org/) ofrece acceso público documentado, pero el fixture `.invalid` no puede enlazarse honestamente a datos reales. Jhojan verifica términos, cobertura, formato, cuota, fecha y un dataset de dominio autorizado. Sin pareja, usar fixture sintético explícito y no medir cobertura real.
+2. **Contrato y correlación:** César/Jhojan etiquetan 5–10 casos positivos y negativos (servicio duplicado, hostname compartido, dato histórico, IP compartida) antes de ampliar el schema. Medir falsos enlaces y pérdidas de evidencia. Puntuación probabilística se posterga sin corpus calibrado.
+3. **API/DB/OAuth:** César hace spike de migración y aislamiento en dos proyectos; después de GitHub OAuth, prueba callback, sesión y autorización de export. Acceso a Railway/Vercel no reduce estas pruebas.
+4. **UI y rendimiento:** Diego valida grafo y lista sobre 100/1 000 nodos sintéticos con dispositivo/versiones medidos; mide tiempo para abrir relación/evidencia, no solo FPS. No prometer <1 s sin medición.
+5. **Valor diferencial:** rúbrica y orden contrabalanceado CHEF/manual; tiempo, pasos, aciertos, falsos enlaces y muestra real. Umbral propuesto de ≥30 % reducción mediana sin más errores es hipótesis, no resultado.
 
-1. César/Jhojan, 4 h: 100 fixtures sintéticos; parser hostile y límite 2 MiB. Gate: sin red/XXE, sin grafo parcial; registrar memoria y tiempo.
-2. Diego, 5 h: Cytoscape en React con 1 000 nodos/2 000 aristas y lista accesible. Gate: interacción útil y p95 hasta render < 1 s en máquina de demo; medir, no suponer.
-3. César/Diego, 2 h: contrato de snapshot en UI y golden exports. Gate: parser/core independientes de UI.
-4. César con Jhojan, 3 h: cargar spike Montoya, seleccionar una request local, exportar Observation y descargar extensión. Gate: compilación no sustituye ejecución en Burp.
-5. Los tres, 2 h: ensayo de 5 min con input repetido/control negativo. Gate: evidencia comprensible para un evaluador externo.
+Cada spike tiene timebox 2–4 h, artefacto y decisión. Si falla, se modifica el backlog antes de implementar dependencias. El [Scrum reestimado](../proposals/2026-09-scrum-to-oct31.md) usa gates; la [selección OSINT](open-osint-selection.md) distingue software abierto de datos/API.
 
-Salida el 05-10: permitir un módulo HTTP extra solo si las cinco incertidumbres están resueltas y caben ≥ 12 h de integración/pruebas. Si falla, conservar importación única y demo explicable. Riesgos principales: exámenes, Java nuevo, rendimiento de grafo, uso incorrecto de inferencias y pérdida de datos sensibles.
+## Costes y riesgos operativos
+
+Hay potenciales gastos de hosting, PostgreSQL, almacenamiento, egress, OAuth, backups y proveedor OSINT que **no se han verificado**. No usar datos de clientes para descubrir presupuesto. Railway/Vercel se pueden estudiar con fixtures sintéticos y configuración sin secretos en Git. El despliegue multiusuario exige aislamiento/retención/backup/restore/observabilidad; sin ellos es una demo local, no un servicio confiable. [CWE/ASVS](../security/cwe-controls.md) y [ADR 0008](../adr/0008-web-platform.md) recogen controles.
+
+El spike Burp existente no está probado manualmente en Burp; su roadmap es posterior y no compite por las ~103 h salvo decisión explícita. La CLI sigue siendo fallback reproducible y prueba de regresión, no producto final elegido.

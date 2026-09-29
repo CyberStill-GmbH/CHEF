@@ -1,9 +1,15 @@
-# Decisiones pendientes de equipo
+# Decisiones abiertas y dependencias externas
 
-Confirmado por propietario: CHEF, repositorio público en su cuenta, rama docs→main, presentación31-10-2026, 10h semanales.
+Actualizado 29-09-2026. **Confirmado por el propietario:** CHEF público en GitHub, proyecto del Centro Cultural de Ciberseguridad, presentación 31-10-2026, **10 h semanales por persona** (César, Diego y Jhojan), React/TypeScript, PostgreSQL/Prisma, GitHub OAuth, prototipo web privado desplegado para el equipo, Nmap XML autorizado, activo **solo importado** y BApp posterior. Vercel/Railway están disponibles como plataformas candidatas. La meta web completa supera la capacidad actual; [factibilidad](../research/feasibility.md) lo cuantifica.
 
-Interpretación visible: 10h por persona. Si es un presupuesto total del equipo, recortar roadmap a un tercio de capacidad.
+| Decisión que falta                                                             | Responsable propuesto / fecha gate         | Por qué importa                                                     | Salida aceptable                                                |
+| ------------------------------------------------------------------------------ | ------------------------------------------ | ------------------------------------------------------------------- | --------------------------------------------------------------- |
+| Fuente pasiva y dataset de dominio/IP autorizado con permiso, cuota y términos | Jhojan + César / 05-10                     | Sin pareja real Nmap+pasivo no se prueba correlación ni ahorro real | Fuente/documentación/fixture; o declarar demo sintética         |
+| Recorte, horas adicionales o nueva fecha para web privada completa             | César + equipo / 05-10                     | 103 h netas frente a 180–280 h estimadas                            | Sprint Backlog viable, pantalla/entorno y pendientes explícitos |
+| Ratificación del backend TS/Node frente a Go                                   | César + reviewers / 05-10                  | Reutilización core y compatibilidad Prisma                          | Aceptar o reemplazar ADR 0008 con coste                         |
+| Hosting real, presupuesto, administración, retención y backup                  | César + equipo / antes de WB14             | Multiusuario requiere operación/seguridad, no solo URL              | Responsable y prueba de despliegue/restore                      |
+| Logins y acceso de Diego/Jhojan a GitHub                                       | César + integrantes / antes de asignar PRs | No se puede exigir review ficticio                                  | Invitaciones aceptadas y reglas de revisión                     |
+| Usuarios piloto y rúbrica de ahorro                                            | Diego + César / antes de WB15              | Hipótesis diferencial sin medición                                  | Muestra real, tareas, labels y protocolo                        |
+| Formato de exportación visual y compatibilidad multifuente                     | Diego + César / al aprobar WB12            | Snapshot 1.0.0 no se cambia en silencio                             | Schema/ejemplo/prueba/nota y seguridad SVG                      |
 
-Por confirmar sin bloquear preparación: logins GitHub de Diego/Jhojan y permisos; experiencia efectiva del equipo; facilitación rotativa; titularidad/consentimiento MIT y atribución al colectivo; instalación/versión de Burp; máquina de demo y fecha de Burp Suite Day.
-
-Revisión técnica necesaria: spike React/Cytoscape, worker/cancelación responsiva, HTTP1.1 conforme entre Java/TS, persistencia/retención si se implementa, usuario final que valide utilidad. No se confirman invitaciones ni aceptación BApp.
+No están autorizados objetivos externos para escaneo ni credenciales de APIs OSINT; nunca se deducen del contenido importado. El fixture Nmap usa `.invalid`/loopback, así que ninguna fuente pública puede devolver honestamente una coincidencia viva. Las decisiones se registran en issue/ADR/PR; no declarar una propuesta “implementada” por haberla documentado.

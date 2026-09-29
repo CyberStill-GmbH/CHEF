@@ -1,21 +1,25 @@
-# Alcance
+# Alcance de CHEF
 
-## Must para 31-10-2026
+Actualizado 29-09-2026. **Visión confirmada por el propietario:** producto web alojable y multiusuario del Centro Cultural de Ciberseguridad, React/TypeScript, PostgreSQL/Prisma, GitHub OAuth, correlación de reconocimiento activo importado con OSINT pasiva, mapa interactivo y exportación; Burp después. El backend TypeScript/Node es la [recomendación arquitectónica](../adr/0008-web-platform.md), aún pendiente de aceptación formal del equipo. La presentación objetivo es el **31-10-2026**, con 10 h semanales confirmadas para César, Diego y Jhojan.
 
-Importación Nmap XML offline, allowlist literal, normalización de puertos y direcciones, procedencia verificable, deduplicación conservadora, grafo exploratorio React/TypeScript, panel de evidencia, exposición explicada, exportación versionada y demo recuperable. UI accesible también mediante una lista de entidades y relaciones.
+## Resultado de usuario
 
-El incremento actual implementa el pipeline offline y JSON; la UI, API y persistencia siguen planificadas. El spike Montoya sirve para evaluar la frontera técnica, sin desplazar el trabajo CSH.
+Un pentester autorizado debe poder crear/abrir proyecto, importar Nmap XML autorizado, consultar una fuente pasiva autorizada, revisar servicios y relaciones con fechas/procedencia, distinguir observaciones de candidatos y descargar datos de evidencia. El producto no declara vulnerabilidad confirmada por un puerto o relación. “Limpieza” significa vista priorizada y deduplicación conservadora **con recuento y causa**, no eliminación opaca de registros. “Tiempo real” es objetivo posterior sujeto a latencia/frescura medibles.
 
-## Should, sujetos al gate del 05-10
+## Implementado / propuesto / bloqueado
 
-Importador HTTP local normalizado y correlación dirección → servicio → endpoint; filtros/timeline; persistencia local mínima. Añadir un solo módulo si parser, UI de fixture y CI funcionan y el trabajo restante cabe en capacidad.
+- **Implementado:** CLI offline Node/TypeScript, Nmap XML subset, scope literal, IDs estables, evidencia y `Snapshot 1.0.0`; 11 pruebas core. El spike Montoya se prueba por separado y no forma parte del flujo web.
+- **Propuesto para primera vertical:** API que reutilice `ImportEvidence`, PostgreSQL/Prisma por puerto, proyectos, React con grafo/lista y panel de evidencia, un adaptador pasivo, correlación explicada y exportación. OAuth/despliegue privado son objetivo del prototipo del equipo, no hechos actuales.
+- **Bloqueado por dato externo:** fuente pasiva concreta con permiso/acceso y dataset que corresponda a Nmap. El fixture actual usa loopback y `.invalid`; ningún proveedor público devolverá honestamente esa pareja. No se simulará OSINT viva como fuente real.
 
-## Later
+El prototipo deseado para octubre es **privado, desplegado para el equipo y demostrable en vivo**. El [análisis de capacidad](../proposals/2026-09-scrum-to-oct31.md) indica que el recorrido completo supera las ~103 h netas disponibles: priorizar y reestimar en gate 05-10, no prometer que todo estará Done. Si una vertical se corta a datos sintéticos o web local, registrar la brecha frente al objetivo original. Mantener una demo de regresión offline reproducible mientras se construye la web.
 
-DNS y descubrimiento activo acotado, actualización web por SSE, importación de Site Map por lotes, diffs entre ejecuciones, BApp autónoma, proyectos grandes y sincronización opcional con app local. Cinco módulos es un techo de evolución, no una promesa para octubre.
+## Fases posteriores, sin fecha prometida
 
-## Exclusiones
+Primero completar fuente pasiva real y medición de ahorro; luego añadir conectores uno a uno con términos, cuota y tests; después historial temporal/actualización medida y exportaciones de informe. Un worker de reconocimiento activo requiere una decisión nueva con autorización escrita, scope, límites de red, egress, cuotas, cancelación y auditoría. La BApp Java/Montoya se diseña después del producto web con criterio de utilidad dentro de Burp y fixtures de conformidad; compilar el JAR no acredita aceptación en BApp Store.
 
-Sin explotación automática, brute force, C2, evasión, inyección, shell ni ofuscación. Sin nube/telemetría/IA obligatoria. Sin correlacionar propiedad de hosts por banners o IP compartida. No ampliar scope a partir de un archivo importado. La app no declara vulnerabilidad confirmada por un servicio abierto.
+## Exclusiones y reglas no negociables
 
-Congelar funciones CSH el 12-10. Si hay retrasos, retirar módulos adicionales y conservar evidencia, scope, exportación y demostración. Los cambios de alcance se anotan en el backlog y PRD.
+Sin explotación automática, brute force, C2, evasión, inyección, shell ni ofuscación. **CHEF no lanza escaneos en esta fase**; solo importa resultados autorizados. No enviar dominios o datos de clientes a terceros por defecto. No ampliar scope por un archivo/importación. No fusionar propiedad de hosts por hostname, IP compartida, banner o certificado. No ocultar `filtered`/`open|filtered` como `open`; no convertir evidencia histórica en estado presente. No mezclar proyectos/usuarios. No publicar datos de clientes, secretos o exportaciones en Git.
+
+Cada cambio de alcance registra requisito, fuente/permiso, persona responsable, horas, pantalla objetivo, contrato/ADR afectado y efecto en el 31-10. La [propuesta de decisiones](../proposals/2026-09-scope-decision.md), [requisitos](requirements.md), [arquitectura](../architecture/overview.md) y [OSINT abierta](../research/open-osint-selection.md) detallan los gates.

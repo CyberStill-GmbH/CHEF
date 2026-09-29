@@ -268,5 +268,311 @@
     "claim": "Endpoint para habilitar reportes privados de vulnerabilidades del repositorio.",
     "kind": "primary",
     "limitation": "Activar el canal no crea un SLA de respuesta."
+  },
+  {
+    "id": "RECON-NMAP-STATES",
+    "url": "https://nmap.org/book/man-port-scanning-basics.html",
+    "consultedAt": "2026-09-29",
+    "version": "documentación consultada",
+    "claim": "Seis estados de puerto; son observaciones contextuales, no propiedades permanentes.",
+    "kind": "primary",
+    "limitation": "No valida el subset concreto del parser CHEF."
+  },
+  {
+    "id": "RECON-CT",
+    "url": "https://www.rfc-editor.org/rfc/rfc9162.html",
+    "consultedAt": "2026-09-29",
+    "version": "RFC 9162",
+    "claim": "CT publica certificados/precertificados en logs auditables.",
+    "kind": "primary",
+    "limitation": "Un nombre de certificado no demuestra propiedad ni servicio actual; acceso a API sin verificar."
+  },
+  {
+    "id": "RECON-RDAP",
+    "url": "https://www.rfc-editor.org/rfc/rfc9083.html",
+    "consultedAt": "2026-09-29",
+    "version": "RFC 9083",
+    "claim": "Define formato JSON de respuestas RDAP.",
+    "kind": "primary",
+    "limitation": "Disponibilidad, privacidad y tasa del proveedor deben comprobarse."
+  },
+  {
+    "id": "RECON-ZAP",
+    "url": "https://www.zaproxy.org/getting-started/",
+    "consultedAt": "2026-09-29",
+    "version": "documentación consultada",
+    "claim": "Distingue análisis pasivo y activo; este último requiere permiso.",
+    "kind": "primary",
+    "limitation": "CHEF no integra ni ejecuta ZAP."
+  },
+  {
+    "id": "CORR-PROV",
+    "url": "https://www.w3.org/TR/prov-o/",
+    "consultedAt": "2026-09-29",
+    "version": "W3C Recommendation 2013",
+    "claim": "Modelo de entidad, actividad, agente y procedencia.",
+    "kind": "primary",
+    "limitation": "Inspiración conceptual; CHEF no afirma compatibilidad PROV-O."
+  },
+  {
+    "id": "CORR-FS",
+    "url": "https://www.tandfonline.com/doi/full/10.1080/01621459.1969.10501049",
+    "consultedAt": "2026-09-29",
+    "version": "JASA 1969",
+    "claim": "Teoría de enlace probabilístico de registros.",
+    "kind": "primary",
+    "limitation": "No se aplica sin etiquetas, calibración y evaluación."
+  },
+  {
+    "id": "CORR-SPLINK",
+    "url": "https://moj-analytical-services.github.io/splink/topic_guides/theory/probabilistic_vs_deterministic.html",
+    "consultedAt": "2026-09-29",
+    "version": "documentación consultada",
+    "claim": "Compara enlace probabilístico y determinista.",
+    "kind": "primary",
+    "limitation": "No se instaló ni probó Splink en CHEF."
+  },
+  {
+    "id": "DATA-PRISMA",
+    "url": "https://www.prisma.io/docs/prisma-orm/quickstart/postgresql",
+    "consultedAt": "2026-09-29",
+    "version": "documentación consultada",
+    "claim": "Guía oficial de Prisma ORM con PostgreSQL.",
+    "kind": "primary",
+    "limitation": "Elegir versión estable y probar migraciones cuando se implemente."
+  },
+  {
+    "id": "DATA-PRISMA-GO",
+    "url": "https://github.com/prisma/prisma-client-go",
+    "consultedAt": "2026-09-29",
+    "version": "README consultado",
+    "claim": "El cliente Go declara deprecación y no soportará Prisma v7+.",
+    "kind": "primary",
+    "limitation": "No excluye Go con otro ORM; sí cambia el compromiso de usar Prisma ORM."
+  },
+  {
+    "id": "DATA-PG-RLS",
+    "url": "https://www.postgresql.org/docs/current/ddl-rowsecurity.html",
+    "consultedAt": "2026-09-29",
+    "version": "PostgreSQL current",
+    "claim": "Políticas RLS filtran filas por usuario/contexto.",
+    "kind": "primary",
+    "limitation": "Dueños de tabla y operaciones concretas tienen salvedades; probar aislamiento."
+  },
+  {
+    "id": "AUTH-GITHUB",
+    "url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps",
+    "consultedAt": "2026-09-29",
+    "version": "documentación consultada",
+    "claim": "Flujo de autorización OAuth de GitHub para app web.",
+    "kind": "primary",
+    "limitation": "Autenticación no concede permisos de proyecto CHEF."
+  },
+  {
+    "id": "AUTH-GITHUB-BP",
+    "url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/best-practices-for-creating-an-oauth-app",
+    "consultedAt": "2026-09-29",
+    "version": "documentación consultada",
+    "claim": "Prácticas oficiales para OAuth apps y protección del flujo.",
+    "kind": "primary",
+    "limitation": "Configurar y probar contra dominio real."
+  },
+  {
+    "id": "DEPLOY-VERCEL",
+    "url": "https://vercel.com/docs/frameworks/frontend/vite",
+    "consultedAt": "2026-09-29",
+    "version": "documentación consultada",
+    "claim": "Vite/React puede desplegarse en Vercel.",
+    "kind": "primary",
+    "limitation": "Acceso a Vercel no confirma despliegue ni presupuesto."
+  },
+  {
+    "id": "DEPLOY-RAILWAY",
+    "url": "https://docs.railway.com/guides/saas-backend",
+    "consultedAt": "2026-09-29",
+    "version": "documentación consultada",
+    "claim": "Railway guía API, Postgres y workers por servicios.",
+    "kind": "primary",
+    "limitation": "No se ha creado infraestructura ni confirmado costes."
+  },
+  {
+    "id": "OSINT-SHODAN",
+    "url": "https://developer.shodan.io/api",
+    "consultedAt": "2026-09-29",
+    "version": "documentación consultada",
+    "claim": "API de búsqueda y datos de host/servicios observados.",
+    "kind": "primary",
+    "limitation": "Cuenta, créditos, términos y cobertura no verificados para CHEF."
+  },
+  {
+    "id": "OSINT-CENSYS",
+    "url": "https://docs.censys.com/docs/platform-api-transition-guide",
+    "consultedAt": "2026-09-29",
+    "version": "guía de transición consultada",
+    "claim": "Describe transición a Platform API y endpoints de hosts/certificados.",
+    "kind": "primary",
+    "limitation": "Acceso, plan, campos y licencia no verificados."
+  },
+  {
+    "id": "OSINT-VT",
+    "url": "https://docs.virustotal.com/reference/domains-relationships",
+    "consultedAt": "2026-09-29",
+    "version": "documentación consultada",
+    "claim": "API de relaciones de objetos de dominio.",
+    "kind": "primary",
+    "limitation": "Requiere API key; relaciones externas no prueban propiedad."
+  },
+  {
+    "id": "UI-REACT-TS",
+    "url": "https://react.dev/learn/typescript",
+    "consultedAt": "2026-09-29",
+    "version": "documentación consultada",
+    "claim": "React documenta componentes con TypeScript.",
+    "kind": "primary",
+    "limitation": "No determina arquitectura de backend ni visualización de grafos."
+  },
+  {
+    "id": "OSINT-COMMONCRAWL",
+    "url": "https://commoncrawl.org/get-started",
+    "consultedAt": "2026-09-29",
+    "version": "documentación consultada",
+    "claim": "Datos de crawl disponibles gratis por HTTPS.",
+    "kind": "primary",
+    "limitation": "Datos históricos y parciales; revisar términos de retención."
+  },
+  {
+    "id": "OSINT-CC-INDEX",
+    "url": "https://index.commoncrawl.org/",
+    "consultedAt": "2026-09-29",
+    "version": "documentación consultada",
+    "claim": "Servidor público de índice CDX para colecciones Common Crawl.",
+    "kind": "primary",
+    "limitation": "Disponibilidad/cuota exacta y resultado por dominio requieren spike autorizado."
+  },
+  {
+    "id": "OSINT-CC-TERMS",
+    "url": "https://commoncrawl.org/terms-of-use/full/",
+    "consultedAt": "2026-09-29",
+    "version": "términos consultados",
+    "claim": "Términos oficiales del servicio/datos Common Crawl.",
+    "kind": "primary",
+    "limitation": "Revisar condiciones actuales antes de uso en CHEF."
+  },
+  {
+    "id": "OSINT-IANA-RDAP",
+    "url": "https://www.iana.org/assignments/rdap-dns",
+    "consultedAt": "2026-09-29",
+    "version": "registro consultado",
+    "claim": "Bootstrap de servidores RDAP por dominio/TLD.",
+    "kind": "primary",
+    "limitation": "Cada operador puede tener límites y redacciones distintas."
+  },
+  {
+    "id": "OSINT-SUBFINDER",
+    "url": "https://github.com/projectdiscovery/subfinder",
+    "consultedAt": "2026-09-29",
+    "version": "README consultado",
+    "claim": "Enumeración pasiva modular, salida JSONL y fuentes; software MIT.",
+    "kind": "primary",
+    "limitation": "Muchas fuentes requieren API keys; no se ejecutó."
+  },
+  {
+    "id": "OSINT-SUBFINDER-TERMS",
+    "url": "https://github.com/projectdiscovery/subfinder/blob/dev/DISCLAIMER.md",
+    "consultedAt": "2026-09-29",
+    "version": "disclaimer consultado",
+    "claim": "Distingue licencia del wrapper y términos de proveedores subyacentes.",
+    "kind": "primary",
+    "limitation": "No sustituye revisar cada proveedor en la fecha de integración."
+  },
+  {
+    "id": "OSINT-CRTSH",
+    "url": "https://github.com/crtsh/certwatch_db",
+    "consultedAt": "2026-09-29",
+    "version": "repositorio consultado",
+    "claim": "Esquema de base de datos abierto de crt.sh.",
+    "kind": "primary",
+    "limitation": "No documenta SLA ni contrato de API pública de búsqueda."
+  },
+  {
+    "id": "ARCH-C4",
+    "url": "https://c4model.com/diagrams",
+    "consultedAt": "2026-09-29",
+    "version": "sitio oficial consultado",
+    "claim": "C4 distingue contexto, contenedores, componentes y código.",
+    "kind": "primary",
+    "limitation": "Es notación/documentación, no prueba de implementación."
+  },
+  {
+    "id": "SEC-CWE-611",
+    "url": "https://cwe.mitre.org/data/definitions/611.html",
+    "consultedAt": "2026-09-29",
+    "version": "CWE 4.20 consultado",
+    "claim": "Clasifica referencia a entidad XML externa mal restringida.",
+    "kind": "primary",
+    "limitation": "CWE clasifica debilidad, no certifica mitigación."
+  },
+  {
+    "id": "SEC-CWE-400",
+    "url": "https://cwe.mitre.org/data/definitions/400.html",
+    "consultedAt": "2026-09-29",
+    "version": "CWE 4.20 consultado",
+    "claim": "Clasifica consumo de recursos no controlado.",
+    "kind": "primary",
+    "limitation": "Límites actuales solo cubren núcleo, no API futura."
+  },
+  {
+    "id": "SEC-CWE-79",
+    "url": "https://cwe.mitre.org/data/definitions/79.html",
+    "consultedAt": "2026-09-29",
+    "version": "CWE 4.20 consultado",
+    "claim": "Clasifica XSS en salida web.",
+    "kind": "primary",
+    "limitation": "UI CHEF todavía no está implementada."
+  },
+  {
+    "id": "SEC-CWE-862",
+    "url": "https://cwe.mitre.org/data/definitions/862.html",
+    "consultedAt": "2026-09-29",
+    "version": "CWE 4.20 consultado",
+    "claim": "Clasifica falta de autorización.",
+    "kind": "primary",
+    "limitation": "Requiere pruebas multiusuario reales cuando exista API."
+  },
+  {
+    "id": "SEC-CWE-639",
+    "url": "https://cwe.mitre.org/data/definitions/639.html",
+    "consultedAt": "2026-09-29",
+    "version": "CWE 4.20 consultado",
+    "claim": "Clasifica bypass por clave controlada por usuario.",
+    "kind": "primary",
+    "limitation": "No implica que CHEF tenga hoy ese endpoint."
+  },
+  {
+    "id": "SEC-CWE-918",
+    "url": "https://cwe.mitre.org/data/definitions/918.html",
+    "consultedAt": "2026-09-29",
+    "version": "CWE 4.20 consultado",
+    "claim": "Clasifica SSRF al recuperar destino no validado.",
+    "kind": "primary",
+    "limitation": "Core offline no hace fetch; aplica a conectores/workers futuros."
+  },
+  {
+    "id": "CI-CODEQL",
+    "url": "https://docs.github.com/en/code-security/how-tos/find-and-fix-code-vulnerabilities/configure-code-scanning/configuring-advanced-setup-for-code-scanning",
+    "consultedAt": "2026-09-29",
+    "version": "documentación consultada",
+    "claim": "Setup avanzado CodeQL por workflow es configurable en repositorio público.",
+    "kind": "primary",
+    "limitation": "Workflow no acredita análisis verde hasta ejecutarse en GitHub."
+  },
+  {
+    "id": "CI-CODEQL-ACTION",
+    "url": "https://github.com/github/codeql-action/releases/tag/v4.38.1",
+    "consultedAt": "2026-09-29",
+    "version": "v4.38.1",
+    "claim": "Release oficial del action CodeQL usado en CI.",
+    "kind": "primary",
+    "limitation": "Pin SHA requiere revisión periódica de actualización."
   }
 ]

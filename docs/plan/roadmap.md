@@ -1,18 +1,26 @@
-# Roadmap hasta CSH
+# Roadmap de CHEF
 
-Presentación: **31-10-2026**. Trabajo planificado 29-09 a 30-10. Se reemplaza el supuesto de siete semanas de Specter por cuatro sprints ajustados al calendario real. Capacidad neta: [102.9 h](../research/feasibility.md), con 25 % de reserva; revisar si 10 h semanales no son por persona.
+Actualizado 29-09-2026. **La web es el producto primero; Burp viene después.** La presentación objetivo es 31-10-2026. El propietario pidió prototipo privado desplegado para el equipo, con GitHub OAuth, PostgreSQL/Prisma, Nmap autorizado, una fuente OSINT pasiva, correlación explicada, mapa y exportación. El [análisis de capacidad](../research/feasibility.md) advierte que este alcance completo supera 10 h/semana por cada una de tres personas. No se transforma un objetivo deseado en un compromiso sin refinement.
 
-| Sprint | Fechas      | Capacidad neta / plan | Objetivo e incremento                                         | Historias           | Salida, riesgo y recorte                                                             |
-| ------ | ----------- | --------------------- | ------------------------------------------------------------- | ------------------- | ------------------------------------------------------------------------------------ |
-| S1     | 29-09–05-10 | 22.5 h / 21 h         | Importación pequeña con evidencia en un explorador de fixture | C01,C02,C03,W01,Q01 | Pipeline/CI + UI fixture. Riesgo setup; eliminar módulos extra si falla              |
-| S2     | 06-10–12-10 | 22.5 h / 21 h         | Selección/evidencia/export; frontera API y decisión HTTP      | W02,W03,C04,I02     | Demo base completa; freeze 12-10. API se recorta a cargar snapshot local             |
-| S3     | 13-10–19-10 | 22.5 h / 21 h         | Accesibilidad, cancelación real y benchmark ampliado          | W04,I03,Q02         | Controles negativos/rendimiento medidos. Recortar timeline antes que scope/evidencia |
-| S4     | 20-10–30-10 | 35.4 h / 31 h         | Endurecimiento, tres ensayos y paquete de presentación        | Q03,Q04,B01,Q05     | Demo offline5 min y respaldo; Burp spike se pospone si afecta ensayo                 |
+## Etapa 0 · base ya existente
 
-Plan total94 h; holgura neta8.9 h. La estimación inicial98 h de factibilidad es un techo de sizing; backlog refinado94 h. Nunca consumir la reserva para prometer nuevos módulos.
+Núcleo/CLI TypeScript offline, Nmap XML subset, scope, IDs deterministas, evidencia y snapshot versionado; tests y CI. El spike Montoya Java es aparte y su uso en Burp requiere prueba manual. Esta base se conserva en todas las etapas mediante fixtures/golden y `npm run check`.
 
-Gate05-10: inspeccionar horas reales, UI, parser hostile y contratos. Gate12-10: congelar scope. Gate19-10: cero bugs que corrompan evidencia o salgan de scope. Gate30-10: build reproducible y tres ensayos; si falla, mostrar snapshot validado + CLI como respaldo sin fingir funcionalidades.
+## Etapa 1 · vertical web de octubre, sujeta a capacidad
 
-Planning30 min al inicio, sincronización10 min lunes/miércoles/viernes, review30 min con demo y retro15 min al cierre; refinement15 min semanal. Ceremonias cuentan dentro de capacidad; combinar review/retro cuando ayude. Facilitación Diego S1/S3, Jhojan S2/S4, propuesta pendiente de acuerdo.
+1. **29-09–05-10:** decidir stack/contrato, fuente pasiva/permiso y corte viable. Gate: sin fuente/dataset autorizado se rotula fixture sintético y se retira claim de OSINT viva.
+2. **06-10–12-10:** API Node que reutiliza core, proyecto y PostgreSQL/Prisma detrás de puerto, importación Nmap desde React. Gate: CLI sin regresión, dos proyectos aislados, salida atómica.
+3. **13-10–19-10:** una fuente pasiva y una relación fuerte/candidata explicada; grafo/lista y panel de evidencia. Gate: control negativo, fechas, regla y dos procedencias.
+4. **20-10–30-10:** export, UX/accesibilidad, GitHub OAuth, despliegue privado y ensayo comparativo **solo según capacidad real**. Gate: no llamar multiusuario al prototipo sin sesiones/IDOR/backup/migración probados. Freeze 30-10 y presentación 31-10 con estado honesto.
 
-Después CSH: [roadmap Burp](burp-roadmap.md). Burp Suite Day no tiene fecha confirmada; no condiciona el deadline CSH ni demuestra invitación.
+La [pauta Scrum detallada](../proposals/2026-09-scrum-to-oct31.md) muestra objetivo, tareas de cada persona, estimaciones, gates y recortes. La [pauta Daily](daily-scrum.md) convierte cada sprint en trabajo coordinado. El fallback técnico del núcleo offline permanece disponible; mostrarlo no cumple por sí solo la nueva meta web.
+
+## Etapa 2 · producto web completo, sin fecha fijada
+
+Conectar fuente pasiva real con licencia/permiso, completar proyectos/OAuth y operación privada, historial temporal, refresco con latencia y frescura medida, export JSON e imagen segura, observabilidad y evaluación con pentesters. Añadir conectores OSINT por valor/fiabilidad, uno por PR y contrato. El mapa “en tiempo real” se reclama solo con SLA observado; antes se muestra “última actualización”. Un worker de reconocimiento activo se evalúa únicamente tras nueva autorización/ADR/aislamiento.
+
+## Etapa 3 · integración Burp/BApp, posterior
+
+Elegir BApp autónoma o cliente del servicio, mantener conformance Java/TypeScript, probar manualmente carga/unload/performance y demostrar ahorro dentro de Burp. Revisar [criterios PortSwigger](https://portswigger.net/burp/documentation/desktop/extend-burp/extensions/creating/bapp-store-acceptance-criteria) en fecha de postulación. No fijar entrega ni prometer aceptación antes de cerrar el producto web y validar el valor diferencial.
+
+Cada gate puede reordenar Product Backlog con evidencia; los criterios de Done, scope, integridad y seguridad no se recortan. Decisiones y cambios viven en [ADRs](../adr/README.md), [backlog](backlog.md) y actas/PRs.
