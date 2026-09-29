@@ -2,7 +2,7 @@
 
 Estado: aceptado para el incremento inicial; decisiones futuras indicadas expresamente. Fecha: 29-09-2026.
 
-Vigencia: describe el incremento CLI offline implementado. La nueva visión web multiusuario con PostgreSQL/Prisma se documenta en [ADR 0008 propuesto](0008-web-platform.md); no afirmar que SQLite o PostgreSQL estén implementados. Al aceptar 0008, actualizar este estado histórico como supersedido para persistencia web.
+Vigencia: describe el incremento CLI offline implementado. La nueva visión web multiusuario con PostgreSQL/Prisma en Node.js y correlación Go se documenta en [ADR 0011 propuesto](0011-node-go-boundary.md); no afirmar que SQLite o PostgreSQL estén implementados. Al aceptar 0011, actualizar este estado histórico como supersedido para persistencia web.
 
 ## Contexto
 

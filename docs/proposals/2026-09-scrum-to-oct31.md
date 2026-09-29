@@ -1,19 +1,19 @@
 # Scrum reestimado hasta el 31 de octubre
 
-Fecha 29-09-2026. **Propuesta, aún no compromiso del equipo.** El propietario confirmó un **prototipo web desplegado para el equipo**, demostrable en vivo, React/TypeScript, PostgreSQL/Prisma, GitHub OAuth, importación de resultados autorizados y **ningún escaneo lanzado por CHEF**. Nmap XML está disponible; la fuente pasiva y su permiso no. Hay acceso a Vercel/Railway, no presupuesto ni servicios preparados. Se recomienda backend TypeScript/Node para reutilizar el núcleo; su aceptación por el equipo sigue pendiente en el [ADR 0008](../adr/0008-web-platform.md). Burp queda después. La [decisión](2026-09-scope-decision.md) y [estudio](../research/recon-correlation-2026-09.md) explican los costes y límites.
+Fecha 29-09-2026. **Propuesta, aún no compromiso del equipo.** El propietario confirmó un **prototipo web desplegado para el equipo**, demostrable en vivo, React/TypeScript, **API Node.js con PostgreSQL/Prisma y GitHub OAuth, motor de correlación Go**, importación de resultados autorizados y **ningún escaneo lanzado por CHEF**. Nmap XML está disponible; Common Crawl fue elegido como primer conector candidato, pero permiso, acceso y dataset correspondiente aún no. Hay acceso a Vercel/Railway, no presupuesto ni servicios preparados. La frontera y migración siguen en revisión técnica según [ADR 0011](../adr/0011-node-go-boundary.md). Burp queda después. La [decisión](2026-09-scope-decision.md) y [selección OSINT](../research/open-osint-selection.md) explican costes y límites.
 
 ## Objetivo, capacidad y recorte honesto
 
-Recorrido deseado: entrar con GitHub → crear proyecto → importar Nmap → consultar fuente pasiva → revisar activos, enlaces y evidencia fechada → exportar. **No existe todavía** este recorrido integrado. Para el 31-10 quedan unas 137 h brutas (10 h/semana por cada uno de César, Diego y Jhojan); 25 % de reserva deja ~103 h netas. Una vertical local estimada en 110–160 h y despliegue privado/OAuth en 70–120 h adicionales exceden ese presupuesto. Ningún calendario puede convertirlos en Done por declararlos. El equipo debe aumentar horas, prolongar fecha o acordar recorte. Hasta entonces los sprints siguientes son **objetivos de aprendizaje y gates**, con trabajo máximo de ~100 h netas; no promesa de toda la demo deseada.
+Recorrido deseado: entrar con GitHub → crear proyecto → importar Nmap → consultar fuente pasiva → correlacionar en Go → revisar activos, enlaces y evidencia fechada → exportar. **No existe todavía** este recorrido integrado. Para el 31-10 quedan unas 137 h brutas (10 h/semana por cada uno de César, Diego y Jhojan); 25 % de reserva deja ~103 h netas. Una vertical local estimada antes de Go en 110–160 h y despliegue privado/OAuth en 70–120 h adicionales ya excedían ese presupuesto; contrato, build y conformidad Go **aún no están estimados**. Ningún calendario puede convertirlos en Done por declararlos. El equipo debe aumentar horas, prolongar fecha o acordar recorte. Hasta entonces los sprints siguientes son **objetivos de aprendizaje y gates**, con trabajo máximo de ~100 h netas; no promesa de toda la demo deseada.
 
-**Ruta crítica propuesta para octubre:** mantener core/CLI estable, construir API/DB/React con fixture Nmap, un segundo fixture pasivo autorizado o sintético claramente marcado, correlación explicada y exportación. Si no se confirma fuente pasiva antes del 05-10, no contar “consulta OSINT viva” ni medir ahorro real multifuente. GitHub OAuth y despliegue privado son gate separado que requieren prueba de sesión, aislamiento y recuperación; si no caben, la web local se demuestra con datos sintéticos y se informa explícitamente. El propietario puede priorizar otro corte tras reestimar.
+**Ruta crítica propuesta para octubre:** mantener core/CLI estable, validar contrato/transporte Go, construir API/DB/React con fixture Nmap, un segundo fixture pasivo autorizado o sintético claramente marcado, correlación Go explicada y exportación. Si no se confirma fuente pasiva antes del 05-10, no contar “consulta OSINT viva” ni medir ahorro real multifuente. GitHub OAuth y despliegue privado son gate separado que requieren prueba de sesión, aislamiento y recuperación; si no caben, la web local se demuestra con datos sintéticos y se informa explícitamente. El propietario puede priorizar otro corte tras reestimar.
 
 ## Sprint 1 · 29-09 a 05-10 · decisión y primer slice (24 h)
 
-- **César, 8 h:** ADR de backend/datos con decisión Go vs TypeScript, límites del dominio, modelo proyecto/run/observación y contrato API mínimo. Reviewer Diego.
+- **César, 8 h:** revisar ADR 0011 con Diego/Jhojan, spike de invocación Node–Go con fixture y límites, modelo proyecto/run/observación y contrato API mínimo; si Go no está disponible, registrar bloqueo. Reviewer Diego.
 - **Diego, 8 h:** prototipo React de proyecto, carga y vista de evidencia con grafo/lista accesibles; prueba de comprensión con el fixture Nmap. Reviewer César.
-- **Jhojan, 8 h:** fixture pasivo de laboratorio y labels multifuente **solo si se valida licencia/acceso**, o fixture sintético rotulado; golden Nmap, negativos y criterios de limpieza. Reviewer César.
-- **Gate:** fuente pasiva, corte de demo y lenguaje confirmados; si faltan, reajustar historias antes de implementar conector.
+- **Jhojan, 8 h:** verificar términos/acceso de Common Crawl y dominio autorizado; fixture pasivo de laboratorio **solo si se valida permiso**, o sintético rotulado; golden Nmap y negativos. Reviewer César.
+- **Gate:** fuente pasiva, corte de demo, contrato/transporte Go y coste medido; el stack está confirmado, su integración no. Si faltan, reajustar historias antes de implementar conector.
 
 ## Sprint 2 · 06-10 a 12-10 · persistir importación (24 h)
 
@@ -24,7 +24,7 @@ Recorrido deseado: entrar con GitHub → crear proyecto → importar Nmap → co
 
 ## Sprint 3 · 13-10 a 19-10 · primer enlace multifuente (24 h)
 
-- **César, 8 h:** regla versionada de correlación fuerte/candidata y explicación, con prueba de falso enlace; no fusionar por hostname/IP compartida. Reviewer Jhojan.
+- **César, 8 h:** primer slice Go de regla fuerte/candidata y explicación con fixtures TS/Go y falso enlace; no fusionar por hostname/IP compartida. Si 8 h no alcanzan, cerrar solo contrato y control negativo, dejando motor incompleto visible. Reviewer Jhojan.
 - **Diego, 8 h:** panel de relación y evidencia fechada, filtros observado/candidato/conflicto, lista equivalente al grafo. Reviewer César.
 - **Jhojan, 8 h:** adaptador pasivo del formato autorizado, o importador de fixture sintético; tests positivos/negativos y conteo de observaciones excluidas. Reviewer Diego.
 - **Incremento verificable:** un servicio Nmap y una señal pasiva del mismo dominio/IP se muestran con evidencias y fechas; las coincidencias débiles siguen candidatas. Sin fuente real, se presenta como simulación controlada.
@@ -40,7 +40,7 @@ Total planificado **100 h netas**; quedan ~3 h de margen adicional sobre la rese
 
 ## Responsabilidades y traspasos
 
-**César — producto técnico, backend y correlación.** Responsable de decidir y documentar el lenguaje con el equipo, composición de la API, puertos de application, PostgreSQL/Prisma, autorización por proyecto, reglas de fusión y contrato de exportación. No concentra revisión de todo: Diego revisa el contrato/API desde el uso real; Jhojan revisa fixtures, negativos y preservación del parser. César decide prioridad de backlog como Product Owner, pero no declara una historia Done sin evidencia y review.
+**César — producto técnico, API Node y motor Go.** Responsable de revisar y documentar la frontera elegida, composición de la API, puertos de application, PostgreSQL/Prisma, autorización por proyecto, reglas Go y contrato de exportación. No concentra revisión de todo: Diego revisa el contrato/API desde el uso real; Jhojan revisa fixtures, negativos y preservación del parser. César decide prioridad de backlog como Product Owner, pero no declara una historia Done sin evidencia y review.
 
 **Diego — frontend y experiencia de análisis.** Responsable de React/TypeScript, arquitectura de información, grafo y lista accesible, panel de procedencia, estados vacíos/error, exportación en UI y protocolo de evaluación con pentesters. César revisa que el cliente no replique reglas ni filtre proyectos; Jhojan verifica contenido del fixture y evidencia. La belleza visual se evalúa con tareas: encontrar un servicio, distinguir candidato de observado y explicar una relación; no con un mockup aislado.
 
@@ -52,10 +52,10 @@ Todos participan en planning, review, retrospectiva y ensayo. El máximo trabajo
 
 ```mermaid
 flowchart LR
-  D["D0: fuente + permiso<br/>backend + corte"] --> C["D1: contrato multifuente<br/>modelo de proyecto"]
+  D["D0: Common Crawl + permiso<br/>frontera Go + corte"] --> C["D1: contrato TS-Go multifuente<br/>modelo de proyecto"]
   C --> I["D2: importación Nmap<br/>Postgres"]
   C --> P["D3: fixture/conector pasivo"]
-  I --> R["D4: correlación explicada"]
+  I --> R["D4: motor Go<br/>correlación explicada"]
   P --> R
   R --> U["D5: mapa/lista + evidencia"]
   U --> X["D6: exportación + estudio"]
@@ -70,11 +70,11 @@ La ruta de aceptación de una relación es: Given proyecto con XML Nmap y observ
 
 ## Capacidad, estimación y control de alcance
 
-Las horas por sprint de arriba suman 100 h, distribuidas César 33 h, Diego 34 h, Jhojan 33 h, con ~3 h de margen sobre la capacidad neta. Esa distribución **no cubre de forma creíble** el alcance completo de las 14 issues: el rango para vertical local es 110–160 h, y despliegue privado/OAuth agrega 70–120 h. Las actividades de sprint son rebanadas exploratorias con tiempo máximo, no una promesa de implementación íntegra. Al cerrar D0 el equipo debe seleccionar historias que caben y anotar descartes. Una estimación más ajustada requiere spikes de 2–4 h para fuente pasiva, Prisma/migraciones y OAuth/despliegue; su resultado altera backlog, no la realidad de 10 h/semana.
+Las horas por sprint de arriba suman 100 h, distribuidas César 33 h, Diego 34 h, Jhojan 33 h, con ~3 h de margen sobre la capacidad neta. Esa distribución **no cubre de forma creíble** el alcance completo: los rangos antiguos de vertical local (110–160 h) y despliegue/OAuth (+70–120 h) **no incluyen aún el contrato/build/conformidad Go**. Las actividades de sprint son rebanadas exploratorias con tiempo máximo, no una promesa de implementación íntegra. Al cerrar D0 el equipo debe seleccionar historias que caben y anotar descartes. Una estimación más ajustada requiere spikes de 2–4 h para fuente pasiva, transporte Go, Prisma/migraciones y OAuth/despliegue; su resultado altera backlog, no la realidad de 10 h/semana.
 
 Orden de recorte para proteger utilidad: (1) eliminar animación/estilo extra y exportación de imagen; conservar JSON/evidencia; (2) diferir filtros/timeline avanzados; (3) reducir a una fuente pasiva reproducible; (4) diferir actualización automática y dejar fecha de última importación; (5) diferir despliegue si no caben seguridad/operación, registrando que **no se cumplió** la meta privada. No recortar aislamiento, scope, evidencia, control negativo ni errores atómicos para sostener la etiqueta “multiusuario”. Si el propietario exige la demo privada completa el 31-10, pedir capacidad adicional concreta o reducir funciones con nueva estimación aceptada; 30 h/semana del equipo no bastan según los rangos actuales.
 
-El tablero usa `Ready / In progress / Review / Blocked / Done`. Cada bloqueo registra fecha, causa, responsable, alternativa y decisión. Riesgos visibles: no hay fuente pasiva confirmada; no hay dataset multifuente con verdad de referencia; hosting sin presupuesto/backup; OAuth y autorización introducen IDOR; Go vs TS cambia costes; diez horas semanales pueden variar por exámenes/ausencias. Una reserva del 25 % cubre integración/contingencias normales, no resuelve un déficit de ~80 h o más.
+El tablero usa `Ready / In progress / Review / Blocked / Done`. Cada bloqueo registra fecha, causa, responsable, alternativa y decisión. Riesgos visibles: acceso/permiso de Common Crawl no confirmados; no hay dataset multifuente con verdad de referencia; hosting sin presupuesto/backup; OAuth y autorización introducen IDOR; frontera Node–Go agrega contrato y operación; diez horas semanales pueden variar por exámenes/ausencias. Una reserva del 25 % cubre integración/contingencias normales, no resuelve un déficit de ~80 h o más.
 
 ## Definition of Ready y Definition of Done
 

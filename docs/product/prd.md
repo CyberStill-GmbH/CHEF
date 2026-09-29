@@ -14,9 +14,9 @@ La **hipótesis diferencial** es que el analista complete tareas concretas de re
 
 ## Recorrido y límites de la primera experiencia
 
-Meta de pantalla: GitHub OAuth → proyecto → importación Nmap con policy → consulta de una fuente pasiva seleccionada con permiso → mapa/lista de activos y relaciones → evidencia/fechas/regla/estado → export. React/TypeScript en Vercel y API TypeScript/Node + PostgreSQL/Prisma en Railway son arquitectura propuesta. “Tiempo real” requiere refresco medido, latencia y estado de proveedor; al principio mostrar “actualizado por importación” y fecha visible. CHEF no lanza escaneos en esta fase: solo importa resultados autorizados.
+Meta de pantalla: GitHub OAuth → proyecto → importación Nmap con policy → consulta de una fuente pasiva seleccionada con permiso → correlación Go → mapa/lista de activos y relaciones → evidencia/fechas/regla/estado → export. React/TypeScript en Vercel y API Node.js/TypeScript + PostgreSQL/Prisma con motor Go en Railway son arquitectura propuesta. “Tiempo real” requiere refresco medido, latencia y estado de proveedor; al principio mostrar “actualizado por importación” y fecha visible. CHEF no lanza escaneos en esta fase: solo importa resultados autorizados.
 
-**Estado hoy:** núcleo TypeScript/Node con CLI offline, Nmap XML subset, scope, identidad, correlación conservadora y `Snapshot 1.0.0`; 11 tests. Un spike Java/Montoya separado normaliza requests seleccionadas pero no está unido al core ni validado manualmente en Burp. No existe web, API, DB, OAuth, conector OSINT core ni correlación multifuente. Los fixtures actuales usan loopback/`.invalid`; una fuente OSINT pública no puede devolver una coincidencia real con ellos. La fuente/dataset autorizado es la mayor dependencia.
+**Estado hoy:** núcleo TypeScript/Node con CLI offline, Nmap XML subset, scope, identidad, correlación conservadora y `Snapshot 1.0.0`; 11 tests. Un spike Java/Montoya separado normaliza requests seleccionadas pero no está unido al core ni validado manualmente en Burp. No existe web, API, DB, OAuth, **motor Go**, conector OSINT core ni correlación multifuente. Los fixtures actuales usan loopback/`.invalid`; una fuente OSINT pública no puede devolver una coincidencia real con ellos. La fuente/dataset autorizado es la mayor dependencia.
 
 ## Éxito y calidad
 

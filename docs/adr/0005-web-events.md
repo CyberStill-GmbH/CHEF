@@ -2,7 +2,7 @@
 
 Estado: aceptado para el incremento inicial; decisiones futuras indicadas expresamente. Fecha: 29-09-2026.
 
-Vigencia: la CLI y el snapshot siguen siendo reales; la dirección anterior de API loopback/SSE era exploratoria. La web alojable de equipo se analiza en [ADR 0008 propuesto](0008-web-platform.md). SSE no se prioriza hasta medir latencia/uso, y no hay API implementada.
+Vigencia: la CLI y el snapshot siguen siendo reales; la dirección anterior de API loopback/SSE era exploratoria. La web alojable de equipo con Node/Prisma y motor Go se analiza en [ADR 0011 propuesto](0011-node-go-boundary.md). SSE no se prioriza hasta medir latencia/uso, y no hay API implementada.
 
 ## Contexto
 

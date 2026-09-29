@@ -574,5 +574,95 @@
     "claim": "Release oficial del action CodeQL usado en CI.",
     "kind": "primary",
     "limitation": "Pin SHA requiere revisión periódica de actualización."
+  },
+  {
+    "id": "OSINT-RIPESTAT-API",
+    "url": "https://stat-ui.stat.ripe.net/docs/data-api/ripestat-data-api",
+    "consultedAt": "2026-09-29",
+    "version": "documentación consultada",
+    "claim": "API pública RIPEstat; reglas de uso, concurrencia y registro para uso regular.",
+    "kind": "primary",
+    "limitation": "Consultar términos actuales y probar campos/cuota antes de integrar."
+  },
+  {
+    "id": "OSINT-IANA-NUMBERS",
+    "url": "https://www.iana.org/numbers/registries",
+    "consultedAt": "2026-09-29",
+    "version": "registro consultado",
+    "claim": "IANA enlaza bootstrap RDAP para IPv4, IPv6 y ASN.",
+    "kind": "primary",
+    "limitation": "Los operadores de registro aplican límites y redacciones propios."
+  },
+  {
+    "id": "OSINT-RIPESTAT-NETWORK",
+    "url": "https://stat-ui.stat.ripe.net/docs/data-api/api-endpoints/network-info.html",
+    "consultedAt": "2026-09-29",
+    "version": "endpoint 1.1 documentado",
+    "claim": "Network Info devuelve prefijo y ASN anunciantes para una IP.",
+    "kind": "primary",
+    "limitation": "Un anuncio de ruta no prueba propiedad de host ni servicio."
+  },
+  {
+    "id": "OSINT-RIPESTAT-TERMS",
+    "url": "https://www.ripe.net/about-us/legal/ripestat-service-terms-and-conditions",
+    "consultedAt": "2026-09-29",
+    "version": "términos enlazados por RIPEstat",
+    "claim": "Condiciones del servicio RIPEstat para uso de API/datos.",
+    "kind": "primary",
+    "limitation": "Revisión de permiso y retención concreta pendiente."
+  },
+  {
+    "id": "OSINT-URLSCAN-API",
+    "url": "https://urlscan.io/docs/api/",
+    "consultedAt": "2026-09-29",
+    "version": "documentación consultada",
+    "claim": "Búsqueda de escaneos existentes, API key, cuotas, backoff y visibilidad.",
+    "kind": "primary",
+    "limitation": "No autoriza uso comercial ni envío de objetivos de clientes."
+  },
+  {
+    "id": "OSINT-URLSCAN-TERMS",
+    "url": "https://urlscan.io/terms/",
+    "consultedAt": "2026-09-29",
+    "version": "términos consultados",
+    "claim": "Condiciones de uso, agregación y tratamiento de URLs enviadas.",
+    "kind": "primary",
+    "limitation": "Requiere evaluación legal/permiso antes de una integración CHEF."
+  },
+  {
+    "id": "OSINT-URLSCAN-AUTH-2026",
+    "url": "https://urlscan.io/blog/2026/03/18/api-auth-required/",
+    "consultedAt": "2026-09-29",
+    "version": "anuncio de 2026-03-18",
+    "claim": "Desde 2026-05-04 ciertos endpoints de resultados requieren API key.",
+    "kind": "primary",
+    "limitation": "No implica que una cuenta autorice uso comercial o consulta de objetivos de terceros."
+  },
+  {
+    "id": "ARCH-NODE-CHILD",
+    "url": "https://nodejs.org/api/child_process.html",
+    "consultedAt": "2026-09-29",
+    "version": "documentación consultada",
+    "claim": "Node documenta spawn/execFile y sus límites de buffer, timeout y shell.",
+    "kind": "primary",
+    "limitation": "No valida todavía empaquetado/latencia del motor Go de CHEF."
+  },
+  {
+    "id": "ARCH-GO-FUZZ",
+    "url": "https://go.dev/doc/security/fuzz/",
+    "consultedAt": "2026-09-29",
+    "version": "documentación consultada",
+    "claim": "Go documenta pruebas fuzz para parsers y validadores.",
+    "kind": "primary",
+    "limitation": "No existe aún módulo Go en CHEF."
+  },
+  {
+    "id": "DEPLOY-RAILWAY-DOCKER",
+    "url": "https://docs.railway.com/builds/dockerfiles",
+    "consultedAt": "2026-09-29",
+    "version": "documentación consultada",
+    "claim": "Railway admite build desde Dockerfile para el servicio.",
+    "kind": "primary",
+    "limitation": "Build multi-stage Node+Go pendiente de prueba real."
   }
 ]

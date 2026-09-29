@@ -1,6 +1,6 @@
 # Pauta diaria de trabajo y Daily Scrum
 
-Propuesta fechada 29-09-2026. El [Product Backlog](backlog.md) contiene opciones ordenadas; el [Sprint Backlog](../proposals/2026-09-scrum-to-oct31.md) limita el trabajo elegido. Esta pauta convierte el objetivo en **siguientes entregables por persona**, no afirma que ya se hayan completado ni obliga a seguir una fecha cuando cambia una dependencia. César (backend/correlación y Product Owner), Diego (frontend/UX) y Jhojan (ingestión/fixtures/investigación) tienen 10 h/semana cada uno, incluidas reuniones/reviews. El nombre vigente en [equipo](team.md) es Jhojan.
+Propuesta fechada 29-09-2026. El [Product Backlog](backlog.md) contiene opciones ordenadas; el [Sprint Backlog](../proposals/2026-09-scrum-to-oct31.md) limita el trabajo elegido. Esta pauta convierte el objetivo en **siguientes entregables por persona**, no afirma que ya se hayan completado ni obliga a seguir una fecha cuando cambia una dependencia. César (API Node/motor Go y Product Owner), Diego (frontend/UX) y Jhojan (ingestión/fixtures/investigación) tienen 10 h/semana cada uno, incluidas reuniones/reviews. El nombre vigente en [equipo](team.md) es Jhojan.
 
 ## Cómo funciona el Daily
 
@@ -10,13 +10,13 @@ El tablero `Ready → In progress → Review → Done` tiene una tarjeta en prog
 
 ## Sprint 1 · decisión y contrato (29-09 a 05-10)
 
-| Día de trabajo | César · backend/correlación                                       | Diego · frontend/UX                                                           | Jhojan · ingestión/investigación                                           |
-| -------------- | ----------------------------------------------------------------- | ----------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| 1              | Inventariar core, puertos y decisión TS/Go; abrir WB01            | Revisar tareas del analista, rutas de pantalla y accesibilidad                | Inventariar CT/RDAP/Common Crawl/Subfinder, separar software/licencia/dato |
-| 2              | ADR de API TS + Prisma, riesgo OAuth/IDOR                         | Wireframe proyecto→import→evidencia, con lista equivalente                    | Verificar términos/acceso/cuota de candidata pasiva; registrar fuente      |
-| 3              | Contrato mínimo de proyecto/observación para fixture              | Probar dos variantes de panel con fixture Nmap, anotar errores de comprensión | Fixture multifuente sintético rotulado y labels de enlace/falso enlace     |
-| 4              | Revisar contrato con Diego/Jhojan; dividir WB04                   | Fijar DTO/estados vacío/error con César; review de ADR                        | Prueba Nmap golden/hostname compartido; review de contrato                 |
-| 5              | Gate WB02/WB03: fuente, capacidad, corte web; publicar decisiones | Demo de prototipo navegable o mock con pendientes visibles                    | Publicar matriz de fuente, permiso, fixture y limitaciones                 |
+| Día de trabajo | César · backend/correlación                                       | Diego · frontend/UX                                                           | Jhojan · ingestión/investigación                                       |
+| -------------- | ----------------------------------------------------------------- | ----------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| 1              | Revisar ADR 0011, puertos y coste Node–Go; abrir WB01             | Revisar tareas del analista, rutas de pantalla y accesibilidad                | Revisar selección Common Crawl/RDAP/RIPEstat y límites                 |
+| 2              | Spike transporte Go + API Node/Prisma, riesgo OAuth/IDOR          | Wireframe proyecto→import→evidencia, con lista equivalente                    | Verificar términos/acceso/cuota Common Crawl y dominio autorizado      |
+| 3              | Contrato mínimo de proyecto/observación/job Go para fixture       | Probar dos variantes de panel con fixture Nmap, anotar errores de comprensión | Fixture multifuente sintético rotulado y labels de enlace/falso enlace |
+| 4              | Revisar contrato con Diego/Jhojan; dividir WB04                   | Fijar DTO/estados vacío/error con César; review de ADR                        | Prueba Nmap golden/hostname compartido; review de contrato             |
+| 5              | Gate WB02/WB03: fuente, capacidad, corte web; publicar decisiones | Demo de prototipo navegable o mock con pendientes visibles                    | Publicar matriz de fuente, permiso, fixture y limitaciones             |
 
 Salida: decisión y fixture trazable. Si la fuente no está autorizada, WB08 permanece bloqueada y el equipo reduce/renegocia la demo; no se dice “OSINT integrada”.
 
@@ -36,10 +36,10 @@ Salida: Nmap desde UI local persiste/conserva evidencia solo si API/DB realmente
 
 | Día | César                                                  | Diego                                               | Jhojan                                                        |
 | --- | ------------------------------------------------------ | --------------------------------------------------- | ------------------------------------------------------------- |
-| 1   | Regla tipada fuerte/candidata, fixtures pactados       | Diseño visual observado/candidato/conflicto         | Adaptador de la fuente aprobada o fixture sintético declarado |
-| 2   | Bloqueo por proyecto/scope/tiempo, versionado de regla | Panel con regla, dos evidencias y fechas            | Error/cuota/truncación, locator y fecha del proveedor         |
-| 3   | Test positivo Nmap↔pasivo y falso enlace               | Grafo + lista sin recalcular identidad en React     | Datos de contradicción/historial, control negativo            |
-| 4   | Review con Jhojan, corregir falsos enlaces             | Prueba teclado/lector y etiquetas hostiles          | Review de contrato/UI desde evidencia, `npm run check`        |
+| 1   | Regla Go tipada fuerte/candidata, fixtures TS/Go       | Diseño visual observado/candidato/conflicto         | Adaptador Common Crawl aprobado o fixture sintético declarado |
+| 2   | Bloqueo por proyecto/scope/tiempo, versión de regla Go | Panel con regla, dos evidencias y fechas            | Error/cuota/truncación, locator y fecha del proveedor         |
+| 3   | Test Go positivo Nmap↔pasivo y falso enlace            | Grafo + lista sin recalcular identidad en React     | Datos de contradicción/historial, control negativo            |
+| 4   | Review con Jhojan, crash/timeout y salida inválida     | Prueba teclado/lector y etiquetas hostiles          | Review de contrato/UI desde evidencia, `npm run check`        |
 | 5   | Demo de relación y export preliminar                   | Validación con tarea real de analista si hay piloto | Informe de cobertura/frescura de fuente y limitaciones        |
 
 Salida: primera relación defendible con fuente/fecha/regla; si solo es sintética, se comunica como validación de algoritmo/UI, no de OSINT real.

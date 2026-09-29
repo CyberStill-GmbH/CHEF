@@ -1,6 +1,6 @@
 # Propuesta para revisión: CHEF web antes de Burp
 
-Fecha: 29-09-2026. **Propuesta, no ADR aceptado ni función implementada.** Esta rama deja intactos el núcleo, la CLI y los contratos publicados. El propietario actualizó la visión: React/TypeScript, PostgreSQL con Prisma ORM, acceso GitHub OAuth y correlación activo–pasivo como núcleo de una aplicación web alojable y multiusuario. La extensión Burp vendrá después. Esto sustituye el antiguo acuerdo de presentar la CLI como experiencia principal; la demostración offline sigue siendo prueba de regresión útil, no la meta de producto.
+Fecha: 29-09-2026. **Stack confirmado por el propietario; arquitectura en revisión, funciones no implementadas.** Esta rama deja intactos el núcleo, la CLI y los contratos publicados. El propietario actualizó la visión: React/TypeScript, **API Node.js con PostgreSQL/Prisma ORM y GitHub OAuth**, y **motor Go de correlación activo–pasivo** para una aplicación web alojable y multiusuario. La extensión Burp vendrá después. Esto sustituye el antiguo acuerdo de presentar la CLI como experiencia principal; la demostración offline sigue siendo prueba de regresión útil, no la meta de producto.
 
 ## 1. Decisión de alcance y coste
 
@@ -10,24 +10,26 @@ Fecha: 29-09-2026. **Propuesta, no ADR aceptado ni función implementada.** Esta
 | B. Web privada desplegada                        | A más GitHub OAuth, roles/proyectos, despliegue, recuperación y aislamiento probado        |              +70–120 h | Seguridad y operación sin hosting definido         |
 | C. Web pública multiusuario con trabajos activos | B más cola, workers aislados, scope aprobado, cuotas, egress, auditoría y fuentes vivas    |       +120–220 h o más | No hay autorización ni fuente/entorno confirmados  |
 
+Estos rangos preceden a la separación Node–Go. El contrato, fixtures de conformidad y build de ambos runtimes añaden trabajo aún sin estimación validada; reestimar en el gate del 05-10, no absorberlo como si fuera gratis.
+
 Son estimaciones de planificación, no mediciones. La presentación sigue siendo el 31-10-2026; César, Diego y Jhojan disponen de 10 h semanales cada uno. Del 29-09 al 30-10 hay unas 137 h brutas; reservar 25 % deja ~103 h netas. **El propietario eligió B, prototipo desplegado para el equipo y demostrable en vivo**, con el recorrido de crear proyecto, importar Nmap, consultar pasivo, revisar relaciones/evidencia y exportar. Esta meta no cabe en la estimación actual: el equipo debe negociar recorte, capacidad o fecha sin llamar terminadas a piezas ausentes. A puede reducirse a Nmap + fixture pasivo sintético, pero así no demuestra OSINT vivo ni ahorro real.
 
 ## 2. Estado real y arquitectura propuesta
 
-**Implementado y probado:** caso de uso `ImportEvidence` en TypeScript/Node, parser Nmap XML acotado, scope literal, identidad determinista, deduplicación conservadora, evidencia y exportación `Snapshot 1.0.0` por CLI; 11 pruebas TypeScript. **Spike separado:** Java/Montoya normaliza una selección HTTP, sin correlación con Nmap ni prueba manual dentro de Burp. **No implementado:** web, API, PostgreSQL/Prisma, OAuth, sesiones, aislamiento de proyectos, fuente pasiva en el core, escáner activo, actualización en tiempo real ni ahorro medido.
+**Implementado y probado:** caso de uso `ImportEvidence` en TypeScript/Node, parser Nmap XML acotado, scope literal, identidad determinista, deduplicación conservadora, evidencia y exportación `Snapshot 1.0.0` por CLI; 11 pruebas TypeScript. **Spike separado:** Java/Montoya normaliza una selección HTTP, sin correlación con Nmap ni prueba manual dentro de Burp. **No implementado:** web, API, PostgreSQL/Prisma, OAuth, sesiones, aislamiento de proyectos, **motor Go**, fuente pasiva en el core, escáner activo, actualización en tiempo real ni ahorro medido.
 
 ```text
 React/TypeScript ── HTTPS/API ── aplicación Node/TypeScript ── puertos
    grafo + lista                │                 ├─ PostgreSQL/Prisma: proyectos, runs, observaciones
-   evidencia, reglas            │                 ├─ importador Nmap existente
-   no decide identidad          └─ casos de uso   ├─ adaptador pasivo autorizado
-                                                 └─ futuro worker activo con scope aprobado
+   evidencia/explicación        │                 ├─ importador Nmap TS existente
+   no decide identidad          │                 ├─ adaptadores OSINT autorizados
+                                └─ contrato JSON ── motor Go: correlación/deduplicación multifuente
                       Snapshot 1.0.0: exportación/intercambio, no tablas ORM
 ```
 
 El dominio permanece sin filesystem, red, React, Prisma ni Montoya; application depende de puertos y adaptadores viven en infraestructura. El servicio Node llama al caso de uso existente: no portar el parser al navegador ni convertir Prisma en modelo de dominio. La CLI queda como herramienta de ingestión/regresión. PostgreSQL guarda datos por proyecto y ejecución; Prisma es adaptador de persistencia, no contrato público. El snapshot JSON versionado conserva interoperabilidad; un lector externo debe validar versión, IDs únicos y referencias antes de importar. OAuth con GitHub identifica al usuario; la autorización a proyectos y operaciones la decide CHEF en servidor. Cada consulta/mutación debe estar acotada al proyecto, con pruebas negativas entre tenants. [PostgreSQL documenta RLS](https://www.postgresql.org/docs/current/ddl-rowsecurity.html) como defensa adicional, con salvedades de propietario de tabla; no sustituye la autorización de aplicación. [GitHub documenta OAuth](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps) y sus [prácticas de seguridad](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/best-practices-for-creating-an-oauth-app). Fijar una versión estable probada de [Prisma/PostgreSQL](https://www.prisma.io/docs/prisma-orm/quickstart/postgresql) al implementar.
 
-**Recomendación técnica:** backend TypeScript/Node. Reutiliza el caso de uso, pruebas, reglas e identidad actuales y usa Prisma directamente. Go sigue siendo viable como servicio separado si una medición futura exige otro perfil de concurrencia, pero hoy obliga a puente o reescritura; [Prisma Client Go declara deprecación](https://github.com/prisma/prisma-client-go) y no seguirá Prisma v7+. No repartir el motor entre Go y TS solo por preferencia de lenguaje. Registrar la decisión final en ADR 0001/0004 tras revisión.
+**Decisión de stack:** Node.js/TypeScript mantiene API, ingesta Nmap, OAuth y Prisma; Go implementará las **nuevas reglas autoritativas multifuente** tras un contrato versionado, como explica [ADR 0011](../adr/0011-node-go-boundary.md). El core/CLI TypeScript aceptado conserva su comportamiento y sirve de referencia de conformidad durante la migración; no se duplicarán reglas futuras en ambos lenguajes. Go no accede a Prisma ni a credenciales de proveedor. La frontera, empaquetado y coste requieren spike y revisión humana; [Prisma Client Go declara deprecación](https://github.com/prisma/prisma-client-go). No presentar la decisión de stack como código entregado.
 
 ## 3. Diferencial propuesto y límites
 
@@ -40,7 +42,7 @@ Medición propuesta: mismo caso de laboratorio con XML Nmap y una fuente pasiva 
 ## 4. Decisiones aún abiertas
 
 1. Recorte/capacidad para hacer viable el prototipo privado en octubre; el recorrido objetivo ya está confirmado, no su factibilidad.
-2. Primera fuente pasiva con acceso y permiso, además del XML Nmap del repo. El envelope HTTP disponible es fixture de conformidad, **no** una ingestión pasiva integrada. CT/RDAP son candidatos, no acceso operativo confirmado.
+2. Primera fuente pasiva con acceso y permiso, además del XML Nmap del repo. Se eligió [Common Crawl Index](../research/open-osint-selection.md) como primer candidato, seguido de RDAP/RIPEstat; el envelope HTTP disponible es fixture de conformidad, **no** una ingestión pasiva integrada. La selección no confirma acceso operativo ni derecho sobre datos de clientes.
 3. Activo: **solo importación de resultados autorizados en esta fase**, sin lanzar escaneos desde CHEF. El entorno de demostración usa datos autorizados; fuentes/targets concretos aún deben registrarse.
 4. Relaciones y etiquetas de referencia, y umbral de falso enlace aceptable. El fixture actual cubre Nmap/control negativo, no correlación multifuente.
 5. Hay acceso a Vercel y Railway como candidatos; faltan presupuesto, retención, clasificación de datos, backups, administradores y usuarios piloto.

@@ -8,8 +8,8 @@ Núcleo/CLI TypeScript offline, Nmap XML subset, scope, IDs deterministas, evide
 
 ## Etapa 1 · vertical web de octubre, sujeta a capacidad
 
-1. **29-09–05-10:** decidir stack/contrato, fuente pasiva/permiso y corte viable. Gate: sin fuente/dataset autorizado se rotula fixture sintético y se retira claim de OSINT viva.
-2. **06-10–12-10:** API Node que reutiliza core, proyecto y PostgreSQL/Prisma detrás de puerto, importación Nmap desde React. Gate: CLI sin regresión, dos proyectos aislados, salida atómica.
+1. **29-09–05-10:** revisar frontera Node–Go/contrato, verificar Common Crawl/permiso y fijar corte viable. Gate: sin fuente/dataset autorizado se rotula fixture sintético y se retira claim de OSINT viva; sin spike Go no se promete correlación web.
+2. **06-10–12-10:** API Node que reutiliza parser/caso Nmap, proyecto y PostgreSQL/Prisma detrás de puerto; spike de contrato/transporte Go antes de prometer correlación web. Gate: CLI sin regresión, dos proyectos aislados, salida atómica.
 3. **13-10–19-10:** una fuente pasiva y una relación fuerte/candidata explicada; grafo/lista y panel de evidencia. Gate: control negativo, fechas, regla y dos procedencias.
 4. **20-10–30-10:** export, UX/accesibilidad, GitHub OAuth, despliegue privado y ensayo comparativo **solo según capacidad real**. Gate: no llamar multiusuario al prototipo sin sesiones/IDOR/backup/migración probados. Freeze 30-10 y presentación 31-10 con estado honesto.
 

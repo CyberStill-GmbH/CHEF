@@ -11,9 +11,10 @@ Los ADRs preservan **por qué** se eligió una dirección, sus alternativas, con
 - [0005 · frontera web](0005-web-events.md), aceptado **solo** como dirección exploratoria inicial; el despliegue web requiere nueva decisión.
 - [0006 · Burp/Montoya](0006-burp-boundary.md), spike separado; BApp posterior.
 - [0007 · explorador de grafo](0007-graph-ui.md), candidata para React, pendiente benchmark real.
-- [0008 · plataforma web y acceso a datos](0008-web-platform.md), **propuesto**; no reemplaza 0004/0005 hasta aceptación.
+- [0008 · plataforma web íntegramente TypeScript](0008-web-platform.md), **rechazado como propuesta futura** tras decisión del propietario; se conserva el análisis.
 - [0009 · correlación multifuente](0009-evidence-correlation.md), **propuesto**; conserva los invariantes de 0002.
 - [0010 · fuentes y ejecución activa](0010-source-integration.md), **propuesto**; la fase actual solo importa resultados autorizados.
+- [0011 · frontera Node.js/Prisma/OAuth y motor Go](0011-node-go-boundary.md), **propuesto para revisión técnica**, con stack confirmado por el propietario; preserva el CLI TypeScript.
 
 ## Cuándo abrir un ADR
 
