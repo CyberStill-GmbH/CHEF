@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE nmaprun>
+<nmaprun scanner="nmap" start="1790640000" version="7.95" xmloutputversion="1.05">
+  <host><status state="up"/><address addr="127.0.0.1" addrtype="ipv4"/><hostnames><hostname name="lab-a.invalid" type="user"/></hostnames>
+    <ports>
+      <port protocol="tcp" portid="8080"><state state="open"/><service name="http" method="table" conf="3"/></port>
+      <port protocol="tcp" portid="8080"><state state="open"/></port>
+      <port protocol="tcp" portid="22"><state state="closed"/></port>
+      <port protocol="udp" portid="443"><state state="open|filtered"/></port>
+    </ports>
+  </host>
+  <host><status state="up"/><address addr="127.0.0.2" addrtype="ipv4"/><hostnames><hostname name="lab-a.invalid" type="user"/></hostnames>
+    <ports><port protocol="tcp" portid="8080"><state state="open"/></port></ports>
+  </host>
+  <host><status state="down"/><address addr="127.0.0.1" addrtype="ipv4"/><ports><port protocol="tcp" portid="80"><state state="open"/></port></ports></host>
+  <runstats><finished time="1790640001" elapsed="1" exit="success"/><hosts up="2" down="1" total="3"/></runstats>
+</nmaprun>

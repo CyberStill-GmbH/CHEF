@@ -1,0 +1,18 @@
+{
+  "datasetVersion": "1.0.0",
+  "synthetic": true,
+  "expectedOpenObservations": 3,
+  "expectedAssetKeys": [
+    "127.0.0.1",
+    "127.0.0.1|tcp|8080",
+    "127.0.0.2",
+    "127.0.0.2|tcp|8080"
+  ],
+  "positivePairs": [[0, 1]],
+  "negativePairs": [
+    [0, 2],
+    [1, 2]
+  ],
+  "excludedPorts": [22, 80, 443],
+  "note": "Indexes refer to Nmap parser order. Deliberate duplicate and shared hostname are synthetic controls; this does not establish real-world accuracy."
+}

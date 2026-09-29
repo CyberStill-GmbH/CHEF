@@ -1,0 +1,174 @@
+{
+  "schemaVersion": "1.0.0",
+  "scopePolicy": {
+    "schemaVersion": "1.0.0",
+    "id": "lab-offline-v1",
+    "allowedAddresses": ["127.0.0.1", "127.0.0.2", "::1"],
+    "excludedAddresses": [],
+    "allowedPorts": [22, 80, 443, 8080],
+    "allowedProtocols": ["tcp", "udp"],
+    "maxInputBytes": 2097152,
+    "maxObservations": 10000
+  },
+  "run": {
+    "id": "run:39805e6cacad839063818cc0a3cf7f8b27855ae4ca62162c919f258beb026bdb",
+    "scopePolicyId": "lab-offline-v1",
+    "scopeDigest": "bfe5a6a0e0070b41c45b41cd788748ce32502147da62f8928093fa1e33ef9c85",
+    "state": "completed",
+    "startedAt": "2026-09-29T00:00:00.000Z",
+    "finishedAt": "2026-09-29T00:00:00.000Z"
+  },
+  "evidence": [
+    {
+      "id": "evidence:3e88e4c3523b65df50b3438307d5186b8be15315dea5972cf5fd485a15bd59bb",
+      "sha256": "2a5544e6f3e02a35ee57e204812ddf2ccdeeb511378669ff2886546ba989d983",
+      "source": "nmap-xml",
+      "parserVersion": "1.0.0",
+      "runId": "run:39805e6cacad839063818cc0a3cf7f8b27855ae4ca62162c919f258beb026bdb",
+      "locator": "/nmaprun",
+      "importedAt": "2026-09-29T00:00:00.000Z"
+    }
+  ],
+  "observations": [
+    {
+      "address": "127.0.0.1",
+      "port": 8080,
+      "protocol": "tcp",
+      "observedAt": "2026-09-29T00:00:00.000Z",
+      "locator": "/nmaprun/host[0]/ports/port[1]",
+      "id": "observation:7159742ae182053416a4c963af4e74a08163a659ddd0d5f5bdc725de67a70a24",
+      "evidenceId": "evidence:3e88e4c3523b65df50b3438307d5186b8be15315dea5972cf5fd485a15bd59bb",
+      "runId": "run:39805e6cacad839063818cc0a3cf7f8b27855ae4ca62162c919f258beb026bdb",
+      "source": "nmap-xml",
+      "fact": "open-port",
+      "confidence": 1
+    },
+    {
+      "address": "127.0.0.1",
+      "port": 8080,
+      "protocol": "tcp",
+      "observedAt": "2026-09-29T00:00:00.000Z",
+      "locator": "/nmaprun/host[0]/ports/port[0]",
+      "id": "observation:8de568b54a3ac9835d3e70a9501c6e04310213268642b26cb7e3fcb605908d46",
+      "evidenceId": "evidence:3e88e4c3523b65df50b3438307d5186b8be15315dea5972cf5fd485a15bd59bb",
+      "runId": "run:39805e6cacad839063818cc0a3cf7f8b27855ae4ca62162c919f258beb026bdb",
+      "source": "nmap-xml",
+      "fact": "open-port",
+      "confidence": 1
+    },
+    {
+      "address": "127.0.0.2",
+      "port": 8080,
+      "protocol": "tcp",
+      "observedAt": "2026-09-29T00:00:00.000Z",
+      "locator": "/nmaprun/host[1]/ports/port[0]",
+      "id": "observation:f680b1959834483683e62871bd3793c1b9c885b27e862de838caddbaf036abf6",
+      "evidenceId": "evidence:3e88e4c3523b65df50b3438307d5186b8be15315dea5972cf5fd485a15bd59bb",
+      "runId": "run:39805e6cacad839063818cc0a3cf7f8b27855ae4ca62162c919f258beb026bdb",
+      "source": "nmap-xml",
+      "fact": "open-port",
+      "confidence": 1
+    }
+  ],
+  "assets": [
+    {
+      "id": "asset:3c41485077b4b9c3b5cf073a9612c69c0465ade5ec939f00885733c088455daf",
+      "kind": "service",
+      "key": "127.0.0.2|tcp|8080",
+      "firstSeen": "2026-09-29T00:00:00.000Z",
+      "lastSeen": "2026-09-29T00:00:00.000Z",
+      "observationIds": [
+        "observation:f680b1959834483683e62871bd3793c1b9c885b27e862de838caddbaf036abf6"
+      ]
+    },
+    {
+      "id": "asset:585d047e936bf8e2ce95fbeada3c65782029231c9cfd97f2c1f4ada12090c0ba",
+      "kind": "service",
+      "key": "127.0.0.1|tcp|8080",
+      "firstSeen": "2026-09-29T00:00:00.000Z",
+      "lastSeen": "2026-09-29T00:00:00.000Z",
+      "observationIds": [
+        "observation:7159742ae182053416a4c963af4e74a08163a659ddd0d5f5bdc725de67a70a24",
+        "observation:8de568b54a3ac9835d3e70a9501c6e04310213268642b26cb7e3fcb605908d46"
+      ]
+    },
+    {
+      "id": "asset:b5a3dd9dc948bc986bc3a40013a1d6d34f043ff82dbb2cd2be57fe5f5e926cb2",
+      "kind": "address",
+      "key": "127.0.0.1",
+      "firstSeen": "2026-09-29T00:00:00.000Z",
+      "lastSeen": "2026-09-29T00:00:00.000Z",
+      "observationIds": [
+        "observation:7159742ae182053416a4c963af4e74a08163a659ddd0d5f5bdc725de67a70a24",
+        "observation:8de568b54a3ac9835d3e70a9501c6e04310213268642b26cb7e3fcb605908d46"
+      ]
+    },
+    {
+      "id": "asset:cc222bae38d64a9cb13fbadf187653668b04568419d76b27de70bd37718cf0da",
+      "kind": "address",
+      "key": "127.0.0.2",
+      "firstSeen": "2026-09-29T00:00:00.000Z",
+      "lastSeen": "2026-09-29T00:00:00.000Z",
+      "observationIds": [
+        "observation:f680b1959834483683e62871bd3793c1b9c885b27e862de838caddbaf036abf6"
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "relationship:5f62147f50dc4abe5261d9ad87580d02cebb31744effb7df0a920948ff834fbb",
+      "from": "asset:b5a3dd9dc948bc986bc3a40013a1d6d34f043ff82dbb2cd2be57fe5f5e926cb2",
+      "to": "asset:585d047e936bf8e2ce95fbeada3c65782029231c9cfd97f2c1f4ada12090c0ba",
+      "kind": "exposes",
+      "assertion": "observed",
+      "observationIds": [
+        "observation:7159742ae182053416a4c963af4e74a08163a659ddd0d5f5bdc725de67a70a24",
+        "observation:8de568b54a3ac9835d3e70a9501c6e04310213268642b26cb7e3fcb605908d46"
+      ],
+      "confidence": 1
+    },
+    {
+      "id": "relationship:98bf0c9e52192bb2d8e774c34c307bf9b3ae09fc4a3d14325db317d0a09cb759",
+      "from": "asset:cc222bae38d64a9cb13fbadf187653668b04568419d76b27de70bd37718cf0da",
+      "to": "asset:3c41485077b4b9c3b5cf073a9612c69c0465ade5ec939f00885733c088455daf",
+      "kind": "exposes",
+      "assertion": "observed",
+      "observationIds": [
+        "observation:f680b1959834483683e62871bd3793c1b9c885b27e862de838caddbaf036abf6"
+      ],
+      "confidence": 1
+    }
+  ],
+  "paths": [
+    {
+      "id": "path:4760c9dd67ff0aaa7b4423fbf709077fe8ed958519060b151d267e3e02952d6c",
+      "assetIds": [
+        "asset:b5a3dd9dc948bc986bc3a40013a1d6d34f043ff82dbb2cd2be57fe5f5e926cb2",
+        "asset:585d047e936bf8e2ce95fbeada3c65782029231c9cfd97f2c1f4ada12090c0ba"
+      ],
+      "relationshipIds": [
+        "relationship:5f62147f50dc4abe5261d9ad87580d02cebb31744effb7df0a920948ff834fbb"
+      ],
+      "assertion": "inferred",
+      "ruleId": "open-service/v1",
+      "explanation": "An imported observation reports an open service. Reachability now and exploitability have not been confirmed.",
+      "confidence": 1,
+      "isConfirmedVulnerability": false
+    },
+    {
+      "id": "path:9b12d524581a29f22c6f9293656345eca768a6eb31a49e507e913e0e454e9568",
+      "assetIds": [
+        "asset:cc222bae38d64a9cb13fbadf187653668b04568419d76b27de70bd37718cf0da",
+        "asset:3c41485077b4b9c3b5cf073a9612c69c0465ade5ec939f00885733c088455daf"
+      ],
+      "relationshipIds": [
+        "relationship:98bf0c9e52192bb2d8e774c34c307bf9b3ae09fc4a3d14325db317d0a09cb759"
+      ],
+      "assertion": "inferred",
+      "ruleId": "open-service/v1",
+      "explanation": "An imported observation reports an open service. Reachability now and exploitability have not been confirmed.",
+      "confidence": 1,
+      "isConfirmedVulnerability": false
+    }
+  ]
+}

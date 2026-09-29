@@ -1,0 +1,487 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://chef.local/schema/1.0.0",
+  "title": "CHEF offline snapshot v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "scopePolicy",
+    "run",
+    "evidence",
+    "observations",
+    "assets",
+    "relationships",
+    "paths"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0.0"
+    },
+    "scopePolicy": {
+      "$ref": "#/$defs/ScopePolicy"
+    },
+    "run": {
+      "$ref": "#/$defs/ScanRun"
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Evidence"
+      },
+      "maxItems": 10000
+    },
+    "observations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Observation"
+      },
+      "maxItems": 10000
+    },
+    "assets": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Asset"
+      },
+      "maxItems": 20000
+    },
+    "relationships": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Relationship"
+      },
+      "maxItems": 10000
+    },
+    "paths": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/ExposurePath"
+      },
+      "maxItems": 10000
+    }
+  },
+  "$defs": {
+    "ScopePolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "id",
+        "allowedAddresses",
+        "excludedAddresses",
+        "allowedPorts",
+        "allowedProtocols",
+        "maxInputBytes",
+        "maxObservations"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "1.0.0"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "allowedAddresses": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "minItems": 1,
+          "maxItems": 1000,
+          "uniqueItems": true
+        },
+        "excludedAddresses": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "maxItems": 1000,
+          "uniqueItems": true
+        },
+        "allowedPorts": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 65535
+          },
+          "minItems": 1,
+          "maxItems": 65535,
+          "uniqueItems": true
+        },
+        "allowedProtocols": {
+          "type": "array",
+          "items": {
+            "enum": ["tcp", "udp"]
+          },
+          "minItems": 1,
+          "maxItems": 2,
+          "uniqueItems": true
+        },
+        "maxInputBytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2097152
+        },
+        "maxObservations": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10000
+        }
+      }
+    },
+    "Asset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "key",
+        "firstSeen",
+        "lastSeen",
+        "observationIds"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z]+:[a-f0-9]{64}$"
+        },
+        "kind": {
+          "enum": ["address", "service"]
+        },
+        "key": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "firstSeen": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastSeen": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "observationIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z]+:[a-f0-9]{64}$"
+          },
+          "uniqueItems": true,
+          "maxItems": 10000,
+          "minItems": 1
+        }
+      }
+    },
+    "Evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "sha256",
+        "source",
+        "parserVersion",
+        "runId",
+        "locator",
+        "importedAt"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z]+:[a-f0-9]{64}$"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "source": {
+          "const": "nmap-xml"
+        },
+        "parserVersion": {
+          "const": "1.0.0"
+        },
+        "runId": {
+          "type": "string",
+          "pattern": "^[a-z]+:[a-f0-9]{64}$"
+        },
+        "locator": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "importedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "Observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "address",
+        "protocol",
+        "port",
+        "observedAt",
+        "locator",
+        "evidenceId",
+        "runId",
+        "source",
+        "fact",
+        "confidence"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z]+:[a-f0-9]{64}$"
+        },
+        "address": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "protocol": {
+          "enum": ["tcp", "udp"]
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "observedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "locator": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "evidenceId": {
+          "type": "string",
+          "pattern": "^[a-z]+:[a-f0-9]{64}$"
+        },
+        "runId": {
+          "type": "string",
+          "pattern": "^[a-z]+:[a-f0-9]{64}$"
+        },
+        "source": {
+          "const": "nmap-xml"
+        },
+        "fact": {
+          "const": "open-port"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "Relationship": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "from",
+        "to",
+        "kind",
+        "assertion",
+        "observationIds",
+        "confidence"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z]+:[a-f0-9]{64}$"
+        },
+        "from": {
+          "type": "string",
+          "pattern": "^[a-z]+:[a-f0-9]{64}$"
+        },
+        "to": {
+          "type": "string",
+          "pattern": "^[a-z]+:[a-f0-9]{64}$"
+        },
+        "kind": {
+          "const": "exposes"
+        },
+        "assertion": {
+          "const": "observed"
+        },
+        "observationIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z]+:[a-f0-9]{64}$"
+          },
+          "uniqueItems": true,
+          "maxItems": 10000,
+          "minItems": 1
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "ExposurePath": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "assetIds",
+        "relationshipIds",
+        "assertion",
+        "ruleId",
+        "explanation",
+        "confidence",
+        "isConfirmedVulnerability"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z]+:[a-f0-9]{64}$"
+        },
+        "assetIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z]+:[a-f0-9]{64}$"
+          },
+          "uniqueItems": true,
+          "maxItems": 2,
+          "minItems": 2
+        },
+        "relationshipIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z]+:[a-f0-9]{64}$"
+          },
+          "uniqueItems": true,
+          "maxItems": 1,
+          "minItems": 1
+        },
+        "assertion": {
+          "const": "inferred"
+        },
+        "ruleId": {
+          "const": "open-service/v1"
+        },
+        "explanation": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "isConfirmedVulnerability": {
+          "const": false
+        }
+      }
+    },
+    "ScanRun": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "scopePolicyId",
+        "scopeDigest",
+        "state",
+        "startedAt",
+        "finishedAt"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z]+:[a-f0-9]{64}$"
+        },
+        "scopePolicyId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "scopeDigest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "state": {
+          "const": "completed"
+        },
+        "startedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "finishedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "Finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "assetIds",
+        "observationIds",
+        "assertion",
+        "title",
+        "reviewer",
+        "reviewedAt"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z]+:[a-f0-9]{64}$"
+        },
+        "assetIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z]+:[a-f0-9]{64}$"
+          },
+          "uniqueItems": true,
+          "maxItems": 10000
+        },
+        "observationIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z]+:[a-f0-9]{64}$"
+          },
+          "uniqueItems": true,
+          "maxItems": 10000,
+          "minItems": 1
+        },
+        "assertion": {
+          "enum": ["observed", "inferred", "confirmed"]
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "reviewer": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "reviewedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  }
+}

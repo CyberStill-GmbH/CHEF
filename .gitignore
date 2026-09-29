@@ -1,0 +1,16 @@
+node_modules/
+dist/
+coverage/
+artifacts/
+.tools/
+.env
+.env.*
+!.env.example
+*.log
+*.jar
+*.class
+target/
+*.sqlite*
+*.tsbuildinfo
+.DS_Store
+Thumbs.db
