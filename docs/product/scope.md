@@ -1,6 +1,6 @@
 # Alcance de CHEF
 
-Actualizado 29-09-2026. **Visión confirmada por el propietario:** producto web alojable y multiusuario del Centro Cultural de Ciberseguridad, React/TypeScript, PostgreSQL/Prisma, GitHub OAuth, correlación de reconocimiento activo importado con OSINT pasiva, mapa interactivo y exportación; Burp después. El backend TypeScript/Node es la [recomendación arquitectónica](../adr/0008-web-platform.md), aún pendiente de aceptación formal del equipo. La presentación objetivo es el **31-10-2026**, con 10 h semanales confirmadas para César, Diego y Jhojan.
+Actualizado 29-09-2026. **Visión confirmada por el propietario:** producto web alojable y multiusuario del Centro Cultural de Ciberseguridad, React/TypeScript, **API Node.js/TypeScript con PostgreSQL/Prisma y GitHub OAuth**, y **motor principal de correlación en Go** para reconocimiento activo importado y OSINT pasiva; mapa interactivo y exportación, Burp después. La [frontera Node–Go](../adr/0011-node-go-boundary.md) está propuesta para revisión técnica; ninguno de esos componentes web/Go está implementado. La presentación objetivo es el **31-10-2026**, con 10 h semanales confirmadas para César, Diego y Jhojan.
 
 ## Resultado de usuario
 
@@ -9,8 +9,8 @@ Un pentester autorizado debe poder crear/abrir proyecto, importar Nmap XML autor
 ## Implementado / propuesto / bloqueado
 
 - **Implementado:** CLI offline Node/TypeScript, Nmap XML subset, scope literal, IDs estables, evidencia y `Snapshot 1.0.0`; 11 pruebas core. El spike Montoya se prueba por separado y no forma parte del flujo web.
-- **Propuesto para primera vertical:** API que reutilice `ImportEvidence`, PostgreSQL/Prisma por puerto, proyectos, React con grafo/lista y panel de evidencia, un adaptador pasivo, correlación explicada y exportación. OAuth/despliegue privado son objetivo del prototipo del equipo, no hechos actuales.
-- **Bloqueado por dato externo:** fuente pasiva concreta con permiso/acceso y dataset que corresponda a Nmap. El fixture actual usa loopback y `.invalid`; ningún proveedor público devolverá honestamente esa pareja. No se simulará OSINT viva como fuente real.
+- **Propuesto para primera vertical:** API Node que reutilice el parser/caso de uso Nmap existente, PostgreSQL/Prisma por puerto, proyectos, React con grafo/lista y panel de evidencia, adaptadores OSINT pasivos y motor Go tras contrato versionado para correlación explicada y exportación. OAuth/despliegue privado son objetivo del prototipo del equipo, no hechos actuales.
+- **Bloqueado por dato externo:** se seleccionaron [fuentes pasivas prioritarias](../research/open-osint-selection.md), pero faltan permiso para consultar objetivos, aceptación de términos, prueba de acceso y dataset que corresponda a Nmap. El fixture actual usa loopback y `.invalid`; ningún proveedor público devolverá honestamente esa pareja. No se simulará OSINT viva como fuente real.
 
 El prototipo deseado para octubre es **privado, desplegado para el equipo y demostrable en vivo**. El [análisis de capacidad](../proposals/2026-09-scrum-to-oct31.md) indica que el recorrido completo supera las ~103 h netas disponibles: priorizar y reestimar en gate 05-10, no prometer que todo estará Done. Si una vertical se corta a datos sintéticos o web local, registrar la brecha frente al objetivo original. Mantener una demo de regresión offline reproducible mientras se construye la web.
 

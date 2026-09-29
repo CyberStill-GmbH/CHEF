@@ -1,6 +1,6 @@
 # ADR 0008: Plataforma web TypeScript y PostgreSQL/Prisma
 
-Estado: **propuesto**. Fecha: 29-09-2026. Responsables propuestos: César (backend/correlación), Diego (contrato UI), Jhojan (regresión/fixture). Revisa la dirección futura de [0001](0001-core-language.md), [0004](0004-persistence.md) y [0005](0005-web-events.md); no las supersede hasta aceptación.
+Estado: **rechazado como propuesta integral TypeScript por nueva decisión del propietario**; conservar como comparación histórica. Fecha: 29-09-2026. La propuesta vigente está en [ADR 0011](0011-node-go-boundary.md): Node.js/Prisma/OAuth para plataforma y Go para correlación. No altera los ADRs aceptados del CLI.
 
 ## Contexto
 

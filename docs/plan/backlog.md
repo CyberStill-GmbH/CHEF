@@ -11,35 +11,37 @@ Actualizado 29-09-2026. Este es el **orden de valor y dependencia del producto w
 
 ## Inventario priorizado
 
-| ID   | Épica / resultado verificable                                 | Prioridad/estado | Responsable → reviewer |    Esfuerzo | Depende de             | Sprint candidato |
-| ---- | ------------------------------------------------------------- | ---------------- | ---------------------- | ----------: | ---------------------- | ---------------- |
-| WB01 | Elegir backend y ADR de límites/Prisma                        | P0/proposed      | César → Diego          |       4–6 h | núcleo actual          | S1               |
-| WB02 | Elegir fuente pasiva con acceso, permiso, términos y fixture  | P0/blocked       | Jhojan → César         |      6–10 h | fuente/autorización    | S1               |
-| WB03 | Acordar corte de demo y presupuesto Vercel/Railway            | P0/blocked       | César + equipo → Diego |       3–5 h | capacidad/hosting      | S1               |
-| WB04 | Contrato de observación/relación multifuente y compatibilidad | P1/proposed      | César → Jhojan         |      8–14 h | WB01,WB02              | S1–S2            |
-| WB05 | Proyecto/membresía y repositorio Prisma/PostgreSQL            | P1/proposed      | César → Diego          |     16–26 h | WB01,WB04              | S2               |
-| WB06 | API de importación Nmap reutilizando core y CLI intacta       | P1/proposed      | César → Jhojan         |     12–20 h | WB04,WB05              | S2               |
-| WB07 | Limpieza Nmap con recuento/motivo y controles negativos       | P1/proposed      | Jhojan → César         |      8–14 h | contrato vigente       | S2               |
-| WB08 | Adaptador de una fuente pasiva con provenance/frescura/error  | P1/blocked       | Jhojan → César         |     12–22 h | WB02,WB04              | S2–S3            |
-| WB09 | Correlación fuerte/candidata/contradictoria versionada        | P1/proposed      | César → Jhojan         |     14–24 h | WB06,WB08              | S3               |
-| WB10 | React: proyecto/importación/estado y evidencia                | P1/proposed      | Diego → César          |     14–22 h | WB04,WB06              | S1–S3            |
-| WB11 | Mapa + lista accesible, filtros y explicación                 | P1/proposed      | Diego → Jhojan         |     16–28 h | WB09,WB10              | S3–S4            |
-| WB12 | Snapshot/exportación de datos versionada y descarga segura    | P1/proposed      | César + Diego → Jhojan |      8–16 h | WB04,WB09              | S4               |
-| WB13 | GitHub OAuth, sesiones, roles e IDOR entre proyectos          | P2/proposed      | César → Diego          |     16–28 h | WB05                   | S4 o posterior   |
-| WB14 | Despliegue privado, migración, secretos, backup/restore       | P2/blocked       | César + Diego → Jhojan |     20–36 h | WB03,WB05,WB10,WB13    | S4 o posterior   |
-| WB15 | Estudio comparativo con pentesters, tiempo/pasos/errores      | P2/blocked       | Diego → César          |      8–16 h | WB08–WB12, piloto      | S4 o posterior   |
-| WB16 | Historial temporal, refresco medido y estado de proveedor     | P3/proposed      | César + Jhojan → Diego | por refinar | evidencia de uso       | después          |
-| WB17 | Conectores adicionales, uno por proveedor y licencia          | P3/proposed      | Jhojan → César         |  por fuente | WB02,WB08              | después          |
-| WB18 | Worker activo con scope aprobado y control de egress          | P3/blocked       | César → Jhojan         | por refinar | nuevo ADR/autorización | después          |
-| WB19 | BApp Montoya autónoma o cliente opcional                      | P3/proposed      | César + Jhojan → Diego | por refinar | producto web validado  | después          |
+| ID   | Épica / resultado verificable                                | Prioridad/estado | Responsable → reviewer |    Esfuerzo | Depende de             | Sprint candidato |
+| ---- | ------------------------------------------------------------ | ---------------- | ---------------------- | ----------: | ---------------------- | ---------------- |
+| WB01 | Validar ADR 0011 y spike frontera Node–Go/Prisma             | P0/proposed      | César → Diego          |   reestimar | núcleo actual          | S1               |
+| WB02 | Validar Common Crawl: acceso, permiso, términos y fixture    | P0/blocked       | Jhojan → César         |      6–10 h | fuente/autorización    | S1               |
+| WB03 | Acordar corte de demo y presupuesto Vercel/Railway           | P0/blocked       | César + equipo → Diego |       3–5 h | capacidad/hosting      | S1               |
+| WB04 | Contrato TS↔Go y observación/relación multifuente            | P1/proposed      | César → Jhojan         |   reestimar | WB01,WB02              | S1–S2            |
+| WB05 | Proyecto/membresía y repositorio Prisma/PostgreSQL           | P1/proposed      | César → Diego          |     16–26 h | WB01,WB04              | S2               |
+| WB06 | API de importación Nmap reutilizando core y CLI intacta      | P1/proposed      | César → Jhojan         |     12–20 h | WB04,WB05              | S2               |
+| WB07 | Limpieza Nmap con recuento/motivo y controles negativos      | P1/proposed      | Jhojan → César         |      8–14 h | contrato vigente       | S2               |
+| WB08 | Adaptador Common Crawl con procedencia/frescura/error        | P1/blocked       | Jhojan → César         |     12–22 h | WB02,WB04              | S2–S3            |
+| WB09 | Motor Go: correlación/candidatos/contradicciones versionadas | P1/proposed      | César → Jhojan         |   reestimar | WB04,WB06,WB08         | S3 o posterior   |
+| WB10 | React: proyecto/importación/estado y evidencia               | P1/proposed      | Diego → César          |     14–22 h | WB04,WB06              | S1–S3            |
+| WB11 | Mapa + lista accesible, filtros y explicación                | P1/proposed      | Diego → Jhojan         |     16–28 h | WB09,WB10              | S3–S4            |
+| WB12 | Snapshot/exportación de datos versionada y descarga segura   | P1/proposed      | César + Diego → Jhojan |      8–16 h | WB04,WB09              | S4               |
+| WB13 | GitHub OAuth, sesiones, roles e IDOR entre proyectos         | P2/proposed      | César → Diego          |     16–28 h | WB05                   | S4 o posterior   |
+| WB14 | Despliegue privado, migración, secretos, backup/restore      | P2/blocked       | César + Diego → Jhojan |     20–36 h | WB03,WB05,WB10,WB13    | S4 o posterior   |
+| WB15 | Estudio comparativo con pentesters, tiempo/pasos/errores     | P2/blocked       | Diego → César          |      8–16 h | WB08–WB12, piloto      | S4 o posterior   |
+| WB16 | Historial temporal, refresco medido y estado de proveedor    | P3/proposed      | César + Jhojan → Diego | por refinar | evidencia de uso       | después          |
+| WB17 | Conectores adicionales, uno por proveedor y licencia         | P3/proposed      | Jhojan → César         |  por fuente | WB02,WB08              | después          |
+| WB18 | Worker activo con scope aprobado y control de egress         | P3/blocked       | César → Jhojan         | por refinar | nuevo ADR/autorización | después          |
+| WB19 | BApp Montoya autónoma o cliente opcional                     | P3/proposed      | César + Jhojan → Diego | por refinar | producto web validado  | después          |
 
-Los rangos mínimos de WB04–WB15 por sí solos rondan **152 h**, sin P0 ni reserva, por encima de la capacidad de octubre; los máximos son sustancialmente mayores. No adjudicar todos al sprint. WB02 y WB03 son bloqueos reales, no tareas “casi hechas”. C01–C04 del plan inicial ya se materializaron en el core y se mantienen como **regresión**, no se reabren para gastar capacidad.
+Los rangos originales de WB04–WB15 ya excedían las ~103 h netas de octubre; **el contrato y motor Go agregan trabajo aún no estimado**. No adjudicar todos al sprint ni reutilizar la cifra vieja de 152 h como total nuevo. WB02 y WB03 son bloqueos reales, no tareas “casi hechas”. C01–C04 del plan inicial ya se materializaron en el core y se mantienen como **regresión**, no se reabren para gastar capacidad.
 
 ## Criterios Given/When/Then por épica
 
 **E1 · datos autorizados (WB02, WB04, WB07, WB08).** Given XML Nmap y una fuente pasiva permitida, When se importan, Then cada observación conserva origen, locator, digest, fecha, scope y versión; los duplicados/exclusiones se cuentan con motivo. Given archivo hostile, cuota agotada o fuente sin acceso, When falla, Then se informa error y no aparecen observaciones inventadas ni parcial. Si solo hay fixture sintético, la interfaz/demo lo declara.
 
 **E2 · correlación explicable (WB09).** Given mismo servicio Nmap en dos registros y señal pasiva fechada, When se comparan claves tipadas, Then identidad fuerte se fusiona sin perder observaciones y la señal externa se enlaza como observado/inferido/candidato según regla. Given hostname/IP compartidos o señal histórica incompatible, When se compara, Then no se atribuye propiedad ni vulnerabilidad, y el control negativo queda separado.
+
+**E2b · frontera Node–Go (WB01, WB04, WB09).** Given job versionado y mismo fixture, When Node invoca Go dos veces, Then resultado, IDs y referencias son estables y la CLI TS no cambia; Given timeout/crash/salida inválida, When falla Go, Then Node no publica relaciones parciales ni evidencia de otro proyecto. Antes de mover WB09 a Ready se necesitan schema, ejemplo, validadores TS/Go, conformance y estimación de empaquetado.
 
 **E3 · trabajo de analista (WB10–WB12).** Given proyecto con servicios y enlaces, When el usuario selecciona nodo o fila, Then ve la misma relación, regla, evidencia, fecha y motivo; puede filtrar sin cambiar el dato y exportar JSON versionado. Given lista vacía, evidencia rota o etiqueta HTML hostil, When se renderiza, Then muestra estado/error seguro, accesible por teclado, sin ejecutar contenido importado.
 
@@ -50,3 +52,5 @@ Los rangos mínimos de WB04–WB15 por sí solos rondan **152 h**, sin P0 ni res
 ## Refinement, Sprint Backlog y cambios
 
 El Product Owner ordena por valor/riesgo; el equipo estima y negocia capacidad. Cada lunes se eligen solo historias `ready` que apoyen el objetivo de sprint y quepan con review/ceremonias. La [pauta diaria por persona](daily-scrum.md) muestra el trabajo esperado, no horas ya realizadas. En el Daily Scrum se actualizan `Done hoy / siguiente paso / bloqueo` y se renegocia la secuencia cuando falla un gate. Una historia no se mueve a Done por tener código: exige prueba positiva/negativa, `npm run check`, revisor distinto, contrato/ADR al día y evidencia en entorno declarado. Las historias web no desplazan la regresión del núcleo ni la autorización de red.
+
+Después del primer conector, RDAP y RIPEstat se refinan como **issues separadas** con términos, fixture, límite y utilidad para Nmap propios; CT es importación posterior. Ninguna se considera incluida automáticamente en WB08.

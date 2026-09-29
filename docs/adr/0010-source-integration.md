@@ -4,7 +4,7 @@ Estado: **propuesto**. Fecha: 29-09-2026. Responsables propuestos: Jhojan (conec
 
 ## Contexto y opciones
 
-El único input operativo garantizado es Nmap XML sintético del repo. El propietario quiere fuentes OSINT abiertas y un prototipo web, pero no hay credenciales/permiso/dataset de dominio real confirmados. “Todas las APIs” mezcla proveedores con licencias, cuotas, tiempos y semánticas diferentes; no permite una prueba de Done estable. Opción A: integrar muchas fuentes de golpe. Opción B: adaptador pequeño por fuente, ordenado por permiso, procedencia y unión con Nmap. Opción C: importar outputs existentes sin consultar proveedores. La [selección documentada](../research/open-osint-selection.md) prioriza Common Crawl Index como candidato abierto, RDAP/CT para contexto y Subfinder/Amass como importación opcional; ninguna está conectada hoy.
+El único input operativo garantizado es Nmap XML sintético del repo. El propietario quiere fuentes OSINT abiertas y un prototipo web, pero no hay credenciales/permiso/dataset de dominio real confirmados. “Todas las APIs” mezcla proveedores con licencias, cuotas, tiempos y semánticas diferentes; no permite una prueba de Done estable. Opción A: integrar muchas fuentes de golpe. Opción B: adaptador pequeño por fuente, ordenado por permiso, procedencia y unión con Nmap. Opción C: importar outputs existentes sin consultar proveedores. La [selección documentada](../research/open-osint-selection.md) fija Common Crawl Index como primer conector candidato, RDAP y RIPEstat después, CT como importación posterior; ninguna está conectada hoy.
 
 ## Decisión propuesta
 

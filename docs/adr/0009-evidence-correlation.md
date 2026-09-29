@@ -1,6 +1,6 @@
 # ADR 0009: Correlación multifuente explicable
 
-Estado: **propuesto**. Fecha: 29-09-2026. Responsables propuestos: César (reglas), Jhojan (fixtures/negativos), Diego (explicación UI). Extiende [0002](0002-graph.md) sin cambiar identidad Nmap aceptada hasta que un contrato nuevo sea aprobado.
+Estado: **propuesto**. Fecha: 29-09-2026. Responsables propuestos: César (reglas Go), Jhojan (fixtures/negativos), Diego (explicación UI). Extiende [0002](0002-graph.md) sin cambiar identidad Nmap aceptada hasta que un contrato nuevo sea aprobado. La [frontera Node–Go](0011-node-go-boundary.md) define dónde se ejecutarán las reglas nuevas; aún no existe el motor Go.
 
 ## Contexto e impulsores
 

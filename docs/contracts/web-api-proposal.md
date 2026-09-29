@@ -7,7 +7,7 @@ Fecha 29-09-2026. **Diseño para discusión; ninguna ruta existe ni es contrato 
 - GitHub OAuth autentica en el servidor; CHEF mapea identidad a usuario/membresía de proyecto. Cookies de sesión protegidas y CSRF/origen según flujo elegido; el navegador no ve secretos de GitHub ni de OSINT.
 - Toda ruta de proyecto verifica membresía y acción en servidor; IDs enviados por cliente jamás son prueba de permiso. Listado, detalle, import, revisión y exportación se prueban con dos usuarios/proyectos (CWE-862/639).
 - DTO de lectura representa entidad/observación/relación/explicación, no modelos Prisma. Cada observación incluye fuente, fecha, locator, digest y estado; cada enlace incluye regla/version/evidencias. `Snapshot 1.0.0` conserva su significado; multifuente necesita versión nueva, no reinterpretación.
-- Upload XML con tamaño/tipo/scope acotados, fallo atómico y run auditado. La primera implementación puede responder al terminar importación pequeña; un job/202/cancelación solo cuando worker real lo soporte.
+- Upload XML con tamaño/tipo/scope acotados, fallo atómico y run auditado. La primera implementación puede responder al terminar importación pequeña; el motor Go se invocará tras validar un contrato interno versionado y nunca publicará relaciones parciales en timeout/crash/salida inválida. Un job/202/cancelación público solo cuando worker real lo soporte.
 - No aceptar URLs arbitrarias, targets de scan ni proveedores elegidos libremente por el cliente. Cada conector habilitado tiene configuración/permiso y cuota del proyecto. Un archivo importado no amplía scope.
 
 ## Recursos candidatos para refinement
