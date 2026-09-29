@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "lab-offline-v1",
+  "allowedAddresses": ["127.0.0.1", "127.0.0.2", "::1"],
+  "excludedAddresses": [],
+  "allowedPorts": [22, 80, 443, 8080],
+  "allowedProtocols": ["tcp", "udp"],
+  "maxInputBytes": 2097152,
+  "maxObservations": 10000
+}

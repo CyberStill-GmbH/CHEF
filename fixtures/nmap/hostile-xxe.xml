@@ -1,0 +1,1 @@
+<!DOCTYPE nmaprun [<!ENTITY xxe SYSTEM "file:///etc/passwd">]><nmaprun scanner="nmap" start="1790640000">&xxe;</nmaprun>

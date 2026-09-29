@@ -1,0 +1,28 @@
+name: Historia de producto
+description: Incremento verificable con éxito y fallo
+title: '[ID] '
+body:
+  - type: textarea
+    id: story
+    attributes:
+      label: Problema, usuario y valor
+    validations:
+      required: true
+  - type: input
+    id: requirement
+    attributes:
+      label: Requisito y dependencias
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Given / When / Then de éxito y fallo
+    validations:
+      required: true
+  - type: textarea
+    id: validation
+    attributes:
+      label: Fixture, prueba, scope, tamaño, dueño y revisor
+    validations:
+      required: true

@@ -1,0 +1,8 @@
+node_modules
+dist
+.tools
+artifacts
+package-lock.json
+*.java
+# Byte-for-byte cross-language fixture, intentional compact JSON
+fixtures/http/golden.json

@@ -1,0 +1,22 @@
+name: Bug
+description: Reproducción sin datos sensibles
+title: '[bug] '
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Commit/version y plataforma
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Pasos y fixture sintético
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Esperado frente a observado
+    validations:
+      required: true

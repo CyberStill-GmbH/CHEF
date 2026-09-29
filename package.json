@@ -1,0 +1,40 @@
+{
+  "name": "chef-evidence-core",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Offline, evidence-backed attack surface correlation for authorized assessments",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "format:check": "prettier --check .",
+    "format": "prettier --write .",
+    "test": "npm run build && node --test dist/tests/*.test.js",
+    "check:docs": "node scripts/check-docs.mjs",
+    "check:architecture": "node scripts/check-architecture.mjs",
+    "check": "npm run lint && npm run typecheck && npm test && npm run check:docs && npm run check:architecture && npm run format:check",
+    "demo": "npm run build && node dist/apps/cli/src/main.js fixtures/nmap/lab.xml fixtures/scope/lab.json",
+    "benchmark": "npm run build && node dist/scripts/benchmark.js"
+  },
+  "dependencies": {
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1",
+    "fast-xml-parser": "5.11.2"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "24.19.0",
+    "eslint": "10.11.0",
+    "jsdom": "30.1.1",
+    "mermaid": "11.17.2",
+    "prettier": "3.9.9",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.71.0",
+    "yaml": "2.9.1"
+  }
+}

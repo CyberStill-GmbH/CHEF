@@ -1,0 +1,1833 @@
+{
+  "generatedFrom": "package-lock.json",
+  "purpose": "Inventory; metadata does not substitute for reviewing applicable license texts and notices.",
+  "packages": [
+    {
+      "name": "@antfu/install-pkg",
+      "version": "2.1.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@asamuzakjp/css-color",
+      "version": "7.1.2",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@asamuzakjp/dom-selector",
+      "version": "9.2.2",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@braintree/sanitize-url",
+      "version": "7.1.2",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@bramus/specificity",
+      "version": "2.4.2",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@cacheable/memory",
+      "version": "2.2.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@cacheable/utils",
+      "version": "2.5.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@chevrotain/types",
+      "version": "11.1.2",
+      "license": "Apache-2.0",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@csstools/color-helpers",
+      "version": "6.1.2",
+      "license": "MIT-0",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@csstools/css-calc",
+      "version": "3.4.1",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@csstools/css-color-parser",
+      "version": "4.2.4",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@csstools/css-parser-algorithms",
+      "version": "4.0.1",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@csstools/css-syntax-patches-for-csstree",
+      "version": "1.1.14",
+      "license": "MIT-0",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@csstools/css-tokenizer",
+      "version": "4.0.2",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@eslint-community/eslint-utils",
+      "version": "4.10.1",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@eslint-community/regexpp",
+      "version": "4.12.2",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@eslint/config-array",
+      "version": "0.23.5",
+      "license": "Apache-2.0",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@eslint/config-helpers",
+      "version": "0.7.0",
+      "license": "Apache-2.0",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@eslint/core",
+      "version": "1.2.1",
+      "license": "Apache-2.0",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@eslint/js",
+      "version": "10.0.1",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@eslint/object-schema",
+      "version": "3.0.5",
+      "license": "Apache-2.0",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@eslint/plugin-kit",
+      "version": "0.7.3",
+      "license": "Apache-2.0",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@exodus/bytes",
+      "version": "1.16.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@humanfs/core",
+      "version": "0.19.2",
+      "license": "Apache-2.0",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@humanfs/node",
+      "version": "0.16.8",
+      "license": "Apache-2.0",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@humanfs/types",
+      "version": "0.15.0",
+      "license": "Apache-2.0",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@humanwhocodes/module-importer",
+      "version": "1.0.1",
+      "license": "Apache-2.0",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@humanwhocodes/retry",
+      "version": "0.4.3",
+      "license": "Apache-2.0",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@iconify/types",
+      "version": "2.0.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@iconify/utils",
+      "version": "3.1.7",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@keyv/bigmap",
+      "version": "1.3.1",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@keyv/serialize",
+      "version": "1.1.1",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@mermaid-js/parser",
+      "version": "1.2.1",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@nodable/entities",
+      "version": "3.1.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": false
+    },
+    {
+      "name": "@types/d3",
+      "version": "7.4.3",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@types/d3-array",
+      "version": "3.2.2",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@types/d3-axis",
+      "version": "3.0.6",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@types/d3-brush",
+      "version": "3.0.6",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@types/d3-chord",
+      "version": "3.0.6",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@types/d3-color",
+      "version": "3.1.3",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@types/d3-contour",
+      "version": "3.0.6",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@types/d3-delaunay",
+      "version": "6.0.4",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@types/d3-dispatch",
+      "version": "3.0.7",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@types/d3-drag",
+      "version": "3.0.7",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@types/d3-dsv",
+      "version": "3.0.7",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@types/d3-ease",
+      "version": "3.0.2",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@types/d3-fetch",
+      "version": "3.0.7",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@types/d3-force",
+      "version": "3.0.10",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@types/d3-format",
+      "version": "3.0.4",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@types/d3-geo",
+      "version": "3.1.1",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@types/d3-hierarchy",
+      "version": "3.1.7",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@types/d3-interpolate",
+      "version": "3.0.4",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@types/d3-path",
+      "version": "3.1.1",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@types/d3-polygon",
+      "version": "3.0.2",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@types/d3-quadtree",
+      "version": "3.0.6",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@types/d3-random",
+      "version": "3.0.4",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@types/d3-scale",
+      "version": "4.0.9",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@types/d3-scale-chromatic",
+      "version": "3.1.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@types/d3-selection",
+      "version": "3.0.12",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@types/d3-shape",
+      "version": "3.2.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@types/d3-time",
+      "version": "3.0.4",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@types/d3-time-format",
+      "version": "4.0.3",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@types/d3-timer",
+      "version": "3.0.2",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@types/d3-transition",
+      "version": "3.0.9",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@types/d3-zoom",
+      "version": "3.0.9",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@types/esrecurse",
+      "version": "4.3.1",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@types/estree",
+      "version": "1.0.9",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@types/geojson",
+      "version": "7946.0.16",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@types/json-schema",
+      "version": "7.0.15",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@types/node",
+      "version": "24.19.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@types/trusted-types",
+      "version": "2.0.7",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@typescript-eslint/eslint-plugin",
+      "version": "8.71.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@typescript-eslint/parser",
+      "version": "8.71.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@typescript-eslint/project-service",
+      "version": "8.71.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@typescript-eslint/scope-manager",
+      "version": "8.71.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@typescript-eslint/tsconfig-utils",
+      "version": "8.71.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@typescript-eslint/type-utils",
+      "version": "8.71.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@typescript-eslint/types",
+      "version": "8.71.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@typescript-eslint/typescript-estree",
+      "version": "8.71.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@typescript-eslint/utils",
+      "version": "8.71.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@typescript-eslint/visitor-keys",
+      "version": "8.71.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "@upsetjs/venn.js",
+      "version": "2.0.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "acorn",
+      "version": "8.18.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "acorn-jsx",
+      "version": "5.3.2",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "ajv",
+      "version": "8.20.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": false
+    },
+    {
+      "name": "ajv",
+      "version": "6.15.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "ajv-formats",
+      "version": "3.0.1",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": false
+    },
+    {
+      "name": "anynum",
+      "version": "1.0.1",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": false
+    },
+    {
+      "name": "balanced-match",
+      "version": "4.0.4",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "bidi-js",
+      "version": "1.1.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "brace-expansion",
+      "version": "5.0.12",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "cacheable",
+      "version": "2.5.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "commander",
+      "version": "7.2.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "commander",
+      "version": "8.3.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "cose-base",
+      "version": "1.0.3",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "cose-base",
+      "version": "2.2.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "cross-spawn",
+      "version": "7.0.6",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "css-tree",
+      "version": "3.2.1",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "cytoscape",
+      "version": "3.34.3",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "cytoscape-cose-bilkent",
+      "version": "4.1.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "cytoscape-fcose",
+      "version": "2.2.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "d3",
+      "version": "7.9.0",
+      "license": "ISC",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "d3-array",
+      "version": "3.2.4",
+      "license": "ISC",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "d3-array",
+      "version": "2.12.1",
+      "license": "BSD-3-Clause",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "d3-axis",
+      "version": "3.0.0",
+      "license": "ISC",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "d3-brush",
+      "version": "3.0.0",
+      "license": "ISC",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "d3-chord",
+      "version": "3.0.1",
+      "license": "ISC",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "d3-color",
+      "version": "3.1.0",
+      "license": "ISC",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "d3-contour",
+      "version": "4.0.2",
+      "license": "ISC",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "d3-delaunay",
+      "version": "6.0.4",
+      "license": "ISC",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "d3-dispatch",
+      "version": "3.0.1",
+      "license": "ISC",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "d3-drag",
+      "version": "3.0.0",
+      "license": "ISC",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "d3-dsv",
+      "version": "3.0.1",
+      "license": "ISC",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "d3-ease",
+      "version": "3.0.1",
+      "license": "BSD-3-Clause",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "d3-fetch",
+      "version": "3.0.1",
+      "license": "ISC",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "d3-force",
+      "version": "3.0.0",
+      "license": "ISC",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "d3-format",
+      "version": "3.1.2",
+      "license": "ISC",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "d3-geo",
+      "version": "3.1.1",
+      "license": "ISC",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "d3-hierarchy",
+      "version": "3.1.2",
+      "license": "ISC",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "d3-interpolate",
+      "version": "3.0.1",
+      "license": "ISC",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "d3-path",
+      "version": "3.1.0",
+      "license": "ISC",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "d3-path",
+      "version": "1.0.9",
+      "license": "BSD-3-Clause",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "d3-polygon",
+      "version": "3.0.1",
+      "license": "ISC",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "d3-quadtree",
+      "version": "3.0.1",
+      "license": "ISC",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "d3-random",
+      "version": "3.0.1",
+      "license": "ISC",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "d3-sankey",
+      "version": "0.12.3",
+      "license": "BSD-3-Clause",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "d3-scale",
+      "version": "4.0.2",
+      "license": "ISC",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "d3-scale-chromatic",
+      "version": "3.1.0",
+      "license": "ISC",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "d3-selection",
+      "version": "3.0.0",
+      "license": "ISC",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "d3-shape",
+      "version": "1.3.7",
+      "license": "BSD-3-Clause",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "d3-shape",
+      "version": "3.2.0",
+      "license": "ISC",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "d3-time",
+      "version": "3.1.0",
+      "license": "ISC",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "d3-time-format",
+      "version": "4.1.0",
+      "license": "ISC",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "d3-timer",
+      "version": "3.0.1",
+      "license": "ISC",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "d3-transition",
+      "version": "3.0.1",
+      "license": "ISC",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "d3-zoom",
+      "version": "3.0.0",
+      "license": "ISC",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "dagre-d3-es",
+      "version": "7.0.14",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "data-urls",
+      "version": "7.0.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "dayjs",
+      "version": "1.11.23",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "debug",
+      "version": "4.4.3",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "decimal.js",
+      "version": "10.6.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "deep-is",
+      "version": "0.1.4",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "delaunator",
+      "version": "5.1.0",
+      "license": "ISC",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "dompurify",
+      "version": "3.4.16",
+      "license": "(MPL-2.0 OR Apache-2.0)",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "entities",
+      "version": "8.1.0",
+      "license": "BSD-2-Clause",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "es-toolkit",
+      "version": "1.52.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "escape-string-regexp",
+      "version": "4.0.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "eslint",
+      "version": "10.11.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "eslint-scope",
+      "version": "9.1.2",
+      "license": "BSD-2-Clause",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "eslint-visitor-keys",
+      "version": "3.4.3",
+      "license": "Apache-2.0",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "eslint-visitor-keys",
+      "version": "5.0.1",
+      "license": "Apache-2.0",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "espree",
+      "version": "11.2.0",
+      "license": "BSD-2-Clause",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "esquery",
+      "version": "1.7.0",
+      "license": "BSD-3-Clause",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "esrecurse",
+      "version": "4.3.0",
+      "license": "BSD-2-Clause",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "estraverse",
+      "version": "5.3.0",
+      "license": "BSD-2-Clause",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "esutils",
+      "version": "2.0.3",
+      "license": "BSD-2-Clause",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "fast-deep-equal",
+      "version": "3.1.3",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": false
+    },
+    {
+      "name": "fast-json-stable-stringify",
+      "version": "2.1.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "fast-levenshtein",
+      "version": "2.0.6",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "fast-uri",
+      "version": "3.1.8",
+      "license": "BSD-3-Clause",
+      "licenseSource": "package-lock.json metadata",
+      "dev": false
+    },
+    {
+      "name": "fast-xml-builder",
+      "version": "1.3.1",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": false
+    },
+    {
+      "name": "fast-xml-parser",
+      "version": "5.11.2",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": false
+    },
+    {
+      "name": "fastdom",
+      "version": "1.0.12",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "fdir",
+      "version": "6.5.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "file-entry-cache",
+      "version": "11.1.5",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "find-up",
+      "version": "5.0.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "flat-cache",
+      "version": "6.1.23",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "flatted",
+      "version": "3.4.4",
+      "license": "ISC",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "glob-parent",
+      "version": "6.0.2",
+      "license": "ISC",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "hachure-fill",
+      "version": "0.5.2",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "hashery",
+      "version": "1.5.1",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "hookified",
+      "version": "1.15.1",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "hookified",
+      "version": "2.2.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "html-encoding-sniffer",
+      "version": "7.0.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "iconv-lite",
+      "version": "0.6.3",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "ignore",
+      "version": "7.0.10",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "ignore",
+      "version": "5.3.2",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "import-meta-resolve",
+      "version": "4.2.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "imurmurhash",
+      "version": "0.1.4",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "internmap",
+      "version": "1.0.1",
+      "license": "ISC",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "internmap",
+      "version": "2.0.3",
+      "license": "ISC",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "is-extglob",
+      "version": "2.1.1",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "is-glob",
+      "version": "4.0.3",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "is-potential-custom-element-name",
+      "version": "1.0.1",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "is-unsafe",
+      "version": "2.0.2",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": false
+    },
+    {
+      "name": "isexe",
+      "version": "2.0.0",
+      "license": "ISC",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "jsdom",
+      "version": "30.1.1",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "json-schema-traverse",
+      "version": "0.4.1",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "json-schema-traverse",
+      "version": "1.0.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": false
+    },
+    {
+      "name": "json-stable-stringify-without-jsonify",
+      "version": "1.0.1",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "katex",
+      "version": "0.16.47",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "keyv",
+      "version": "5.6.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "khroma",
+      "version": "2.1.0",
+      "license": "MIT",
+      "licenseSource": "node_modules/khroma/license",
+      "dev": true
+    },
+    {
+      "name": "layout-base",
+      "version": "2.0.1",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "layout-base",
+      "version": "1.0.2",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "levn",
+      "version": "0.4.1",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "locate-path",
+      "version": "6.0.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "lodash-es",
+      "version": "4.18.1",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "lru-cache",
+      "version": "11.5.3",
+      "license": "BlueOak-1.0.0",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "marked",
+      "version": "16.4.2",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "mdn-data",
+      "version": "2.27.1",
+      "license": "CC0-1.0",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "mermaid",
+      "version": "11.17.2",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "minimatch",
+      "version": "10.2.6",
+      "license": "BlueOak-1.0.0",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "ms",
+      "version": "2.1.3",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "natural-compare",
+      "version": "1.4.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "optionator",
+      "version": "0.9.4",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "p-limit",
+      "version": "3.1.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "p-locate",
+      "version": "5.0.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "package-manager-detector",
+      "version": "1.8.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "parse5",
+      "version": "8.0.1",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "path-data-parser",
+      "version": "0.1.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "path-exists",
+      "version": "4.0.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "path-expression-matcher",
+      "version": "1.6.2",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": false
+    },
+    {
+      "name": "path-key",
+      "version": "3.1.1",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "picomatch",
+      "version": "4.0.7",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "points-on-curve",
+      "version": "0.2.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "points-on-path",
+      "version": "0.2.1",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "prelude-ls",
+      "version": "1.2.1",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "prettier",
+      "version": "3.9.9",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "punycode",
+      "version": "2.3.1",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "qified",
+      "version": "0.10.1",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "require-from-string",
+      "version": "2.0.2",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": false
+    },
+    {
+      "name": "robust-predicates",
+      "version": "3.0.3",
+      "license": "Unlicense",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "roughjs",
+      "version": "4.6.6",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "rw",
+      "version": "1.3.3",
+      "license": "BSD-3-Clause",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "safer-buffer",
+      "version": "2.1.2",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "saxes",
+      "version": "6.0.0",
+      "license": "ISC",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "semver",
+      "version": "7.8.5",
+      "license": "ISC",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "shebang-command",
+      "version": "2.0.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "shebang-regex",
+      "version": "3.0.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "source-map-js",
+      "version": "1.2.1",
+      "license": "BSD-3-Clause",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "strictdom",
+      "version": "1.0.1",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "strnum",
+      "version": "2.4.2",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": false
+    },
+    {
+      "name": "stylis",
+      "version": "4.4.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "tinyexec",
+      "version": "1.3.1",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "tinyglobby",
+      "version": "0.2.17",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "tldts",
+      "version": "7.4.16",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "tldts-core",
+      "version": "7.4.16",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "tough-cookie",
+      "version": "6.0.2",
+      "license": "BSD-3-Clause",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "tr46",
+      "version": "6.0.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "ts-api-utils",
+      "version": "2.5.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "ts-dedent",
+      "version": "2.3.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "type-check",
+      "version": "0.4.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "typescript",
+      "version": "6.0.3",
+      "license": "Apache-2.0",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "typescript-eslint",
+      "version": "8.71.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "undici",
+      "version": "8.11.2",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "undici-types",
+      "version": "7.24.6",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "uri-js",
+      "version": "4.4.1",
+      "license": "BSD-2-Clause",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "uuid",
+      "version": "14.0.2",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "w3c-xmlserializer",
+      "version": "6.0.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "webidl-conversions",
+      "version": "8.0.1",
+      "license": "BSD-2-Clause",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "whatwg-mimetype",
+      "version": "5.0.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "whatwg-url",
+      "version": "16.0.1",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "whatwg-url",
+      "version": "17.1.2",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "which",
+      "version": "2.0.2",
+      "license": "ISC",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "word-wrap",
+      "version": "1.2.5",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "xml-name-validator",
+      "version": "5.0.0",
+      "license": "Apache-2.0",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "xml-naming",
+      "version": "0.3.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": false
+    },
+    {
+      "name": "xmlchars",
+      "version": "2.2.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "yaml",
+      "version": "2.9.1",
+      "license": "ISC",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    },
+    {
+      "name": "yocto-queue",
+      "version": "0.1.0",
+      "license": "MIT",
+      "licenseSource": "package-lock.json metadata",
+      "dev": true
+    }
+  ]
+}

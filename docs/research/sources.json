@@ -1,0 +1,272 @@
+[
+  {
+    "id": "PS-AC",
+    "url": "https://portswigger.net/burp/documentation/desktop/extend-burp/extensions/creating/bapp-store-acceptance-criteria",
+    "consultedAt": "2026-09-29",
+    "version": "2026-09-22",
+    "claim": "Criterios de aceptación; checklist de 12 puntos.",
+    "kind": "primary",
+    "limitation": "No constituye aprobación ni un listado de pruebas suficientes."
+  },
+  {
+    "id": "PS-SUB",
+    "url": "https://portswigger.net/burp/documentation/desktop/extend-burp/extensions/creating/bapp-store-submitting-extensions",
+    "consultedAt": "2026-09-29",
+    "version": "2026-09-22",
+    "claim": "Submission mediante issue en extension-portal con repositorio, descripción y uso.",
+    "kind": "primary",
+    "limitation": "Hay revisión posterior de PortSwigger."
+  },
+  {
+    "id": "PS-API",
+    "url": "https://github.com/PortSwigger/burp-extensions-montoya-api",
+    "consultedAt": "2026-09-29",
+    "version": "2026.7",
+    "claim": "Artefacto Montoya Java en Maven Central.",
+    "kind": "primary",
+    "limitation": "Versión API no determina por sí sola mínimo Burp."
+  },
+  {
+    "id": "PS-CONTEXT",
+    "url": "https://portswigger.github.io/burp-extensions-montoya-api/javadoc/burp/api/montoya/ui/contextmenu/ContextMenuEvent.html",
+    "consultedAt": "2026-09-29",
+    "version": "2026.7",
+    "claim": "Selección HTTP disponible por ContextMenuEvent.",
+    "kind": "primary",
+    "limitation": "Debe probarse con Burp real."
+  },
+  {
+    "id": "PS-REQUEST",
+    "url": "https://portswigger.github.io/burp-extensions-montoya-api/javadoc/burp/api/montoya/http/message/requests/HttpRequest.html",
+    "consultedAt": "2026-09-29",
+    "version": "2026.7",
+    "claim": "PathWithoutQuery y isInScope disponibles.",
+    "kind": "primary",
+    "limitation": "Requests malformadas pueden lanzar excepciones."
+  },
+  {
+    "id": "PS-CRAWL",
+    "url": "https://portswigger.net/burp/documentation/scanner/crawling",
+    "consultedAt": "2026-09-29",
+    "version": "2026-09-22",
+    "claim": "Crawler representa ubicaciones/enlaces como grafo.",
+    "kind": "primary",
+    "limitation": "No prueba que cubra correlación de evidencia Nmap/HTTP."
+  },
+  {
+    "id": "PS-NMAP-PARSER",
+    "url": "https://portswigger.net/bappstore/0780c0a9f12e47848a94ac3e43dccbd9",
+    "consultedAt": "2026-09-29",
+    "version": "1.1 / ficha 2017",
+    "claim": "Parser Nmap GUI y adición de puertos web al scope.",
+    "kind": "primary",
+    "limitation": "No se ejecutó; licencia de reutilización requiere revisión."
+  },
+  {
+    "id": "PS-NMAP-SCANNER",
+    "url": "https://portswigger.net/bappstore/9710f65c31044b3794df0767f8f4bd5d",
+    "consultedAt": "2026-09-29",
+    "version": "1.0 / ficha 2024",
+    "claim": "Nmap scans, GUI y export XML desde Burp.",
+    "kind": "primary",
+    "limitation": "No se ejecutó; no inferir ausencia de features no documentadas."
+  },
+  {
+    "id": "AMASS",
+    "url": "https://github.com/owasp-amass/amass",
+    "consultedAt": "2026-09-29",
+    "version": "main consultada",
+    "claim": "ASM/recon; Apache con excepciones para subcomponentes.",
+    "kind": "primary",
+    "limitation": "Capacidades por release requieren spike."
+  },
+  {
+    "id": "SPIDERFOOT",
+    "url": "https://github.com/smicallef/spiderfoot",
+    "consultedAt": "2026-09-29",
+    "version": "master / release 4.0 en README",
+    "claim": "Módulos OSINT, reglas, visualización, export y MIT.",
+    "kind": "primary",
+    "limitation": "La documentación no acredita funcionamiento en runtime actual."
+  },
+  {
+    "id": "UNCOVER",
+    "url": "https://github.com/projectdiscovery/uncover",
+    "consultedAt": "2026-09-29",
+    "version": "main consultada",
+    "claim": "Descubre hosts desde APIs, JSONL e IP/port/host.",
+    "kind": "primary",
+    "limitation": "Depende de proveedores y API keys."
+  },
+  {
+    "id": "UNCOVER-LICENSE",
+    "url": "https://github.com/projectdiscovery/uncover/blob/main/LICENSE.md",
+    "consultedAt": "2026-09-29",
+    "version": "main consultada",
+    "claim": "Licencia MIT.",
+    "kind": "primary",
+    "limitation": "No se redistribuye en CHEF."
+  },
+  {
+    "id": "NMAP-XML",
+    "url": "https://nmap.org/book/output-formats-xml-output.html",
+    "consultedAt": "2026-09-29",
+    "version": "documentación consultada",
+    "claim": "XML para procesamiento estructurado.",
+    "kind": "primary",
+    "limitation": "CHEF soporta subset declarado, no DTD completa."
+  },
+  {
+    "id": "NMAP-DTD",
+    "url": "https://nmap.org/book/nmap-dtd.html",
+    "consultedAt": "2026-09-29",
+    "version": "DTD consultada",
+    "claim": "Tipos address, port, state y service; estados ambiguos.",
+    "kind": "primary",
+    "limitation": "DTD no se descarga ni ejecuta en parser."
+  },
+  {
+    "id": "NMAP-LICENSE",
+    "url": "https://nmap.org/book/man-legal.html",
+    "consultedAt": "2026-09-29",
+    "version": "documentación consultada",
+    "claim": "NPSL y condiciones de redistribución.",
+    "kind": "primary",
+    "limitation": "Importar XML no implica permiso para empaquetar ejecutable."
+  },
+  {
+    "id": "CYTOSCAPE",
+    "url": "https://js.cytoscape.org/",
+    "consultedAt": "2026-09-29",
+    "version": "documentación consultada",
+    "claim": "Grafo, layouts, serialización, análisis, core MIT.",
+    "kind": "primary",
+    "limitation": "Rendimiento real depende del grafo y equipo; falta spike UI."
+  },
+  {
+    "id": "SIGMA",
+    "url": "https://www.sigmajs.org/docs/",
+    "consultedAt": "2026-09-29",
+    "version": "documentación consultada",
+    "claim": "Render de grafos con WebGL y Graphology.",
+    "kind": "primary",
+    "limitation": "Evaluación de complejidad de integración es inferencia."
+  },
+  {
+    "id": "SSDF",
+    "url": "https://csrc.nist.gov/pubs/sp/800/218/final",
+    "consultedAt": "2026-09-29",
+    "version": "SP 800-218 v1.1",
+    "claim": "Prácticas de desarrollo seguro durante SDLC.",
+    "kind": "primary",
+    "limitation": "Selección de prácticas, sin certificación de conformidad."
+  },
+  {
+    "id": "ASVS",
+    "url": "https://owasp.org/projects/asvs",
+    "consultedAt": "2026-09-29",
+    "version": "página consultada",
+    "claim": "Estándar de verificación de seguridad de aplicaciones.",
+    "kind": "primary",
+    "limitation": "Se usa cuando exista API/web; no asignar cumplimiento global."
+  },
+  {
+    "id": "TS",
+    "url": "https://github.com/microsoft/TypeScript",
+    "consultedAt": "2026-09-29",
+    "version": "repo consultado",
+    "claim": "Tipos y compilación; toolchain oficial.",
+    "kind": "primary",
+    "limitation": "La elección por velocidad de aprendizaje es estimación del equipo."
+  },
+  {
+    "id": "FXP",
+    "url": "https://github.com/NaturalIntelligence/fast-xml-parser",
+    "consultedAt": "2026-09-29",
+    "version": "repo consultado",
+    "claim": "Parser/validator XML.",
+    "kind": "primary",
+    "limitation": "Seguridad depende de configuración y límites propios."
+  },
+  {
+    "id": "PS-LICENSE",
+    "url": "https://github.com/PortSwigger/burp-extensions-montoya-api/blob/main/LICENSE",
+    "consultedAt": "2026-09-29",
+    "version": "main consultada",
+    "claim": "Términos propios API/BApp.",
+    "kind": "primary",
+    "limitation": "No tratar como MIT ni copiar ejemplos sin revisar."
+  },
+  {
+    "id": "PS-PORTAL",
+    "url": "https://github.com/PortSwigger/extension-portal",
+    "consultedAt": "2026-09-29",
+    "version": "repo consultado",
+    "claim": "Portal para submission y consentimiento de autores.",
+    "kind": "primary",
+    "limitation": "No se realizó submission."
+  },
+  {
+    "id": "ADOPTIUM",
+    "url": "https://adoptium.net/temurin/releases/",
+    "consultedAt": "2026-09-29",
+    "version": "página consultada",
+    "claim": "Proveedor oficial de JDK Temurin.",
+    "kind": "primary",
+    "limitation": "Setup local no prueba compatibilidad Burp."
+  },
+  {
+    "id": "MAVEN",
+    "url": "https://maven.apache.org/download.cgi",
+    "consultedAt": "2026-09-29",
+    "version": "3.9.16",
+    "claim": "Distribución oficial verificada SHA-512 para build local.",
+    "kind": "primary",
+    "limitation": "Versión congelada para este incremento; revisar upstream al actualizar."
+  },
+  {
+    "id": "ACTION-CHECKOUT",
+    "url": "https://github.com/actions/checkout",
+    "consultedAt": "2026-09-29",
+    "version": "v7 / 3d3c42e5aac5ba805825da76410c181273ba90b1",
+    "claim": "Checkout CI pin por SHA oficial.",
+    "kind": "primary",
+    "limitation": "Versión congelada para este incremento; revisar upstream al actualizar."
+  },
+  {
+    "id": "ACTION-NODE",
+    "url": "https://github.com/actions/setup-node",
+    "consultedAt": "2026-09-29",
+    "version": "v6 / 249970729cb0ef3589644e2896645e5dc5ba9c38",
+    "claim": "Setup Node24 CI pin por SHA oficial.",
+    "kind": "primary",
+    "limitation": "Versión congelada para este incremento; revisar upstream al actualizar."
+  },
+  {
+    "id": "ACTION-JAVA",
+    "url": "https://github.com/actions/setup-java",
+    "consultedAt": "2026-09-29",
+    "version": "v5 / b6effb05e454b25005698d916606bdc6ffcbf961",
+    "claim": "Setup JDK21 CI pin por SHA oficial.",
+    "kind": "primary",
+    "limitation": "Versión congelada para este incremento; revisar upstream al actualizar."
+  },
+  {
+    "id": "GITHUB-PROTECTION",
+    "url": "https://docs.github.com/en/rest/branches/branch-protection?apiVersion=2022-11-28",
+    "consultedAt": "2026-09-29",
+    "version": "documentación vigente",
+    "claim": "Protección de main con checks y PR; permite cero approvals mientras se incorpora el equipo.",
+    "kind": "primary",
+    "limitation": "La política no sustituye la revisión humana."
+  },
+  {
+    "id": "GITHUB-PRIVATE-REPORTING",
+    "url": "https://docs.github.com/en/rest/repos/repos?apiVersion=2022-11-28",
+    "consultedAt": "2026-09-29",
+    "version": "documentación vigente",
+    "claim": "Endpoint para habilitar reportes privados de vulnerabilidades del repositorio.",
+    "kind": "primary",
+    "limitation": "Activar el canal no crea un SLA de respuesta."
+  }
+]
