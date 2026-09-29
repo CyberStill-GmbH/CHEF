@@ -6,3 +6,7 @@ package-lock.json
 *.java
 # Byte-for-byte cross-language fixture, intentional compact JSON
 fixtures/http/golden.json
+# Vendored skills retain upstream text and licenses; Prettier does not rewrite them.
+.agents/skills/playwright/
+.agents/skills/security-best-practices/
+.agents/skills/vercel-deploy/

@@ -2,6 +2,8 @@
 
 Estado: aceptado para el incremento inicial; decisiones futuras indicadas expresamente. Fecha: 29-09-2026.
 
+Vigencia: la CLI y el snapshot siguen siendo reales; la dirección anterior de API loopback/SSE era exploratoria. La web alojable de equipo se analiza en [ADR 0008 propuesto](0008-web-platform.md). SSE no se prioriza hasta medir latencia/uso, y no hay API implementada.
+
 ## Contexto
 
 React debe recibir estado sin acoplarse a parser/IO.

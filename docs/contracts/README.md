@@ -1,5 +1,7 @@
 # Contratos
 
+La prioridad web se discute en el [borrador de API multiusuario](web-api-proposal.md). La [API loopback](api.md) y los [eventos SSE](events.md) son diseños históricos no implementados; **no son contratos estables**. El único wire ejecutable validado hoy es Snapshot 1.0.0, más el envelope HTTP separado del spike Montoya.
+
 `snapshot.schema.json` es la autoridad wire del incremento offline, JSON Schema 2020-12, versión 1.0.0; types del dominio deben concordar mediante pruebas. `Asset`, `Evidence`, `Observation`, `Relationship`, `ExposurePath`, `ScanRun` y `ScopePolicy` tienen campos requeridos y propiedades extra prohibidas. `Finding` está definido como contrato reservado; el motor actual no lo produce.
 
 ## Semántica

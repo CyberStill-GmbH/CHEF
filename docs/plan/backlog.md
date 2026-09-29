@@ -1,163 +1,52 @@
-# Backlog priorizado
+# Product Backlog de CHEF
 
-Cuatro épicas y orden por dependencia. Tamaños en horas netas para integración/revisión por el equipo, no horas ya ejecutadas. **Total 94 h**. Estado inicial de equipo: Todo; los componentes core preparados automáticamente necesitan revisión/adopción antes de pasar a Done.
+Actualizado 29-09-2026. Este es el **orden de valor y dependencia del producto web**; no es una promesa de que todas las historias terminen el 31-10. El [Sprint Backlog](../proposals/2026-09-scrum-to-oct31.md) selecciona un subconjunto según capacidad real. Las [issues sugeridas](../proposals/2026-09-issues.md) desarrollan escenarios; se crean/asignan en GitHub solo tras refinement. César es Product Owner/responsable de backend y correlación; Diego responde por frontend/UX; Jhojan por ingestión, fixtures e investigación de fuentes. Diez horas semanales por persona, revisión cruzada y una historia en curso por persona.
 
-## C01: Importar subset Nmap normalizado
+## Reglas de lectura
 
-Épica: Ingestión/evidencia. Sprint S1. Tamaño 5 h. Dueño Jhojan; revisor César. Dependencias: —. Requisitos: FR-01,NFR-02 ([trazabilidad](../product/requirements.md)).
+- **Estado:** `hecho-core` significa que ya existe y tiene tests; `ready` exige fuente, permiso, contrato y GWT; `blocked` necesita decisión externa; `proposed` aún no se planifica como Done.
+- **Tamaño:** rango exploratorio de esfuerzo incremental del equipo **incluyendo tests, review y docs**, no horas registradas. Historias >8 h se parten al entrar al sprint. Un spike acotado puede producir conocimiento, no funcionalidad.
+- **Prioridad:** P0 resuelve incertidumbre/riesgo; P1 hace la vertical usable; P2 completa operación; P3 es evolución tras octubre. Una dependencia no satisfecha impide mover a `ready`.
+- **Corte de octubre:** prototipo privado desplegado para el equipo es el objetivo pedido, pero la suma de vertical y operación supera ~103 h netas. El gate del 05-10 debe registrar recorte, horas extra o cambio de fecha; [factibilidad](../research/feasibility.md) lo cuantifica.
 
-Historia: como analista/colaborador quiero importar subset nmap normalizado para conservar un análisis explicable y revisable.
+## Inventario priorizado
 
-- Éxito: Given un fixture válido, When se importa con policy explícita, Then emite puertos open normalizados.
-- Fallo: Given XML hostile/oversize, When se importa, Then error sin snapshot.
-- Pruebas/entregable: parser/CLI hostile, límites, UTF-8.
+| ID   | Épica / resultado verificable                                 | Prioridad/estado | Responsable → reviewer |    Esfuerzo | Depende de             | Sprint candidato |
+| ---- | ------------------------------------------------------------- | ---------------- | ---------------------- | ----------: | ---------------------- | ---------------- |
+| WB01 | Elegir backend y ADR de límites/Prisma                        | P0/proposed      | César → Diego          |       4–6 h | núcleo actual          | S1               |
+| WB02 | Elegir fuente pasiva con acceso, permiso, términos y fixture  | P0/blocked       | Jhojan → César         |      6–10 h | fuente/autorización    | S1               |
+| WB03 | Acordar corte de demo y presupuesto Vercel/Railway            | P0/blocked       | César + equipo → Diego |       3–5 h | capacidad/hosting      | S1               |
+| WB04 | Contrato de observación/relación multifuente y compatibilidad | P1/proposed      | César → Jhojan         |      8–14 h | WB01,WB02              | S1–S2            |
+| WB05 | Proyecto/membresía y repositorio Prisma/PostgreSQL            | P1/proposed      | César → Diego          |     16–26 h | WB01,WB04              | S2               |
+| WB06 | API de importación Nmap reutilizando core y CLI intacta       | P1/proposed      | César → Jhojan         |     12–20 h | WB04,WB05              | S2               |
+| WB07 | Limpieza Nmap con recuento/motivo y controles negativos       | P1/proposed      | Jhojan → César         |      8–14 h | contrato vigente       | S2               |
+| WB08 | Adaptador de una fuente pasiva con provenance/frescura/error  | P1/blocked       | Jhojan → César         |     12–22 h | WB02,WB04              | S2–S3            |
+| WB09 | Correlación fuerte/candidata/contradictoria versionada        | P1/proposed      | César → Jhojan         |     14–24 h | WB06,WB08              | S3               |
+| WB10 | React: proyecto/importación/estado y evidencia                | P1/proposed      | Diego → César          |     14–22 h | WB04,WB06              | S1–S3            |
+| WB11 | Mapa + lista accesible, filtros y explicación                 | P1/proposed      | Diego → Jhojan         |     16–28 h | WB09,WB10              | S3–S4            |
+| WB12 | Snapshot/exportación de datos versionada y descarga segura    | P1/proposed      | César + Diego → Jhojan |      8–16 h | WB04,WB09              | S4               |
+| WB13 | GitHub OAuth, sesiones, roles e IDOR entre proyectos          | P2/proposed      | César → Diego          |     16–28 h | WB05                   | S4 o posterior   |
+| WB14 | Despliegue privado, migración, secretos, backup/restore       | P2/blocked       | César + Diego → Jhojan |     20–36 h | WB03,WB05,WB10,WB13    | S4 o posterior   |
+| WB15 | Estudio comparativo con pentesters, tiempo/pasos/errores      | P2/blocked       | Diego → César          |      8–16 h | WB08–WB12, piloto      | S4 o posterior   |
+| WB16 | Historial temporal, refresco medido y estado de proveedor     | P3/proposed      | César + Jhojan → Diego | por refinar | evidencia de uso       | después          |
+| WB17 | Conectores adicionales, uno por proveedor y licencia          | P3/proposed      | Jhojan → César         |  por fuente | WB02,WB08              | después          |
+| WB18 | Worker activo con scope aprobado y control de egress          | P3/blocked       | César → Jhojan         | por refinar | nuevo ADR/autorización | después          |
+| WB19 | BApp Montoya autónoma o cliente opcional                      | P3/proposed      | César + Jhojan → Diego | por refinar | producto web validado  | después          |
 
-## C02: Construir evidencia e identidad determinista
+Los rangos mínimos de WB04–WB15 por sí solos rondan **152 h**, sin P0 ni reserva, por encima de la capacidad de octubre; los máximos son sustancialmente mayores. No adjudicar todos al sprint. WB02 y WB03 son bloqueos reales, no tareas “casi hechas”. C01–C04 del plan inicial ya se materializaron en el core y se mantienen como **regresión**, no se reabren para gastar capacidad.
 
-Épica: Grafo/correlación. Sprint S1. Tamaño 6 h. Dueño César; revisor Diego. Dependencias: C01. Requisitos: FR-02,FR-06,NFR-03 ([trazabilidad](../product/requirements.md)).
+## Criterios Given/When/Then por épica
 
-Historia: como analista/colaborador quiero construir evidencia e identidad determinista para conservar un análisis explicable y revisable.
+**E1 · datos autorizados (WB02, WB04, WB07, WB08).** Given XML Nmap y una fuente pasiva permitida, When se importan, Then cada observación conserva origen, locator, digest, fecha, scope y versión; los duplicados/exclusiones se cuentan con motivo. Given archivo hostile, cuota agotada o fuente sin acceso, When falla, Then se informa error y no aparecen observaciones inventadas ni parcial. Si solo hay fixture sintético, la interfaz/demo lo declara.
 
-- Éxito: Given Observation válida, When se correlaciona, Then cada relación resuelve evidencia y regla.
-- Fallo: Given relación sin evidencia o vulnerabilidad marcada, When se valida, Then se rechaza.
-- Pruebas/entregable: referencias, schema, arquitectura.
+**E2 · correlación explicable (WB09).** Given mismo servicio Nmap en dos registros y señal pasiva fechada, When se comparan claves tipadas, Then identidad fuerte se fusiona sin perder observaciones y la señal externa se enlaza como observado/inferido/candidato según regla. Given hostname/IP compartidos o señal histórica incompatible, When se compara, Then no se atribuye propiedad ni vulnerabilidad, y el control negativo queda separado.
 
-## C03: Deduplicar sin falsas fusiones
+**E3 · trabajo de analista (WB10–WB12).** Given proyecto con servicios y enlaces, When el usuario selecciona nodo o fila, Then ve la misma relación, regla, evidencia, fecha y motivo; puede filtrar sin cambiar el dato y exportar JSON versionado. Given lista vacía, evidencia rota o etiqueta HTML hostil, When se renderiza, Then muestra estado/error seguro, accesible por teclado, sin ejecutar contenido importado.
 
-Épica: Grafo/correlación. Sprint S1. Tamaño 2 h. Dueño Jhojan; revisor César. Dependencias: C01,C02. Requisitos: FR-03 ([trazabilidad](../product/requirements.md)).
+**E4 · multiusuario/operación (WB05, WB06, WB13, WB14).** Given dos usuarios y dos proyectos, When uno cambia IDs de URL/cuerpo o intenta exportar el otro, Then el servidor niega acceso sin fuga. Given XML inválido o fallo DB, When se importa, Then transacción revierte y la CLI actual sigue pasando tests. Despliegue Done solo con OAuth callback, migración, secretos, aislamiento y recuperación ensayados en Vercel/Railway.
 
-Historia: como analista/colaborador quiero deduplicar sin falsas fusiones para conservar un análisis explicable y revisable.
+**E5 · valor medido (WB15).** Given la misma tarea y datos autorizados, When evaluadores alternan CHEF y revisión manual, Then se registran tiempos, pasos, aciertos, falsos enlaces y muestra real; un resultado adverso se publica. No usar número de nodos como sustituto de productividad.
 
-- Éxito: Given servicio repetido, When se fusiona, Then una entidad conserva dos observaciones.
-- Fallo: Given hostname compartido con IP distinta, When se fusiona, Then servicios separados.
-- Pruebas/entregable: fixture etiquetado, idempotencia.
+## Refinement, Sprint Backlog y cambios
 
-## W01: Explorar snapshot en React y lista
-
-Épica: Exploración/export. Sprint S1. Tamaño 6 h. Dueño Diego; revisor César. Dependencias: C02. Requisitos: FR-04 ([trazabilidad](../product/requirements.md)).
-
-Historia: como analista/colaborador quiero explorar snapshot en react y lista para conservar un análisis explicable y revisable.
-
-- Éxito: Given JSON válido, When se abre, Then grafo/lista seleccionable por teclado.
-- Fallo: Given JSON inválido/vacío, When se abre, Then error/empty sin render parcial.
-- Pruebas/entregable: UI fixture, teclado, schema.
-
-## Q01: Preparar CI y errores seguros
-
-Épica: Calidad/demo. Sprint S1. Tamaño 2 h. Dueño César + Diego; revisor Jhojan. Dependencias: C01. Requisitos: NFR-01,NFR-07,NFR-08 ([trazabilidad](../product/requirements.md)).
-
-Historia: como analista/colaborador quiero preparar ci y errores seguros para conservar un análisis explicable y revisable.
-
-- Éxito: Given PR válido, When CI corre, Then checks verdes y build disponible.
-- Fallo: Given test/contrato roto, When CI corre, Then bloquea integración.
-- Pruebas/entregable: workflow, lint, docs, stderr.
-
-## W02: Mostrar evidencia e incertidumbre
-
-Épica: Exploración/export. Sprint S2. Tamaño 7 h. Dueño Diego; revisor César. Dependencias: W01. Requisitos: FR-04,FR-06 ([trazabilidad](../product/requirements.md)).
-
-Historia: como analista/colaborador quiero mostrar evidencia e incertidumbre para conservar un análisis explicable y revisable.
-
-- Éxito: Given entidad seleccionada, When se inspecciona, Then muestra observaciones/hash/rule.
-- Fallo: Given label HTML o evidencia faltante, When se visualiza, Then texto plano/error explícito.
-- Pruebas/entregable: UI adversarial, estados.
-
-## W03: Implementar frontera de ejecución local
-
-Épica: Exploración/export. Sprint S2. Tamaño 7 h. Dueño César; revisor Diego. Dependencias: W01,C01. Requisitos: FR-04,NFR-01 ([trazabilidad](../product/requirements.md)).
-
-Historia: como analista/colaborador quiero implementar frontera de ejecución local para conservar un análisis explicable y revisable.
-
-- Éxito: Given sesión autenticada, When se sube fixture, Then job/snapshot según contrato.
-- Fallo: Given Origin/token inválido o payload grande, When se llama API, Then rechazo sin trabajo.
-- Pruebas/entregable: API contract, auth, bounded read.
-
-## C04: Exportar e importar ejemplo versionado
-
-Épica: Exploración/export. Sprint S2. Tamaño 4 h. Dueño Jhojan; revisor Diego. Dependencias: C02. Requisitos: FR-05 ([trazabilidad](../product/requirements.md)).
-
-Historia: como analista/colaborador quiero exportar e importar ejemplo versionado para conservar un análisis explicable y revisable.
-
-- Éxito: Given snapshot válido, When se exporta, Then reader conserva IDs/evidencia.
-- Fallo: Given versión desconocida/referencias inválidas, When se abre, Then rechazo legible.
-- Pruebas/entregable: schema/golden/semantic reader.
-
-## I02: Spike HTTP normalizado sujeto a gate
-
-Épica: Ingestión/evidencia. Sprint S2. Tamaño 3 h. Dueño Jhojan; revisor César. Dependencias: C04. Requisitos: FR-07 ([trazabilidad](../product/requirements.md)).
-
-Historia: como analista/colaborador quiero spike http normalizado sujeto a gate para conservar un análisis explicable y revisable.
-
-- Éxito: Given metadata sintética saneada, When se normaliza, Then endpoint tipado y sin query/auth.
-- Fallo: Given input malformado o fuera de scope, When se procesa, Then error.
-- Pruebas/entregable: fixtures HTTP y contrato1.1; si gate falla, mejorar fixture Nmap.
-
-## W04: Hacer explorador accesible y acotado
-
-Épica: Exploración/export. Sprint S3. Tamaño 7 h. Dueño Diego; revisor Jhojan. Dependencias: W02. Requisitos: FR-04,NFR-04 ([trazabilidad](../product/requirements.md)).
-
-Historia: como analista/colaborador quiero hacer explorador accesible y acotado para conservar un análisis explicable y revisable.
-
-- Éxito: Given grafo grande, When se filtra, Then selección usable/lista equivalente.
-- Fallo: Given buffer/render saturado, When se alcanza límite, Then resync/error visible.
-- Pruebas/entregable: UI rendimiento, teclado/lectura.
-
-## I03: Worker y cancelación en curso
-
-Épica: Ingestión/evidencia. Sprint S3. Tamaño 7 h. Dueño César; revisor Diego. Dependencias: W03. Requisitos: NFR-05 ([trazabilidad](../product/requirements.md)).
-
-Historia: como analista/colaborador quiero worker y cancelación en curso para conservar un análisis explicable y revisable.
-
-- Éxito: Given job activo, When se cancela, Then terminal <1s sin updates nuevos.
-- Fallo: Given excepción/timeout, When termina worker, Then error saneado sin grafo parcial.
-- Pruebas/entregable: integration worker/cancel.
-
-## Q02: Benchmark ampliado y controles negativos
-
-Épica: Calidad/demo. Sprint S3. Tamaño 7 h. Dueño Jhojan; revisor César. Dependencias: C03,W01. Requisitos: FR-03,NFR-04 ([trazabilidad](../product/requirements.md)).
-
-Historia: como analista/colaborador quiero benchmark ampliado y controles negativos para conservar un análisis explicable y revisable.
-
-- Éxito: Given labels revisados, When se mide, Then TP/FP/recall/latencia con entorno.
-- Fallo: Given control negativo fusionado, When se evalúa, Then falla gate y se registra.
-- Pruebas/entregable: 100/1000 obs, resultados reales.
-
-## Q03: Ensayar demo cinco minutos
-
-Épica: Calidad/demo. Sprint S4. Tamaño 9 h. Dueño Los tres; revisor Revisión cruzada. Dependencias: W02,C04. Requisitos: NFR-06,NFR-09 ([trazabilidad](../product/requirements.md)).
-
-Historia: como analista/colaborador quiero ensayar demo cinco minutos para conservar un análisis explicable y revisable.
-
-- Éxito: Given equipo desconectado, When se sigue runbook, Then3 ensayos completos.
-- Fallo: Given archivo corrupto o UI rota, When se recupera, Then usa respaldo validado.
-- Pruebas/entregable: ensayos cronometrados.
-
-## Q04: Endurecer integración y release demo
-
-Épica: Calidad/demo. Sprint S4. Tamaño 12 h. Dueño Los tres; revisor Revisión cruzada. Dependencias: Q02,I03. Requisitos: NFR-02,NFR-07,NFR-08 ([trazabilidad](../product/requirements.md)).
-
-Historia: como analista/colaborador quiero endurecer integración y release demo para conservar un análisis explicable y revisable.
-
-- Éxito: Given build limpio, When se valida, Then sin defectos de evidencia/scope.
-- Fallo: Given secret/raw/limit bug, When se revisa, Then no release hasta resolver.
-- Pruebas/entregable: adversarial, CI, licenses.
-
-## B01: Validar spike Montoya manualmente
-
-Épica: Calidad/demo. Sprint S4. Tamaño 6 h. Dueño César + Jhojan; revisor Diego. Dependencias: I02. Requisitos: FR-08,NFR-10 ([trazabilidad](../product/requirements.md)).
-
-Historia: como analista/colaborador quiero validar spike montoya manualmente para conservar un análisis explicable y revisable.
-
-- Éxito: Given Burp local, When se carga/selecciona, Then Observation/export útil.
-- Fallo: Given out-of-scope/unload, When se intenta procesar, Then rechazo/worker termina.
-- Pruebas/entregable: MB01–MB09, conformidad Java/TS.
-
-## Q05: Preparar narrativa/capturas y paquete público
-
-Épica: Exploración/export. Sprint S4. Tamaño 4 h. Dueño Diego; revisor Jhojan. Dependencias: Q03. Requisitos: NFR-09 ([trazabilidad](../product/requirements.md)).
-
-Historia: como analista/colaborador quiero preparar narrativa/capturas y paquete público para conservar un análisis explicable y revisable.
-
-- Éxito: Given demo validada, When se presenta, Then distingue hechos/hipótesis/futuro.
-- Fallo: Given captura sensible o función pendiente, When se prepara material, Then se anonimiza/etiqueta.
-- Pruebas/entregable: runbook, revisión de capturas.
+El Product Owner ordena por valor/riesgo; el equipo estima y negocia capacidad. Cada lunes se eligen solo historias `ready` que apoyen el objetivo de sprint y quepan con review/ceremonias. La [pauta diaria por persona](daily-scrum.md) muestra el trabajo esperado, no horas ya realizadas. En el Daily Scrum se actualizan `Done hoy / siguiente paso / bloqueo` y se renegocia la secuencia cuando falla un gate. Una historia no se mueve a Done por tener código: exige prueba positiva/negativa, `npm run check`, revisor distinto, contrato/ADR al día y evidencia en entorno declarado. Las historias web no desplazan la regresión del núcleo ni la autorización de red.

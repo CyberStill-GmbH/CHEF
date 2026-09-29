@@ -1,4 +1,6 @@
-# Eventos propuestos
+# Eventos históricos propuestos
+
+**Diferidos:** este diseño SSE de la antigua API loopback no está implementado ni forma parte de la primera vertical web. La nueva [API propuesta](web-api-proposal.md) comienza por importación/lectura con fecha visible; eventos se decidirán con una medición de latencia, reconexión y demanda real. Conservar esta exploración para un ADR futuro, sin asumir que un cliente puede depender de ella.
 
 No implementados. SSE local para UI; no se necesita WebSocket bidireccional para el MVP. Envelope: `{schemaVersion,eventId,jobId,sequence,occurredAt,type,payload}`. Sequence aumenta por job; eventId estable para replay.
 

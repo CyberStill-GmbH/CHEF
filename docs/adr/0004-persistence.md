@@ -2,6 +2,8 @@
 
 Estado: aceptado para el incremento inicial; decisiones futuras indicadas expresamente. Fecha: 29-09-2026.
 
+Vigencia: describe el incremento CLI offline implementado. La nueva visión web multiusuario con PostgreSQL/Prisma se documenta en [ADR 0008 propuesto](0008-web-platform.md); no afirmar que SQLite o PostgreSQL estén implementados. Al aceptar 0008, actualizar este estado histórico como supersedido para persistencia web.
+
 ## Contexto
 
 Demo necesita exportar; persistencia completa todavía no es requisito del primer slice.

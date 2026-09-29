@@ -1,19 +1,15 @@
-# Equipo y forma de trabajo
+# Equipo, responsabilidades y revisión
 
-César: Product Owner y responsable técnico; contratos, core, integración, scope, mentoring y decisiones. Diego: frontend React/TypeScript, grafo/evidencia, accesibilidad; revisa contratos con César. Jhojan: código de parser/fixtures/normalización, export y benchmarks; trabajo incremental con ejemplos/tests y revisión acompañada.
+Actualizado 29-09-2026. Integrantes confirmados: **César, Diego y Jhojan**, cada uno con **10 horas semanales**. Los logins de GitHub de Diego y Jhojan aún no se han confirmado; las asignaciones nominales de esta página son plan, no permisos concedidos en GitHub. El proyecto pertenece al Centro Cultural de Ciberseguridad.
 
-## Presupuesto por sprint
+| Persona | Responsabilidad principal                                                                                                  | Entregables verificables                                                               | Reviewer habitual                                                |
+| ------- | -------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| César   | Product Owner técnico; backend TypeScript/Node, API, PostgreSQL/Prisma, autorización, motor de correlación y ADRs de stack | contrato/versiones, tests entre proyectos, reglas con explicación, decisión de alcance | Diego para API/UX; Jhojan para reglas/fixtures                   |
+| Diego   | Frontend React/TypeScript, diseño visual/UX, accesibilidad, mapa/lista, panel de evidencia, experimento con usuarios       | recorrido de analista, teclado, estados, exportación UI, rúbrica/medición              | César para contrato/seguridad; Jhojan para evidencia             |
+| Jhojan  | Importación Nmap, normalización, fixtures, investigación/verificación de fuente pasiva, calidad del dato y benchmarks      | golden, casos hostiles/negativos, matriz de permiso, adaptador con provenance          | César para core/contrato; Diego para presentación de exclusiones |
 
-| Persona | S1              | S2              | S3     | S4                       | Responsable de revisión                    |
-| ------- | --------------- | --------------- | ------ | ------------------------ | ------------------------------------------ |
-| César   | C02 6h + Q01 1h | W03 7h          | I03 7h | Q03 3h + Q04 4h + B01 3h | Revisa core de Jhojan y contratos de Diego |
-| Diego   | W01 6h + Q01 1h | W02 7h          | W04 7h | Q03 3h + Q04 4h + Q05 4h | Revisa export/core por contratos y UX      |
-| Jhojan  | C01 5h + C03 2h | C04 4h + I02 3h | Q02 7h | Q03 3h + Q04 4h + B01 3h | Revisa fixtures/criterios y hace pairing   |
+“Owner” organiza el trabajo; no autoriza unir código propio sin revisión. Un reviewer distinto del autor comprueba Given/When/Then, pruebas, contrato, seguridad y límites. César puede priorizar el backlog, pero un defecto de evidencia/scope bloquea Done aunque haya presión de fecha. Jhojan recibe pairing inicial en cambios de contrato o proveedor; Diego no diseña sobre DTO no aprobado; César no reimplementa reglas de identidad en API/DB.
 
-Horas incluyen la revisión asociada y sincronizaciones dentro del tamaño de la historia. Capacidad neta persona S1–S3 7.5h y S4 ≈11.8h. No sumar reviews por fuera sin recalcular presupuesto.
+La disponibilidad bruta entre el 29-09 y el 30-10 es ~137 h del equipo, con 25 % de reserva ≈103 h netas. Ceremonias, review y ensayos consumen esas horas. Cada planning anota capacidad real de la semana, ausencias y PRs pendientes. El [Product Backlog](backlog.md), [plan de sprints](../proposals/2026-09-scrum-to-oct31.md) y [pauta diaria](daily-scrum.md) son las referencias de ejecución. Si la fuente pasiva, presupuesto o capacidad cambian, el Product Owner registra decisión y efecto sobre pantalla de demo, no asigna horas ficticias.
 
-Para Jhojan: C01 recibe un XML de un host y expected output; pairing inicial30 min con César; primer PR solo parsing de IP/port; segundo PR estados/límites; tercero integración. C03: fixture de duplicado y control negativo; C04: export schema con prueba; Q02: medición reproducible; B01: verificación/fixture HTTP junto con César. Nunca ponerlo solo a resolver threading/seguridad de red.
-
-Definition of Ready: problema y requisito, aceptación éxito/fallo, fixture, alcance, reviewer, tamaño ≤7h (o dividir). Definition of Done en [testing](../testing/strategy.md).
-
-Tablero mínimo Todo / In progress / Review / Done; máximo una historia en implementación por persona y dos en Review para el equipo. Si Review está lleno, revisar antes de empezar otra historia. No hay logins de GitHub de Diego/Jhojan confirmados; no se invitó a nadie ni se asignaron cuentas ficticias.
+Para contribuciones externas, seguir [CONTRIBUTING](../../CONTRIBUTING.md) y [AGENTS.md](../../AGENTS.md). Las skills locales guían trabajo especializado, sin sustituir ownership humano ni revisión.

@@ -24,3 +24,15 @@ El core sin red elimina varios caminos SSRF del incremento actual. No habilitar 
 La cancelación del core síncrono detecta señales ya activadas y en checkpoints. SIGINT no puede interrumpir inmediatamente el parse síncrono mientras el event loop esté ocupado; hay que migrar a worker antes de ofrecer cancelación interactiva durante ingestión. Se registra esta limitación en UI/API y backlog.
 
 El benchmark usa material sintético: no estima tasa de falsos positivos en redes reales. Revisar amenazas cada vez que se añade red, almacenamiento, nueva fuente, third party o rendering de contenido no confiable.
+
+## Extensión propuesta para producto web multiusuario
+
+La [arquitectura web propuesta](../architecture/proposed-web.md) añade navegador, GitHub OAuth, API, PostgreSQL/Prisma, proveedor OSINT y exportaciones. **Estos controles no están implementados todavía.** La [matriz CWE](cwe-controls.md) registra debilidad, prueba y estado.
+
+- **Identidad ≠ autorización.** OAuth prueba quién inicia sesión; cada lectura/importación/exportación necesita membresía y acción del proyecto. Probar dos usuarios/dos proyectos, IDs cambiados y artefactos temporales (CWE-862/639). Las políticas RLS pueden reforzar, no reemplazar el control de aplicación.
+- **Datos de proyecto y secretos.** Guardar solo evidencia necesaria, definir retención/borrado/backup, cifrado y clasificación; tokens de OAuth/proveedor quedan en servidor y no en logs/cliente. No enviar dominios de clientes a una API externa por defecto. Hash de evidencia no anonimiza datos ni autentica emisor.
+- **Conector externo.** Configurar proveedores/destinos permitidos, no aceptar URL arbitraria; comprobar redirects, respuesta, tamaño, cuota, términos y tiempo. Si en el futuro se añaden jobs activos, aislar egress y validar scope aprobado antes de cada conexión; riesgo CWE-918. La fase actual solo importa resultados autorizados.
+- **UI/export visual.** Tratar hostname, banner, path, descripción de proveedor y SVG descargable como datos hostiles. Renderizar texto, no HTML; controlar enlaces y contenido embebido. Probar etiquetas maliciosas y descarga (CWE-79).
+- **Integridad semántica.** Un proveedor que falla no significa ausencia de activos. Mostrar estado, última actualización y contradicciones; no borrar observaciones al deduplicar ni inferir vulnerabilidad por puerto. Versionar reglas y conservar procedencia.
+
+El despliegue privado tiene gate: OAuth/session, control entre proyectos, migración/rollback, backup/restore, logs seguros, límites y tests end-to-end con usuario no miembro. No se declara listo por tener CI verde o una URL. La revisión de amenazas acompaña cada nuevo adaptador/rol/worker.
