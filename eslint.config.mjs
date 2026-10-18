@@ -1,7 +1,15 @@
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 export default tseslint.config(
-  { ignores: ['dist/**', 'node_modules/**', '.tools/**', 'artifacts/**'] },
+  {
+    ignores: [
+      'dist/**',
+      'apps/web/dist/**',
+      'node_modules/**',
+      '.tools/**',
+      'artifacts/**',
+    ],
+  },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
