@@ -204,3 +204,7 @@ Validación estática del incremento: formato Rust, `cargo check --locked --offl
 ## 28-10-2026 — Pistas desde registros DNS importados
 
 Se adaptó la parte local de `modules/internal/dnsresolve.py` que interpreta respuestas `RAW_DNS_RECORD`: `chef_dns_rdata_hints` consume MX/NAPTR/NS/SOA/SRV/TXT ya presentes en un JSONL, limita a 32 nombres canónicos por evento y produce `DNS_NAME_HINT` con vínculo al evento padre. La proyección CHEF marca el dominio `hint` y asocia la evidencia tanto al derivado como al registro importado. Se activa solo con `offline_hints`; no hace consultas, no inventa respuestas, no procesa A/AAAA como activos y no altera scope ni Snapshot. Se mantiene `recon-graph 1.4.0` y se amplía su ejemplo. Las pruebas positivas/negativas y de límites quedan pendientes para la fase indicada por el propietario. No se modificó la copia local de origen.
+
+## 28-10-2026 — Delimitación de módulos internos fuera del alcance actual
+
+La auditoría ahora registra `BbotModule`/`ModuleDescriptor` como adaptación parcial de `BaseInternalModule`; excluye el `__init__.py` vacío, `excavate.py` (requiere cuerpos HTTP que CHEF elimina para no persistir datos sensibles) y `unarchive.py` (recorre/modifica filesystem y ejecuta herramientas externas, ajenas a la importación elegida por el usuario). `cloudcheck.py` permanece pendiente porque consulta firmas externas y su resultado necesita contrato de activos CHEF. El inventario suma 30 parciales, 412 pendientes y 24 exclusiones de 466 archivos; no se modifica ni ejecuta la fuente local.
