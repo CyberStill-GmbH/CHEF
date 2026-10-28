@@ -41,25 +41,41 @@ pub(crate) fn canonical_domain(value: &str) -> Option<String> {
     host.parse::<IpAddr>().is_err().then_some(host)
 }
 
+fn icann_registrable_domain(value: &str) -> Option<(String, String)> {
+    let host = canonical_domain(value)?;
+    let registrable = psl::domain(host.as_bytes())?;
+    if registrable.suffix().typ() != Some(psl::Type::Icann) {
+        return None;
+    }
+    let registrable = String::from_utf8_lossy(registrable.as_bytes()).into_owned();
+    Some((host, registrable))
+}
+
+/// Indica si el nombre canónico es una raíz registrable bajo un sufijo ICANN
+/// de la PSL integrada. Los sufijos privados/desconocidos no se infieren.
+pub(crate) fn is_registrable_domain(value: &str) -> bool {
+    icann_registrable_domain(value).is_some_and(|(host, registrable)| host == registrable)
+}
+
+/// Indica si el nombre es descendiente de una raíz registrable ICANN conocida.
+/// No realiza resolución ni concede autorización de alcance.
+pub(crate) fn is_subdomain(value: &str) -> bool {
+    icann_registrable_domain(value).is_some_and(|(host, registrable)| {
+        host != registrable && host.ends_with(&format!(".{registrable}"))
+    })
+}
+
 /// Devuelve los dominios padre de un host dentro de una raíz registrable
 /// ICANN. Se adapta a `domain_parents` de las utilidades de origen, con la
 /// política CHEF de no expandir sufijos privados o desconocidos. El resultado
 /// es solo contexto local; no implica propiedad ni autorización de red.
 pub(crate) fn domain_parent_candidates(value: &str, include_self: bool) -> Vec<String> {
-    let Some(host) = canonical_domain(value) else {
-        return Vec::new();
-    };
-    let Some(registrable) = psl::domain(host.as_bytes()) else {
-        return Vec::new();
-    };
-    if registrable.suffix().typ() != Some(psl::Type::Icann) {
+    if is_registrable_domain(value) || !is_subdomain(value) {
         return Vec::new();
     }
-
-    let registrable = String::from_utf8_lossy(registrable.as_bytes()).into_owned();
-    if host == registrable {
+    let Some((host, registrable)) = icann_registrable_domain(value) else {
         return Vec::new();
-    }
+    };
 
     let root_depth = registrable.split('.').count();
     let mut labels = host.split('.').collect::<Vec<_>>();
