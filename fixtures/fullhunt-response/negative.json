@@ -1,0 +1,9 @@
+{
+  "queryDomain": "example.com",
+  "response": {
+    "domain": "example.com",
+    "hosts": ["example.com.evil.test", "notexample.com", "outside.example.net"],
+    "status": 200
+  },
+  "expectedCandidates": []
+}
