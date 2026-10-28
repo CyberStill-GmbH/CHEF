@@ -199,7 +199,7 @@ fn bbot_jsonl_import_is_deterministic_scoped_and_keeps_source_provenance() {
             .iter()
             .all(|item| item.source == "bbot-ndjson" && item.fact == "open-port")
     );
-    assert_eq!(first.skipped_event_types.get("DNS_NAME"), Some(&1));
+    assert!(!first.skipped_event_types.contains_key("DNS_NAME"));
     assert!(
         first
             .snapshot
@@ -221,8 +221,7 @@ fn bbot_jsonl_rejects_malformed_and_out_of_scope_open_port_events() {
     .unwrap_err();
     assert_eq!(malformed.code, ErrorCode::InvalidInput);
 
-    let outside =
-        br#"{"type":"OPEN_TCP_PORT","host":"192.0.2.10","port":443,"timestamp":1792281600}"#;
+    let outside = br#"{"type":"OPEN_TCP_PORT","data":"192.0.2.10:443","host":"192.0.2.10","port":443,"timestamp":1792281600}"#;
     let error = ImportBbotEvidence::execute(
         outside,
         &scope,
@@ -260,7 +259,7 @@ async fn background_bbot_job_emits_bounded_lifecycle_and_returns_snapshot() {
     let output = task.join().await.expect("worker completes");
     assert_eq!(output.snapshot.schema_version, "1.1.0");
     assert_eq!(output.snapshot.observations.len(), 2);
-    assert_eq!(output.skipped_event_types.get("DNS_NAME"), Some(&1));
+    assert!(!output.skipped_event_types.contains_key("DNS_NAME"));
 }
 
 #[tokio::test]
