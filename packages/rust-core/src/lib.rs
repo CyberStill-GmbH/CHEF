@@ -37,6 +37,7 @@ mod presets;
 mod provider_subdomains;
 mod rate_limit;
 mod recon;
+mod shodan_dns;
 mod speculate;
 mod statistics;
 mod target_seed;
@@ -103,6 +104,7 @@ pub use recon::{
     ChefReconGraph, ReconAsset, ReconAssetKind, ReconEvidence, ReconRelationship,
     ReconRelationshipKind, adapt_bbot_to_chef, validate_chef_recon_graph,
 };
+pub use shodan_dns::{ShodanDnsSubdomainPage, parse_shodan_dns_subdomains};
 pub use statistics::{
     BbotEventStatistics, BbotRuntimeStatistics, EventTypeCount, ModuleProducedCount,
     ModuleRuntimeStatistics, summarize_bbot_events,
