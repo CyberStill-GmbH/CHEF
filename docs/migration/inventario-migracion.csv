@@ -48,7 +48,7 @@ chef-engine/core/helpers/web/envelopes.py,382,Helper HTTP,Puerto/adaptador HTTP 
 chef-engine/core/helpers/web/response_event.py,96,Helper HTTP,Puerto/adaptador HTTP Rust; ejecución desactivada sin scope autorizado,Pendiente
 chef-engine/core/helpers/web/ssl_context.py,8,Helper HTTP,Puerto/adaptador HTTP Rust; ejecución desactivada sin scope autorizado,Pendiente
 chef-engine/core/helpers/web/web.py,797,Helper HTTP,Puerto/adaptador HTTP Rust; ejecución desactivada sin scope autorizado,Pendiente
-chef-engine/core/helpers/wordcloud.py,526,Motor/escáner,"Mutador offline Rust con reglas CHEF, límites y explicación; word cloud persistente fuera del dominio",Parcial
+chef-engine/core/helpers/wordcloud.py,526,Motor/escáner,"Frecuencia de tokens acotada por trabajo y mutador DNS offline; archivos y persistencia se adaptan fuera del dominio",Parcial
 chef-engine/core/helpers/yara_helper.py,50,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
 chef-engine/core/modules.py,1182,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
 chef-engine/core/multiprocess.py,58,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente

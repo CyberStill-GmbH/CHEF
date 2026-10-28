@@ -14,6 +14,7 @@ mod dns_format;
 mod dns_policy;
 mod dns_records;
 mod dns_service_candidates;
+mod dns_wordcloud;
 mod domain;
 mod event_engine;
 mod event_import;
@@ -48,13 +49,15 @@ pub use contracts::{ScopePolicy, Snapshot};
 pub use dns_cache::DnsCache;
 pub use dns_candidates::{
     DnsBruteRootAssessment, DnsCandidateBatch, DnsMutationBatch, DnsMutationCandidate, DnsWordlist,
-    assess_dns_brute_root, generate_dns_mutation_candidates, generate_dns_name_candidates,
+    assess_dns_brute_root, generate_dns_mutation_candidates,
+    generate_dns_mutation_candidates_with_wordcloud, generate_dns_name_candidates,
     has_excessive_digits, parse_dns_wordlist,
 };
 pub use dns_format::format_dns_rdata;
 pub use dns_policy::{DnsQueryPolicy, DnsZoneDecision};
 pub use dns_records::{DNS_RECORD_TYPES, DnsTarget, extract_dns_targets, is_dns_service_record};
 pub use dns_service_candidates::common_dns_service_candidates;
+pub use dns_wordcloud::{DnsWordCloud, DnsWordFrequency};
 pub use domain::{ChefError, ChefResult, ErrorCode, ServiceInput};
 pub use event_engine::{
     BbotEvent, BbotEventDraft, BbotEventEngine, BbotEventGraph, BbotModule, EventScopeGate,

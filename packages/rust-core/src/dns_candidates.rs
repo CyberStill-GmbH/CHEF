@@ -85,6 +85,7 @@ pub struct DnsMutationCandidate {
     pub root: String,
     pub seed_label: String,
     pub rule_id: &'static str,
+    pub modifier: Option<crate::DnsWordFrequency>,
 }
 
 /// Resultado acotado de generar mutaciones DNS sin filesystem ni red.
@@ -131,6 +132,33 @@ pub fn generate_dns_mutation_candidates(
     observed_labels: &[String],
     max_candidates: usize,
 ) -> ChefResult<DnsMutationBatch> {
+    generate_dns_mutation_candidates_with_modifiers(root, observed_labels, &[], max_candidates)
+}
+
+/// Genera las variantes anteriores y añade prefijos/sufijos de las palabras
+/// más frecuentes de una nube del mismo trabajo.
+pub fn generate_dns_mutation_candidates_with_wordcloud(
+    root: &str,
+    observed_labels: &[String],
+    word_cloud: &crate::DnsWordCloud,
+    max_modifiers: usize,
+    max_candidates: usize,
+) -> ChefResult<DnsMutationBatch> {
+    let modifiers = word_cloud.top_words(max_modifiers.min(1_000));
+    generate_dns_mutation_candidates_with_modifiers(
+        root,
+        observed_labels,
+        &modifiers,
+        max_candidates,
+    )
+}
+
+fn generate_dns_mutation_candidates_with_modifiers(
+    root: &str,
+    observed_labels: &[String],
+    modifiers: &[crate::DnsWordFrequency],
+    max_candidates: usize,
+) -> ChefResult<DnsMutationBatch> {
     if observed_labels.len() > MAX_INPUT_PREFIXES {
         return Err(ChefError::new(
             ErrorCode::LimitExceeded,
@@ -157,25 +185,45 @@ pub fn generate_dns_mutation_candidates(
             skipped_invalid += 1;
             continue;
         }
-        let mut mutations: Vec<(String, &'static str)> = vec![(seed.clone(), "seed")];
+        let mut mutations: Vec<(String, &'static str, Option<crate::DnsWordFrequency>)> =
+            vec![(seed.clone(), "seed", None)];
         let segments: Vec<&str> = seed
             .split(['-', '_', '.'])
             .filter(|segment| !segment.is_empty())
             .collect();
         for segment in &segments {
             if *segment != seed {
-                mutations.push(((*segment).to_owned(), "segment"));
+                mutations.push(((*segment).to_owned(), "segment", None));
             }
         }
         if segments.len() > 1 {
-            mutations.push((segments.concat(), "separator-join"));
+            mutations.push((segments.concat(), "separator-join", None));
         }
-        mutations.extend(numeric_mutations(&seed));
+        mutations.extend(
+            numeric_mutations(&seed)
+                .into_iter()
+                .map(|(label, rule)| (label, rule, None)),
+        );
         for number in 0..3 {
-            mutations.push((format!("{seed}{number}"), "numeric-suffix"));
+            mutations.push((format!("{seed}{number}"), "numeric-suffix", None));
+        }
+        for modifier in modifiers {
+            if modifier.word == seed {
+                continue;
+            }
+            mutations.push((
+                format!("{seed}{}", modifier.word),
+                "wordcloud-suffix",
+                Some(modifier.clone()),
+            ));
+            mutations.push((
+                format!("{}{seed}", modifier.word),
+                "wordcloud-prefix",
+                Some(modifier.clone()),
+            ));
         }
 
-        for (label, rule_id) in mutations {
+        for (label, rule_id, modifier) in mutations {
             let hostname = format!("{label}.{root}");
             let Some(name) = crate::host::canonical_domain(&hostname) else {
                 skipped_invalid += 1;
@@ -198,6 +246,7 @@ pub fn generate_dns_mutation_candidates(
                 root: root.clone(),
                 seed_label: seed.clone(),
                 rule_id,
+                modifier,
             });
         }
     }
