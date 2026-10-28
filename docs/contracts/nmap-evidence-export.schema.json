@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://chef.invalid/contracts/nmap-evidence-export.schema.json",
+  "title": "Exportación CHEF de evidencia Nmap XML",
+  "description": "XML CHEF con vocabulario inspirado en Nmap, construido desde evidencia directa. No cumple el DTD oficial de Nmap ni garantiza interoperabilidad; los tiempos son de observación y el alcance no se afirma.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "runId",
+    "fileName",
+    "contentType",
+    "scopeStatus",
+    "observationStart",
+    "observationEnd",
+    "hostCount",
+    "portCount",
+    "xml"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "runId": {
+      "type": "string",
+      "minLength": 5,
+      "maxLength": 128,
+      "pattern": "^run:[a-z0-9:-]+$"
+    },
+    "fileName": {
+      "type": "string",
+      "maxLength": 152,
+      "pattern": "^chef-evidencia-nmap-run-[a-z0-9-]+\\.xml$"
+    },
+    "contentType": { "const": "application/xml; charset=utf-8" },
+    "scopeStatus": { "const": "not_asserted" },
+    "observationStart": {
+      "type": "string",
+      "format": "date-time",
+      "maxLength": 40
+    },
+    "observationEnd": {
+      "type": "string",
+      "format": "date-time",
+      "maxLength": 40
+    },
+    "hostCount": { "type": "integer", "minimum": 1, "maximum": 10000 },
+    "portCount": { "type": "integer", "minimum": 1, "maximum": 40000 },
+    "xml": { "type": "string", "minLength": 1, "maxLength": 2097152 }
+  }
+}
