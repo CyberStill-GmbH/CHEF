@@ -473,12 +473,16 @@ name = "chef-core"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "deunicode",
+ "idna",
+ "psl",
  "roxmltree",
  "serde",
  "serde_json",
  "sha2",
  "tokio",
  "toml",
+ "url",
 ]
 
 [[package]]
@@ -2676,9 +2680,9 @@ checksum = "f6b464fbc74e149a392436b17d523f769e057cb6877f6a5c4618bc6f11800548"
 
 [[package]]
 name = "portable-atomic"
-version = "1.15.0"
+version = "1.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "05c8b63e8d9609db387f0324918f81d68fe27748f084ef092fb35954d0539a85"
+checksum = "c33a9471896f1c69cecef8d20cbe2f7accd12527ce60845ff44c153bb2a21b49"
 
 [[package]]
 name = "portable-atomic-util"
@@ -2744,6 +2748,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "985e7ec9bb745e6ce6535b544d84d6cd6f7ad8bd711c398938ae983b91a766d9"
 dependencies = [
  "unicode-ident",
+]
+
+[[package]]
+name = "psl"
+version = "2.1.239"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5736f71353f867ae262bd123b86ddb161f50a2db0300ab762c8f4a0e659635d3"
+dependencies = [
+ "psl-types",
 ]
 
 [[package]]
