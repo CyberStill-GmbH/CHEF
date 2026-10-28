@@ -63,8 +63,8 @@ pub use event_engine::{
     ModuleDescriptor,
 };
 pub use jobs::{
-    ImportFormat, ImportJobEvent, ImportOutput, ImportTask, spawn_bbot_import_job,
-    spawn_bbot_import_job_with_config, spawn_import_job,
+    ImportCancellation, ImportFormat, ImportJobEvent, ImportOutput, ImportTask,
+    spawn_bbot_import_job, spawn_bbot_import_job_with_config, spawn_import_job,
 };
 pub use keyed_lock::{KeyedLock, KeyedLockGuard};
 pub use port_spec::parse_port_string;

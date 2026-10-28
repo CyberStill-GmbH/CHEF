@@ -1,7 +1,8 @@
-use std::path::PathBuf;
+use std::{collections::HashMap, path::PathBuf};
 
 use chef_core::{
-    Clock, ImportJobEvent, ScopePolicy, Snapshot, SystemClock, spawn_bbot_import_job_with_config,
+    Clock, ImportCancellation, ImportJobEvent, ScopePolicy, Snapshot, SystemClock,
+    spawn_bbot_import_job_with_config,
 };
 use chef_storage::LocalSnapshotStore;
 use serde::Serialize;
@@ -17,6 +18,12 @@ struct StoreSlot {
 
 struct ConfigSlot {
     config_path: PathBuf,
+}
+
+#[derive(Default)]
+struct ImportJobs {
+    active: Mutex<HashMap<String, ImportCancellation>>,
+    admission: Mutex<()>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -55,6 +62,7 @@ async fn load_offline_demo_snapshot(
     app: AppHandle,
     state: State<'_, StoreSlot>,
     config_state: State<'_, ConfigSlot>,
+    jobs: State<'_, ImportJobs>,
 ) -> Result<Snapshot, String> {
     const EVENT_FIXTURE: &[u8] = include_bytes!("../../../../fixtures/event-import/events.ndjson");
     const SCOPE_FIXTURE: &[u8] =
@@ -69,6 +77,7 @@ async fn load_offline_demo_snapshot(
         EVENT_FIXTURE.to_vec(),
         scope,
         None,
+        &jobs,
     )
     .await
 }
@@ -78,6 +87,7 @@ async fn import_bbot_jsonl(
     app: AppHandle,
     state: State<'_, StoreSlot>,
     config_state: State<'_, ConfigSlot>,
+    jobs: State<'_, ImportJobs>,
     jsonl: String,
     scope: ScopePolicy,
     preset_id: Option<String>,
@@ -86,7 +96,7 @@ async fn import_bbot_jsonl(
     if bytes.len() > 2 * 1024 * 1024 {
         return Err("El archivo BBOT supera el máximo de 2 MiB CHEF".to_owned());
     }
-    import_bbot_payload(app, state, config_state, bytes, scope, preset_id).await
+    import_bbot_payload(app, state, config_state, bytes, scope, preset_id, &jobs).await
 }
 
 async fn import_bbot_payload(
@@ -96,7 +106,12 @@ async fn import_bbot_payload(
     bytes: Vec<u8>,
     scope: ScopePolicy,
     preset_id: Option<String>,
+    jobs: &ImportJobs,
 ) -> Result<Snapshot, String> {
+    let _admission = jobs
+        .admission
+        .try_lock()
+        .map_err(|_| "Ya hay una importación CHEF en curso".to_owned())?;
     let mut config = load_runtime_config(config_state.config_path.clone()).await?;
     if let Some(preset_id) = preset_id {
         let preset = chef_core::PresetCatalog::built_in()
@@ -110,25 +125,47 @@ async fn import_bbot_payload(
         .await
         .map_err(|error| error.message.to_owned())?;
     let mut task = task;
+    let cancellation = task.cancellation();
     let mut sequence = 0_u64;
     let mut job_id: Option<String> = None;
+    let mut log_delivery_failed = false;
+    let mut cancelled = false;
     while let Some(event) = task.next_event().await {
         sequence += 1;
-        let payload = match event {
-            ImportJobEvent::Started { job_id: id } => {
-                job_id = Some(id.clone());
-                Some(ScanLogPayload {
-                    schema_version: "1.0.0",
-                    job_id: id,
-                    sequence,
-                    phase: "started",
-                    message: "Importación offline CHEF iniciada.",
-                    event_type: None,
-                    observed_at: None,
-                })
+        if let ImportJobEvent::Started { job_id: id } = &event {
+            job_id = Some(id.clone());
+            jobs.active
+                .lock()
+                .await
+                .insert(id.clone(), cancellation.clone());
+        }
+        match &event {
+            ImportJobEvent::Completed { job_id: id, .. } => {
+                cancelled = jobs
+                    .active
+                    .lock()
+                    .await
+                    .remove(id)
+                    .is_some_and(|handle| handle.is_cancelled());
             }
+            ImportJobEvent::Failed { job_id: id, code } => {
+                jobs.active.lock().await.remove(id);
+                cancelled = *code == chef_core::ErrorCode::Cancelled;
+            }
+            _ => {}
+        }
+        let payload = match event {
+            ImportJobEvent::Started { job_id: id } => Some(ScanLogPayload {
+                schema_version: "1.1.0",
+                job_id: id,
+                sequence,
+                phase: "started",
+                message: "Importación offline CHEF iniciada.",
+                event_type: None,
+                observed_at: None,
+            }),
             ImportJobEvent::BbotEvent { job_id: id, event } => Some(ScanLogPayload {
-                schema_version: "1.0.0",
+                schema_version: "1.1.0",
                 job_id: id,
                 sequence,
                 phase: "event",
@@ -137,33 +174,51 @@ async fn import_bbot_payload(
                 observed_at: Some(event.timestamp),
             }),
             ImportJobEvent::Completed { job_id: id, .. } => Some(ScanLogPayload {
-                schema_version: "1.0.0",
+                schema_version: "1.1.0",
                 job_id: id,
                 sequence,
-                phase: "validated",
-                message: "JSONL validado; guardando resultado local.",
+                phase: if cancelled { "cancelled" } else { "validated" },
+                message: if cancelled {
+                    "La importación offline fue cancelada."
+                } else {
+                    "JSONL validado; guardando resultado local."
+                },
                 event_type: None,
                 observed_at: None,
             }),
-            ImportJobEvent::Failed { job_id: id, .. } => Some(ScanLogPayload {
-                schema_version: "1.0.0",
+            ImportJobEvent::Failed { job_id: id, code } => Some(ScanLogPayload {
+                schema_version: "1.1.0",
                 job_id: id,
                 sequence,
-                phase: "failed",
-                message: "La importación offline no pudo completarse.",
+                phase: if code == chef_core::ErrorCode::Cancelled {
+                    "cancelled"
+                } else {
+                    "failed"
+                },
+                message: if code == chef_core::ErrorCode::Cancelled {
+                    "La importación offline fue cancelada."
+                } else {
+                    "La importación offline no pudo completarse."
+                },
                 event_type: None,
                 observed_at: None,
             }),
         };
         if let Some(payload) = payload {
-            app.emit("scan-log", payload)
-                .map_err(|_| "No se pudo enviar el evento de actividad CHEF".to_owned())?;
+            log_delivery_failed |= app.emit("scan-log", payload).is_err();
         }
     }
-    let imported = task
-        .join()
-        .await
-        .map_err(|error| error.message.to_owned())?;
+    let import_result = task.join().await;
+    if let Some(job_id) = &job_id {
+        jobs.active.lock().await.remove(job_id);
+    }
+    if log_delivery_failed {
+        return Err("No se pudo enviar el evento de actividad CHEF".to_owned());
+    }
+    if cancelled {
+        return Err("La importación offline fue cancelada.".to_owned());
+    }
+    let imported = import_result.map_err(|error| error.message.to_owned())?;
 
     let mut slot = state.store.lock().await;
     if slot.is_none() {
@@ -184,7 +239,7 @@ async fn import_bbot_payload(
     app.emit(
         "scan-log",
         ScanLogPayload {
-            schema_version: "1.0.0",
+            schema_version: "1.1.0",
             job_id: job_id.clone(),
             sequence,
             phase: "stored",
@@ -198,7 +253,7 @@ async fn import_bbot_payload(
     app.emit(
         "scan-log",
         ScanLogPayload {
-            schema_version: "1.0.0",
+            schema_version: "1.1.0",
             job_id,
             sequence,
             phase: "completed",
@@ -210,6 +265,18 @@ async fn import_bbot_payload(
     .map_err(|_| "No se pudo enviar el evento de actividad CHEF".to_owned())?;
 
     Ok(imported.snapshot)
+}
+
+#[tauri::command]
+async fn cancel_import_job(job_id: String, jobs: State<'_, ImportJobs>) -> Result<bool, String> {
+    validate_job_id(&job_id)?;
+    let active = jobs.active.lock().await;
+    if let Some(cancellation) = active.get(&job_id) {
+        cancellation.cancel();
+        Ok(true)
+    } else {
+        Ok(false)
+    }
 }
 
 #[tauri::command]
@@ -351,11 +418,24 @@ fn validate_run_id(run_id: &str) -> Result<(), String> {
     Ok(())
 }
 
+fn validate_job_id(job_id: &str) -> Result<(), String> {
+    if !job_id.starts_with("job:")
+        || job_id.len() > 128
+        || !job_id
+            .bytes()
+            .all(|byte| byte.is_ascii_lowercase() || byte.is_ascii_digit() || b":-".contains(&byte))
+    {
+        return Err("El identificador de trabajo CHEF no es válido".to_owned());
+    }
+    Ok(())
+}
+
 pub fn run() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
             load_offline_demo_snapshot,
             import_bbot_jsonl,
+            cancel_import_job,
             load_chef_recon_graph,
             load_chef_event_statistics,
             export_chef_snapshot,
@@ -370,6 +450,7 @@ pub fn run() {
                 store: Mutex::new(None),
             });
             app.manage(ConfigSlot { config_path });
+            app.manage(ImportJobs::default());
             Ok(())
         })
         .run(tauri::generate_context!())

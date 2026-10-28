@@ -7,7 +7,7 @@
   "additionalProperties": false,
   "required": ["schemaVersion", "jobId", "sequence", "phase", "message"],
   "properties": {
-    "schemaVersion": { "const": "1.0.0" },
+    "schemaVersion": { "const": "1.1.0" },
     "jobId": {
       "type": "string",
       "minLength": 1,
@@ -16,7 +16,7 @@
     },
     "sequence": { "type": "integer", "minimum": 1 },
     "phase": {
-      "enum": ["started", "event", "validated", "stored", "completed", "failed"]
+      "enum": ["started", "event", "validated", "stored", "completed", "failed", "cancelled"]
     },
     "message": {
       "type": "string",

@@ -139,12 +139,39 @@ pub struct ImportTask {
     worker: JoinHandle<ChefResult<ImportOutput>>,
 }
 
+/// Clonable cooperative cancellation handle for application adapters.
+#[derive(Debug, Clone)]
+pub struct ImportCancellation {
+    cancel: Arc<AtomicBool>,
+    cancel_notify: Arc<Notify>,
+}
+
+impl ImportCancellation {
+    /// Request cancellation between records or while the event channel is blocked.
+    pub fn cancel(&self) {
+        self.cancel.store(true, Ordering::SeqCst);
+        self.cancel_notify.notify_one();
+    }
+
+    /// Check whether a cancellation request has been recorded.
+    pub fn is_cancelled(&self) -> bool {
+        self.cancel.load(Ordering::SeqCst)
+    }
+}
+
 impl ImportTask {
     /// Request cooperative cancellation. The importer checks between records and
     /// while publishing events, including when a bounded channel applies backpressure.
     pub fn cancel(&self) {
-        self.cancel.store(true, Ordering::SeqCst);
-        self.cancel_notify.notify_one();
+        self.cancellation().cancel();
+    }
+
+    /// Clone a handle that lets an application cancel this job by its public ID.
+    pub fn cancellation(&self) -> ImportCancellation {
+        ImportCancellation {
+            cancel: Arc::clone(&self.cancel),
+            cancel_notify: Arc::clone(&self.cancel_notify),
+        }
     }
 
     pub async fn next_event(&mut self) -> Option<ImportJobEvent> {

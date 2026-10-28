@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import type { ApiClient } from '../api/ApiClient';
 import type { ScopePolicyDto, SnapshotDto } from '../contracts/snapshot';
@@ -13,7 +13,11 @@ export function EvidenceImportPanel({ client, onImported }: Props) {
   const [scopeFile, setScopeFile] = useState<File | null>(null);
   const [presetId, setPresetId] = useState('');
   const [busy, setBusy] = useState(false);
+  const [cancelable, setCancelable] = useState(false);
   const [status, setStatus] = useState('');
+  const importController = useRef<AbortController | null>(null);
+
+  useEffect(() => () => importController.current?.abort(), []);
 
   async function importFile() {
     if (!jsonlFile || !scopeFile || !client.importBbotJsonl || busy) return;
@@ -25,7 +29,10 @@ export function EvidenceImportPanel({ client, onImported }: Props) {
     }
 
     setBusy(true);
+    setCancelable(true);
     setStatus('Validando e importando evidencia local…');
+    const controller = new AbortController();
+    importController.current = controller;
     try {
       const [jsonl, scopeText] = await Promise.all([
         jsonlFile.text(),
@@ -33,17 +40,30 @@ export function EvidenceImportPanel({ client, onImported }: Props) {
       ]);
       const scope = parseScopePolicy(JSON.parse(scopeText));
       const snapshot = await client.importBbotJsonl(jsonl, scope, {
+        signal: controller.signal,
+        onPhase: (phase) => {
+          setCancelable(
+            !controller.signal.aborted &&
+              (phase === 'started' || phase === 'event'),
+          );
+        },
         ...(presetId ? { presetId } : {}),
       });
       onImported(snapshot);
       setStatus('Importación terminada y guardada en el almacén local CHEF.');
     } catch (error) {
       setStatus(
-        error instanceof Error
-          ? `No se pudo importar: ${error.message}`
-          : 'No se pudo importar el archivo BBOT.',
+        controller.signal.aborted &&
+          error instanceof DOMException &&
+          error.name === 'AbortError'
+          ? 'Importación cancelada; no se guardó el snapshot.'
+          : error instanceof Error
+            ? `No se pudo importar: ${error.message}`
+            : 'No se pudo importar el archivo BBOT.',
       );
     } finally {
+      importController.current = null;
+      setCancelable(false);
       setBusy(false);
     }
   }
@@ -100,6 +120,17 @@ export function EvidenceImportPanel({ client, onImported }: Props) {
       >
         {busy ? 'Importando…' : 'Importar JSONL'}
       </button>
+      {busy && cancelable && (
+        <button
+          type="button"
+          onClick={() => {
+            setCancelable(false);
+            importController.current?.abort();
+          }}
+        >
+          Cancelar importación
+        </button>
+      )}
       <p role="status" aria-live="polite">
         {status}
       </p>

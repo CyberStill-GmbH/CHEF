@@ -208,3 +208,7 @@ Se adaptó la parte local de `modules/internal/dnsresolve.py` que interpreta res
 ## 28-10-2026 — Alias y nombres PTR desde RDATA DNS
 
 `chef_dns_rdata_hints` amplía su parser offline para procesar CNAME, ANAME y PTR importados, además de MX/NAPTR/NS/SOA/SRV/TXT. Cada destino canónico produce `DNS_NAME_HINT` con el registro original como padre; el límite de 32 nombres por evento y el estado `hint` se mantienen. No interpreta A/AAAA como pista, no consulta DNS ni modifica Snapshot o scope. El cambio reutiliza `recon-graph 1.4.0`; equivalencia positiva/negativa y límites pendientes para la fase de pruebas.
+
+## 28-10-2026 — Cancelación de importación conectada a Tauri
+
+`ImportTask` ahora expone un handle cancelable clonable; el adaptador Tauri lo registra por `jobId` y ofrece `cancel_import_job`. React conecta `AbortSignal` y el botón Cancelar con ese comando. La transición entre cancelación y validación se serializa en el registro de trabajos: si la importación ya pasó a `validated`, el comando responde que ya no es cancelable; si acepta la cancelación, no persiste el snapshot. El contrato interno `scan-log` pasa a `1.1.0` y añade `cancelled`, con esquema y ejemplo. Pasaron formato Rust, check/Clippy del core y validador documental; pruebas de carrera, análisis cancelado, no persistencia y cancelación tardía quedan pendientes según la fase indicada por el propietario.

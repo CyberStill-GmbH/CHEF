@@ -1,8 +1,14 @@
 export type ScanLogPhase =
-  'started' | 'event' | 'validated' | 'stored' | 'completed' | 'failed';
+  | 'started'
+  | 'event'
+  | 'validated'
+  | 'stored'
+  | 'completed'
+  | 'failed'
+  | 'cancelled';
 
 export interface ScanLogDto {
-  schemaVersion: '1.0.0';
+  schemaVersion: '1.1.0';
   jobId: string;
   sequence: number;
   phase: ScanLogPhase;

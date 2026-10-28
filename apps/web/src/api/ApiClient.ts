@@ -1,6 +1,6 @@
 import type { SnapshotDto } from '../contracts/snapshot';
 import type { ReconGraphDto } from '../contracts/recon-graph';
-import type { ScanLogDto } from '../contracts/scan-log';
+import type { ScanLogDto, ScanLogPhase } from '../contracts/scan-log';
 import type { ChefConfigDto } from '../contracts/chef-config';
 import type { EventStatisticsDto } from '../contracts/event-statistics';
 import type { ScopePolicyDto } from '../contracts/snapshot';
@@ -23,7 +23,11 @@ export interface ApiClient {
   importBbotJsonl?(
     jsonl: string,
     scope: ScopePolicyDto,
-    options?: { signal?: AbortSignal; presetId?: string },
+    options?: {
+      signal?: AbortSignal;
+      presetId?: string;
+      onPhase?: (phase: ScanLogPhase) => void;
+    },
   ): Promise<SnapshotDto>;
   listenScanLogs?(
     listener: (event: ScanLogDto) => void,
