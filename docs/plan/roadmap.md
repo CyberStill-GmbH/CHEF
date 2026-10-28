@@ -1,26 +1,31 @@
-# Roadmap de CHEF
+# Hoja de ruta de CHEF
 
-Actualizado 29-09-2026. **La web es el producto primero; Burp viene después.** La presentación objetivo es 31-10-2026. El propietario pidió prototipo privado desplegado para el equipo, con GitHub OAuth, PostgreSQL/Prisma, Nmap autorizado, una fuente OSINT pasiva, correlación explicada, mapa y exportación. El [análisis de capacidad](../research/feasibility.md) advierte que este alcance completo supera 10 h/semana por cada una de tres personas. No se transforma un objetivo deseado en un compromiso sin refinement.
+Actualizado 18-10-2026. **Dirección vigente: aplicación local Tauri/Rust, con UI React y SurrealDB embebida sobre RocksDB.** El [diseño de persistencia](../architecture/persistencia-local.md), [arquitectura de escritorio](../architecture/desktop-tauri.md), [ADR 0012](../adr/0012-escritorio-tauri-rust.md) y [backlog de migración](backlog-desktop.md) contienen decisión y estados. La antigua ruta web Node/Go se conserva como antecedente, sin implementación.
 
-## Etapa 0 · base ya existente
+## Etapa 0 · núcleo de referencia implementado
 
-Núcleo/CLI TypeScript offline, Nmap XML subset, scope, IDs deterministas, evidencia y snapshot versionado; tests y CI. El spike Montoya Java es aparte y su uso en Burp requiere prueba manual. Esta base se conserva en todas las etapas mediante fixtures/golden y `npm run check`.
+CLI y dominio TypeScript offline, importador Nmap XML acotado, alcance literal, IDs deterministas, evidencia, controles negativos y `Snapshot 1.0.0`; explorador React/Vite local y spike Java/Montoya separado. Esta etapa se mantiene disponible hasta demostrar conformidad del port Rust. No se encuentra backend Python en el checkout actual.
 
-## Etapa 1 · vertical web de octubre, sujeta a capacidad
+## Etapa 1 · vertical de escritorio offline
 
-1. **29-09–05-10:** revisar frontera Node–Go/contrato, verificar Common Crawl/permiso y fijar corte viable. Gate: sin fuente/dataset autorizado se rotula fixture sintético y se retira claim de OSINT viva; sin spike Go no se promete correlación web.
-2. **06-10–12-10:** API Node que reutiliza parser/caso Nmap, proyecto y PostgreSQL/Prisma detrás de puerto; spike de contrato/transporte Go antes de prometer correlación web. Gate: CLI sin regresión, dos proyectos aislados, salida atómica.
-3. **13-10–19-10:** una fuente pasiva y una relación fuerte/candidata explicada; grafo/lista y panel de evidencia. Gate: control negativo, fechas, regla y dos procedencias.
-4. **20-10–30-10:** export, UX/accesibilidad, GitHub OAuth, despliegue privado y ensayo comparativo **solo según capacidad real**. Gate: no llamar multiusuario al prototipo sin sesiones/IDOR/backup/migración probados. Freeze 30-10 y presentación 31-10 con estado honesto.
+1. **Toolchain y shell:** Rust/Tauri v2 compilable en el sistema objetivo, capabilities mínimas y UI React actual dentro del WebView.
+2. **Núcleo Rust:** portar por incrementos el parser/casos de uso necesarios; comparar salida e IDs con fixtures/golden TypeScript antes de cambiar la autoridad.
+3. **Trabajo y logs:** comando asíncrono, cancelación, cola acotada y evento `scan-log` versionado; xterm.js muestra texto estructurado de una simulación offline.
+4. **Persistencia local:** adaptador SurrealDB/RocksDB inicial escrito para snapshot por `runId`; validar build y completar compatibilidad de esquema, grafo, backup y restauración. Vectores quedan propuestos hasta medir un caso de uso.
+5. **Entrega de octubre:** demo offline repetible y estado de cada pieza; validación manual del build en Windows. Otros sistemas se reportan pendientes hasta disponer de CI/entorno.
 
-La [pauta Scrum detallada](../proposals/2026-09-scrum-to-oct31.md) muestra objetivo, tareas de cada persona, estimaciones, gates y recortes. La [pauta Daily](daily-scrum.md) convierte cada sprint en trabajo coordinado. El fallback técnico del núcleo offline permanece disponible; mostrarlo no cumple por sí solo la nueva meta web.
+El [plan Scrum vigente](scrum-actual.md) divide esta etapa entre César, Diego y Jhojan. La carga Nmap, la simulación y la base local se implementan sin transmitir tráfico a objetivos.
 
-## Etapa 2 · producto web completo, sin fecha fijada
+## Etapa 2 · fuentes pasivas y sincronización optativa
 
-Conectar fuente pasiva real con licencia/permiso, completar proyectos/OAuth y operación privada, historial temporal, refresco con latencia y frescura medida, export JSON e imagen segura, observabilidad y evaluación con pentesters. Añadir conectores OSINT por valor/fiabilidad, uno por PR y contrato. El mapa “en tiempo real” se reclama solo con SLA observado; antes se muestra “última actualización”. Un worker de reconocimiento activo se evalúa únicamente tras nueva autorización/ADR/aislamiento.
+Evaluar conectores individualmente tras verificar términos, cuenta, permiso, cuota y datos permitidos. Los secretos se guardan fuera de TOML; la UI enseña proveedor, datos enviados y destino antes de cada consulta. La sincronización DefectDojo es una acción separada con vista previa/confirmación, redacción, manejo de errores y registro local. No se consulta ningún dominio de cliente por defecto.
 
-## Etapa 3 · integración Burp/BApp, posterior
+## Etapa 3 · descubrimiento activo (gate nuevo)
 
-Elegir BApp autónoma o cliente del servicio, mantener conformance Java/TypeScript, probar manualmente carga/unload/performance y demostrar ahorro dentro de Burp. Revisar [criterios PortSwigger](https://portswigger.net/burp/documentation/desktop/extend-burp/extensions/creating/bapp-store-acceptance-criteria) en fecha de postulación. No fijar entrega ni prometer aceptación antes de cerrar el producto web y validar el valor diferencial.
+DNS/HTTP no se ejecuta hasta que un ADR específico documente autorización escrita, targets/IP/puertos, política de resolución/redirect, rate/concurrency, timeout, cancelación, auditoría y entorno de prueba. Sin esa autorización, la función sigue desactivada; la demo usa fixtures y se identifica como simulación.
 
-Cada gate puede reordenar Product Backlog con evidencia; los criterios de Done, scope, integridad y seguridad no se recortan. Decisiones y cambios viven en [ADRs](../adr/README.md), [backlog](backlog.md) y actas/PRs.
+## Etapa 4 · integración Burp
+
+Reevaluar la utilidad del spike Montoya después de validar el escritorio local. Mantener conformidad mediante fixtures compartidos; ejecutar tests manuales de carga/unload en Burp y documentar por separado lo hecho y lo pendiente. No afirmar aceptación BApp por compilar un JAR.
+
+Los gates cambian con evidencia y capacidad real. No confundir seleccionado, propuesto, implementado, probado automáticamente, validado manualmente ni publicado. Los registros de septiembre permanecen en las propuestas históricas; la dirección actual se enlaza desde el [índice de documentación](../README.md).

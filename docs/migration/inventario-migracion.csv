@@ -1,0 +1,467 @@
+archivo_origen,lineas_python,subsistema,destino_chef_rust,estado
+chef-engine/__init__.py,6,Herramienta auxiliar,Evaluar; portar solo lo necesario al flujo CHEF y documentar exclusión,Pendiente
+chef-engine/cli.py,452,Herramienta auxiliar,Evaluar; portar solo lo necesario al flujo CHEF y documentar exclusión,Pendiente
+chef-engine/constants.py,72,Herramienta auxiliar,Evaluar; portar solo lo necesario al flujo CHEF y documentar exclusión,Pendiente
+chef-engine/core/__init__.py,3,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
+chef-engine/core/config/__init__.py,12,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
+chef-engine/core/config/files.py,82,Configuración,"apps/desktop/src-tauri/src/config_store.rs y comando load_chef_config; TOML opcional CHEF limitado y seguro; YAML, secretos y rutas temporales fuente de referencia excluidos",Parcial
+chef-engine/core/config/logger.py,273,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
+chef-engine/core/config/merge.py,94,Configuración,"packages/rust-core/src/config_merge.rs; merge profundo TOML, dotted_get/set e iteración de rutas con límites CHEF",Parcial
+chef-engine/core/config/models.py,488,Motor/escáner,"Configuración TOML tipada CHEF, sin secretos y con capacidades activas bloqueadas",Parcial
+chef-engine/core/core.py,224,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
+chef-engine/core/event/__init__.py,3,Modelo/eventos,"Evidencia, activos tipados, linaje y relaciones CHEF",Pendiente
+chef-engine/core/event/base.py,2482,Modelo/eventos,"Grafo fuente CHEF con UUID, linaje, redacción, deduplicación y límites; importa OPEN_*_PORT y HTTP_RESPONSE saneado; scope_distance ausente usa default fuente de referencia 10, null se rechaza y parserVersion es 1.1.0; distingue unresolved y pistas en recon-graph 1.4.0",Parcial
+chef-engine/core/event/helpers.py,305,Modelo/eventos,"packages/rust-core/src/target_seed.rs; clasifica IP, CIDR, DNS, URL HTTP(S), host:puerto y ASN sin expandir ni consultar; correo y otros EventSeed pendientes",Parcial
+chef-engine/core/event/spill.py,225,Modelo/eventos,Excluido: CHEF descarta cuerpo y cabeceras HTTP antes de persistir; no necesita caché temporal ni spill a disco. El importador limita archivo/línea y usa canales Tokio acotados.,Excluido
+chef-engine/core/flags.py,25,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
+chef-engine/core/helpers/__init__.py,4,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
+chef-engine/core/helpers/asn.py,118,Motor/escáner,"packages/rust-core/src/asn.rs; normaliza respuesta asndb con CIDR canónicos y límites, modela el circuit breaker de 5 fallos y reintentos de semilla (3 intentos/3 s); falta adaptador HTTP autorizado e integración de UI",Parcial
+chef-engine/core/helpers/async_helpers.py,165,Motor/escáner,"packages/rust-core/src/jobs.rs cubre workers Tokio, canal acotado y cancelación cooperativa que despierta ante backpressure; keyed_lock.rs añade locks async por clave con registro acotado y limpieza de claves ociosas. TaskCounter vivo y caché async quedan pendientes. El puente sync/async de Python y ShuffleQueue aleatoria no se trasladan al flujo Tauri determinista",Parcial
+chef-engine/core/helpers/bloom.py,77,Motor/escáner,"Excluido del núcleo CHEF actual: Bloom admite falsos positivos y la fuente lo usa para saltar mutaciones y respuestas, lo que podría omitir evidencia; el motor CHEF usa deduplicación exacta. Reevaluar solo con una función CHEF de alto volumen y una política explícita de errores",Excluido
+chef-engine/core/helpers/cache.py,53,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
+chef-engine/core/helpers/command.py,320,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
+chef-engine/core/helpers/depsinstaller/__init__.py,3,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
+chef-engine/core/helpers/depsinstaller/installer.py,600,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
+chef-engine/core/helpers/depsinstaller/sudo_askpass.py,41,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
+chef-engine/core/helpers/diff.py,376,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
+chef-engine/core/helpers/dns/__init__.py,1,Helper DNS,Puerto/adaptador DNS Rust; ejecución desactivada sin scope autorizado,Pendiente
+chef-engine/core/helpers/dns/brute.py,190,Helper DNS,Puerto/adaptador DNS Rust; ejecución desactivada sin scope autorizado,Pendiente
+chef-engine/core/helpers/dns/dns.py,469,Helper DNS,"dns_policy.rs adapta omisiones y circuit breaker acotado por zona/type; dns_cache.rs añade caché TTL LRU bounded por host/tipo con tiempo monotónico, todavía sin conectar a un resolver. BlastDNS, batch, wildcard y conectividad del adaptador siguen pendientes",Parcial
+chef-engine/core/helpers/dns/helpers.py,299,Helper DNS,"dns_records.rs adapta DNS_RECORD_TYPES, service_record y extract_targets de RDATA/TXT-SPF con límite de 64 KiB; dns_format.rs conserva record_to_text con límite de 64 KiB; el catálogo common_srvs sigue pendiente",Parcial
+chef-engine/core/helpers/files.py,166,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
+chef-engine/core/helpers/git.py,30,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
+chef-engine/core/helpers/helper.py,369,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
+chef-engine/core/helpers/interactsh.py,353,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
+chef-engine/core/helpers/libmagic.py,65,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
+chef-engine/core/helpers/misc.py,3016,Motor/escáner,packages/rust-core/src/speculate.rs (parent_directory/url_parents) port_spec.rs (parse_port_string) y text_policy.rs (validación/escape de controles y truncado Unicode acotado); quedan helpers por clasificar,Parcial
+chef-engine/core/helpers/names_generator.py,775,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
+chef-engine/core/helpers/ntlm.py,80,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
+chef-engine/core/helpers/process.py,53,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
+chef-engine/core/helpers/ratelimiter.py,61,Motor/escáner,packages/rust-core/src/rate_limit.rs; reserva turnos por tiempo monotónico y deja la espera a la aplicación; integración por adaptador de red y pruebas equivalentes pendientes,Parcial
+chef-engine/core/helpers/regex.py,113,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
+chef-engine/core/helpers/regexes.py,224,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
+chef-engine/core/helpers/simhash.py,116,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
+chef-engine/core/helpers/url.py,235,Motor/escáner,"url_tools.rs canonicaliza HTTP(S) para objetivos/activos; url_policy.rs porta profundidad de ruta y validación de FQDN/IP; utilidades de parámetros y fingerprint pendientes",Parcial
+chef-engine/core/helpers/validators.py,363,Motor/escáner,"host.rs y url_policy.rs validan/canonicalizan IDNA, FQDN e IP para scope, importación y grafo; correo y otros validadores siguen pendientes",Parcial
+chef-engine/core/helpers/web/__init__.py,1,Helper HTTP,Puerto/adaptador HTTP Rust; ejecución desactivada sin scope autorizado,Pendiente
+chef-engine/core/helpers/web/envelopes.py,382,Helper HTTP,Puerto/adaptador HTTP Rust; ejecución desactivada sin scope autorizado,Pendiente
+chef-engine/core/helpers/web/response_event.py,96,Helper HTTP,Puerto/adaptador HTTP Rust; ejecución desactivada sin scope autorizado,Pendiente
+chef-engine/core/helpers/web/ssl_context.py,8,Helper HTTP,Puerto/adaptador HTTP Rust; ejecución desactivada sin scope autorizado,Pendiente
+chef-engine/core/helpers/web/web.py,797,Helper HTTP,Puerto/adaptador HTTP Rust; ejecución desactivada sin scope autorizado,Pendiente
+chef-engine/core/helpers/wordcloud.py,526,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
+chef-engine/core/helpers/yara_helper.py,50,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
+chef-engine/core/modules.py,1182,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
+chef-engine/core/multiprocess.py,58,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
+chef-engine/core/shared_deps.py,240,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
+chef-engine/errors.py,78,Herramienta auxiliar,Evaluar; portar solo lo necesario al flujo CHEF y documentar exclusión,Pendiente
+chef-engine/logger.py,103,Herramienta auxiliar,Evaluar; portar solo lo necesario al flujo CHEF y documentar exclusión,Pendiente
+chef-engine/models/helpers.py,20,Modelo/eventos,"Evidencia, activos tipados, linaje y relaciones CHEF",Pendiente
+chef-engine/models/pydantic.py,159,Modelo/eventos,Importación JSONL fuente de referencia y proyección a evidencia y activos tipados CHEF; tipos pendientes quedan contabilizados,Parcial
+chef-engine/models/sql.py,136,Modelo/eventos,"Evidencia, activos tipados, linaje y relaciones CHEF",Pendiente
+chef-engine/modules/__init__.py,0,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/ajaxpro.py,91,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/anubisdb.py,55,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/apkpure.py,71,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/aspnet_bin_exposure.py,86,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/azure_tenant.py,549,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/baddns.py,206,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/baddns_direct.py,92,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/baddns_zone.py,34,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/badsecrets.py,114,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/base.py,2006,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/bevigil.py,77,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/bucket_amazon.py,24,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/bucket_digitalocean.py,24,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/bucket_file_enum.py,59,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/bucket_firebase.py,39,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/bucket_google.py,66,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/bucket_hetzner.py,29,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/bucket_microsoft.py,36,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/bufferoverrun.py,49,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/builtwith.py,133,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/bypass403.py,191,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/c99.py,40,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/censys_dns.py,83,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/censys_ip.py,184,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/certspotter.py,73,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/chaos.py,99,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/code_repository.py,56,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/credshed.py,110,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/crt.py,44,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/crt_db.py,84,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/dehashed.py,122,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/dnsbimi.py,134,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/dnsbrute.py,71,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/dnsbrute_mutations.py,156,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/dnscaa.py,130,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/dnscommonsrv.py,43,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/dnsdumpster.py,75,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/dnstlsrpt.py,130,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/docker_pull.py,234,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/dockerhub.py,89,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/dotnetnuke.py,219,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/emailformat.py,47,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/filedownload.py,202,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/fingerprintx.py,107,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/fullhunt.py,40,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/generic_ssrf.py,262,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/git.py,53,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/git_clone.py,105,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/gitdumper.py,325,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/github_codesearch.py,87,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/github_org.py,211,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/github_usersearch.py,76,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/github_workflows.py,251,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/gitlab_com.py,34,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/gitlab_onprem.py,87,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/google_playstore.py,93,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/gowitness.py,310,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/graphql_introspection.py,152,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/hackertarget.py,31,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/host_header.py,196,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/http.py,393,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/hunt.py,324,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/hunterio.py,62,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/iis_shortnames.py,390,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/internal/__init__.py,0,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/internal/aggregate.py,14,Módulo de reconocimiento,packages/rust-core/src/statistics.rs; resumen offline CHEF por tipo y módulo,Parcial
+chef-engine/modules/internal/base.py,16,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/internal/cloudcheck.py,267,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/internal/dnsresolve.py,390,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/internal/excavate.py,1717,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/internal/python.py,27,Módulo de reconocimiento,packages/rust-core/src/jobs.rs y apps/desktop/src-tauri/src/lib.rs; importa NDJSON offline y transmite eventos saneados por canal acotado,Parcial
+chef-engine/modules/internal/speculate.py,219,Módulo de reconocimiento,"packages/rust-core/src/speculate.rs; pistas URL y dominios padre (PSL ICANN), TCP 80/443, puertos URL, expansión IP_RANGE hasta 256 y ORG_STUB Unicode/ASCII desde dominio raíz además de SOCIAL/AZURE_TENANT; offline, opt-in y con procedencia",Parcial
+chef-engine/modules/internal/unarchive.py,165,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/ip2location.py,77,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/ipneighbor.py,46,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/ipstack.py,59,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/jadx.py,86,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/kreuzberg.py,127,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/leakix.py,40,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/legba.py,237,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/lightfuzz/lightfuzz.py,428,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/lightfuzz/submodules/__init__.py,0,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/lightfuzz/submodules/base.py,462,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/lightfuzz/submodules/cmdi.py,209,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/lightfuzz/submodules/crypto.py,858,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/lightfuzz/submodules/esi.py,80,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/lightfuzz/submodules/path.py,231,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/lightfuzz/submodules/serial.py,424,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/lightfuzz/submodules/sqli.py,319,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/lightfuzz/submodules/ssrf.py,42,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/lightfuzz/submodules/ssti.py,72,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/lightfuzz/submodules/xss.py,357,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/medusa.py,231,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/myssl.py,29,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/newsletters.py,67,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/ntlm.py,144,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/nuclei.py,494,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/oauth.py,183,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/otx.py,36,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/output/__init__.py,0,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
+chef-engine/modules/output/asset_inventory.py,377,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
+chef-engine/modules/output/base.py,95,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
+chef-engine/modules/output/csv.py,89,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
+chef-engine/modules/output/discord.py,17,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
+chef-engine/modules/output/elastic.py,31,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
+chef-engine/modules/output/emails.py,38,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
+chef-engine/modules/output/json.py,39,Salida,Exportación local Snapshot CHEF JSON desde Tauri; el JSONL fuente se conserva por separado,Parcial
+chef-engine/modules/output/kafka.py,48,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
+chef-engine/modules/output/mongo.py,93,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
+chef-engine/modules/output/mysql.py,53,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
+chef-engine/modules/output/nats.py,51,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
+chef-engine/modules/output/neo4j.py,161,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
+chef-engine/modules/output/nmap_xml.py,172,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
+chef-engine/modules/output/postgres.py,51,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
+chef-engine/modules/output/rabbitmq.py,63,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
+chef-engine/modules/output/slack.py,32,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
+chef-engine/modules/output/splunk.py,56,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
+chef-engine/modules/output/sqlite.py,35,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
+chef-engine/modules/output/stdout.py,92,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
+chef-engine/modules/output/subdomains.py,45,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
+chef-engine/modules/output/teams.py,101,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
+chef-engine/modules/output/txt.py,34,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
+chef-engine/modules/output/web_parameters.py,55,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
+chef-engine/modules/output/web_report.py,104,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
+chef-engine/modules/output/webhook.py,68,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
+chef-engine/modules/output/websocket.py,73,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
+chef-engine/modules/output/zeromq.py,46,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
+chef-engine/modules/paramminer_cookies.py,45,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/paramminer_getparams.py,92,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/paramminer_headers.py,359,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/pgp.py,50,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/portfilter.py,43,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/portscan.py,336,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/postman.py,109,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/postman_download.py,94,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/rapiddns.py,23,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/reflected_parameters.py,92,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/report/affiliates.py,44,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/report/asn.py,81,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/report/base.py,5,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/retirejs.py,230,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/robots.py,52,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/securitytrails.py,36,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/securitytxt.py,122,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/shodan_dns.py,23,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/shodan_enterprise.py,158,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/shodan_idb.py,241,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/skymem.py,55,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/social.py,59,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/sslcert.py,94,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/subdomaincenter.py,26,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/subdomainradar.py,166,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/telerik.py,424,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/templates/bucket.py,201,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/templates/censys.py,54,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/templates/github.py,74,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/templates/gitlab.py,97,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/templates/postman.py,182,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/templates/shodan.py,35,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/templates/sql.py,115,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/templates/subdomain_enum.py,210,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/templates/webhook.py,94,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/trajan.py,272,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/trickest.py,39,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/trufflehog.py,220,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/url_manipulation.py,117,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/urlscan.py,84,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/viewdns.py,72,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/virtualhost.py,1029,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/virustotal.py,30,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/waf_bypass.py,284,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/wafw00f.py,72,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/wayback.py,787,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/webbrute.py,369,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/webbrute_shortnames.py,382,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/scanner/__init__.py,33,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
+chef-engine/scanner/dispatcher.py,33,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
+chef-engine/scanner/manager.py,294,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
+chef-engine/scanner/preset/__init__.py,30,Preset/configuración,"Configuración CHEF validada, sin ampliar scope silenciosamente",Pendiente
+chef-engine/scanner/preset/args.py,535,Preset/configuración,"Configuración CHEF validada, sin ampliar scope silenciosamente",Pendiente
+chef-engine/scanner/preset/conditions.py,54,Preset/configuración,"Configuración CHEF validada, sin ampliar scope silenciosamente",Pendiente
+chef-engine/scanner/preset/environ.py,149,Preset/configuración,"Configuración CHEF validada, sin ampliar scope silenciosamente",Pendiente
+chef-engine/scanner/preset/path.py,107,Preset/configuración,"Configuración CHEF validada, sin ampliar scope silenciosamente",Pendiente
+chef-engine/scanner/preset/preset.py,1142,Preset/configuración,packages/rust-core/src/presets.rs y Tauri import_bbot_jsonl: composición CHEF acotada y aplicación por trabajo de tres perfiles; catálogo/opciones fuente de referencia restantes pendientes,Parcial
+chef-engine/scanner/preset/validate.py,317,Preset/configuración,Validación estricta de config/presets CHEF; conformidad de validación fuente de referencia pendiente,Parcial
+chef-engine/scanner/scanner.py,1525,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
+chef-engine/scanner/stats.py,165,Motor/escáner,packages/rust-core/src/statistics.rs; producción/consumo por módulo; velocidad por ventana pendiente,Parcial
+chef-engine/scanner/target.py,440,Motor/escáner,Scope literal CHEF para importaciones; reglas fuente de referencia completas pendientes y no habilitan red,Parcial
+chef-engine/scripts/benchmark_report.py,494,Herramienta auxiliar,Evaluar; portar solo lo necesario al flujo CHEF y documentar exclusión,Pendiente
+chef-engine/scripts/docs.py,308,Herramienta auxiliar,Evaluar; portar solo lo necesario al flujo CHEF y documentar exclusión,Pendiente
+chef-engine/test/__init__.py,0,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/bbot_fixtures.py,281,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/benchmarks/__init__.py,2,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/benchmarks/_eventloop_profiler.py,364,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/benchmarks/_memory_helpers.py,345,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/benchmarks/_scan_memory_deep_chain.py,150,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/benchmarks/_scan_memory_parallel_chains.py,158,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/benchmarks/_scan_memory_subdomain_enum.py,110,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/benchmarks/_scan_memory_web_crawl.py,131,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/benchmarks/test_bloom_filter_benchmarks.py,105,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/benchmarks/test_closest_match_benchmarks.py,76,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/benchmarks/test_event_memory_benchmarks.py,120,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/benchmarks/test_event_validation_benchmarks.py,436,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/benchmarks/test_excavate_benchmarks.py,295,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/benchmarks/test_intercept_throughput_benchmarks.py,249,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/benchmarks/test_ipaddress_benchmarks.py,143,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/benchmarks/test_scan_memory.py,197,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/benchmarks/test_scan_throughput_benchmarks.py,91,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/benchmarks/test_weighted_shuffle_benchmarks.py,70,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/conftest.py,534,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/fastapi_test.py,17,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/mock_blasthttp.py,207,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_1/__init__.py,0,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_1/test__module__tests.py,37,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_1/test_bbot_fastapi.py,83,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_1/test_bloom_filter.py,71,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_1/test_body_spill.py,278,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_1/test_cli.py,1093,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_1/test_command.py,150,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_1/test_config.py,24,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_1/test_db_models.py,93,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_1/test_depsinstaller.py,158,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_1/test_dns.py,912,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_1/test_docs.py,4,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_1/test_e2e.py,216,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_1/test_event_seeds.py,160,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_1/test_events.py,1385,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_1/test_excavate_url_regexes.py,70,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_1/test_field_metadata.py,159,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_1/test_files.py,25,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_1/test_gitdumper_safeguards.py,141,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_1/test_helpers.py,1352,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_1/test_manager_deduplication.py,186,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_1/test_manager_scope_accuracy.py,891,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_1/test_merge.py,164,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_1/test_modules_basic.py,651,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_1/test_preset_seeds.py,25,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_1/test_presets.py,1566,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_1/test_python_api.py,174,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_1/test_regexes.py,431,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_1/test_scan.py,522,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_1/test_scope.py,118,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_1/test_target.py,876,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_1/test_validate_preset.py,330,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_1/test_web.py,804,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_1/test_web_envelopes.py,417,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_1/test_web_rate_limit.py,90,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_1/test_worker_count.py,81,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_1/test_worker_isolation.py,85,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/__init__.py,0,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/__init__.py,0,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/base.py,195,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_affiliates.py,20,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_aggregate.py,13,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_ajaxpro.py,76,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_anubisdb.py,13,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_apkpure.py,73,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_asn.py,82,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_aspnet_bin_exposure.py,88,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_asset_inventory.py,99,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_azure_tenant.py,318,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_baddns.py,214,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_baddns_direct.py,66,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_baddns_zone.py,87,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_badsecrets.py,225,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_bevigil.py,51,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_bucket_amazon.py,115,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_bucket_digitalocean.py,10,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_bucket_file_enum.py,46,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_bucket_firebase.py,13,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_bucket_google.py,27,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_bucket_hetzner.py,8,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_bucket_microsoft.py,61,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_bufferoverrun.py,35,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_builtwith.py,110,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_bypass403.py,102,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_c99.py,151,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_censys_dns.py,83,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_censys_ip.py,323,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_certspotter.py,74,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_chaos.py,173,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_cloudcheck.py,280,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_code_repository.py,70,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_credshed.py,104,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_crt.py,15,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_crt_db.py,94,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_csv.py,15,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_dehashed.py,161,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_discord.py,40,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_dnsbimi.py,117,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_dnsbrute.py,229,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_dnsbrute_mutations.py,70,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_dnscaa.py,68,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_dnscommonsrv.py,166,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_dnsdumpster.py,16,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_dnsresolve.py,300,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_dnstlsrpt.py,70,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_docker_pull.py,607,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_dockerhub.py,96,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_dotnetnuke.py,182,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_elastic.py,129,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_emailformat.py,12,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_emails.py,23,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_excavate.py,2188,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_filedownload.py,92,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_fingerprintx.py,69,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_fullhunt.py,52,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_generic_ssrf.py,91,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_git.py,42,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_git_clone.py,231,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_gitdumper.py,421,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_github_codesearch.py,105,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_github_org.py,417,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_github_usersearch.py,138,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_github_workflows.py,655,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_gitlab_com.py,67,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_gitlab_onprem.py,212,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_google_playstore.py,83,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_gowitness.py,200,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_graphql_introspection.py,35,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_hackertarget.py,13,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_host_header.py,71,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_http.py,282,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_hunt.py,46,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_hunterio.py,160,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_iis_shortnames.py,131,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_ip2location.py,31,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_ipneighbor.py,15,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_ipstack.py,67,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_jadx.py,64,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_json.py,124,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_kafka.py,99,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_kreuzberg.py,90,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_leakix.py,26,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_legba.py,100,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_lightfuzz.py,5392,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_medusa.py,52,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_mongo.py,153,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_mysql.py,63,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_myssl.py,39,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_nats.py,67,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_neo4j.py,45,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_newsletters.py,58,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_nmap_xml.py,93,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_ntlm.py,25,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_nuclei.py,261,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_oauth.py,263,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_otx.py,30,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_paramminer_cookies.py,69,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_paramminer_getparams.py,290,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_paramminer_headers.py,309,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_pgp.py,35,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_portfilter.py,50,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_portscan.py,243,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_postgres.py,54,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_postman.py,471,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_postman_download.py,306,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_python.py,6,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_rabbitmq.py,71,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_rapiddns.py,108,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_reflected_parameters.py,256,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_retirejs.py,169,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_robots.py,43,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_securitytrails.py,21,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_securitytxt.py,50,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_shodan_dns.py,42,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_shodan_enterprise.py,136,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_shodan_idb.py,103,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_skymem.py,43,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_slack.py,7,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_social.py,70,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_speculate.py,177,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_splunk.py,58,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_sqlite.py,32,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_sslcert.py,19,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_stdout.py,170,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_subdomaincenter.py,13,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_subdomainradar.py,210,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_subdomains.py,29,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_teams.py,37,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_telerik.py,178,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_trajan.py,335,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_trickest.py,26,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_trufflehog.py,1398,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_txt.py,8,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_unarchive.py,357,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_url_manipulation.py,40,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_urlscan.py,58,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_viewdns.py,151,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_virtualhost.py,1128,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_virustotal.py,51,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_waf_bypass.py,193,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_wafw00f.py,51,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_wayback.py,730,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_web_parameters.py,61,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_web_report.py,71,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_webbrute.py,352,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_webbrute_shortnames.py,228,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_webhook.py,54,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_websocket.py,36,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_zeromq.py,46,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/template_tests/__init__.py,0,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/template_tests/test_template_subdomain_enum.py,244,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/worker.py,106,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/worker_count.py,39,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+examples/discord_bot.py,81,Herramienta auxiliar,Evaluar; portar solo lo necesario al flujo CHEF y documentar exclusión,Pendiente

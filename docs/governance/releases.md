@@ -2,7 +2,7 @@
 
 Estado0.1.0: preparación/core offline/spike, no release estable. No publicar binario como extensión aceptada. Demo tag propuesto `v0.1.0-demo` después de ensayos reales y review del equipo; el bootstrap no crea ese tag.
 
-Cada release incluirá changelog, schema/rules/parser version, commit, build reproducible, SHA-256 de artifact, licencias/notices, guía de uso y límites. Construir de checkout limpio usando lockfile y JDK/API fijados. Mantener `project.build.outputTimestamp` para JAR reproducible; comparar dos builds limpios.
+Cada release incluirá registro de cambios, versiones de esquema/reglas/parser, commit, compilación reproducible, SHA-256 del artefacto, `LICENSE`, avisos de terceros, código fuente correspondiente conforme a AGPL-3.0, guía de uso y límites. Construir desde un checkout limpio con lockfile y JDK/API fijados. Mantener `project.build.outputTimestamp` para el JAR reproducible y comparar dos builds limpios.
 
 Compatibilidad wire: major cuando cambia identidad/semántica; minor para extensión compatible solo si reader soporta explícitamente la versión. Actualmente Nmap snapshot1.0.0 y HTTP envelope1.1.0 propuesto son contratos diferentes con schemas distintos.
 

@@ -1,6 +1,6 @@
 # Sprint 0: preparación verificable
 
-**Registro histórico del bootstrap inicial.** El producto fue reorientado a web multiusuario el 29-09-2026; [roadmap](roadmap.md), [Product Backlog](backlog.md) y [Scrum reestimado](../proposals/2026-09-scrum-to-oct31.md) son la planificación vigente. No reabrir las tareas de core ya realizadas como trabajo nuevo.
+**Registro histórico del bootstrap inicial.** La etapa web multiusuario del 29-09-2026 fue retirada el 18-10-2026 al elegir la migración a escritorio Tauri/Rust. El [backlog de migración](backlog-desktop.md) y el [Scrum vigente](scrum-actual.md) son la planificación activa. No reabrir como trabajo nuevo tareas del core que ya están implementadas.
 
 Este bootstrap se realiza en `docs` y se integra en `main` tras checks. No se contabiliza como trabajo terminado por los estudiantes; deben revisar y apropiarse de contratos y decisiones.
 

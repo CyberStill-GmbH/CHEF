@@ -1,4 +1,6 @@
-# Propuesta para revisión: CHEF web antes de Burp
+# Antecedente histórico: propuesta CHEF web antes de Burp
+
+> Documento fechado el 29-09-2026 y retirado por la dirección de escritorio solicitada el 18-10-2026. La arquitectura actual se documenta en el [ADR 0012](../adr/0012-escritorio-tauri-rust.md), el [PRD de escritorio](../product/desktop-prd.md) y el [Scrum vigente](../plan/scrum-actual.md). Las decisiones Node.js/Go y el plan web que siguen se conservan como registro, no como alcance activo.
 
 Fecha: 29-09-2026. **Stack confirmado por el propietario; arquitectura en revisión, funciones no implementadas.** Esta rama deja intactos el núcleo, la CLI y los contratos publicados. El propietario actualizó la visión: React/TypeScript, **API Node.js con PostgreSQL/Prisma ORM y GitHub OAuth**, y **motor Go de correlación activo–pasivo** para una aplicación web alojable y multiusuario. La extensión Burp vendrá después. Esto sustituye el antiguo acuerdo de presentar la CLI como experiencia principal; la demostración offline sigue siendo prueba de regresión útil, no la meta de producto.
 

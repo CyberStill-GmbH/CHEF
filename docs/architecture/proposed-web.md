@@ -1,6 +1,6 @@
-# Arquitectura propuesta de CHEF web
+# Arquitectura web propuesta (antecedente)
 
-Fecha 29-09-2026. **Propuesta para revisión, no arquitectura implementada.** El propietario fijó React/TypeScript, API Node.js/TypeScript con GitHub OAuth y PostgreSQL/Prisma, y motor principal de correlación Go. El parser/caso de uso Nmap TypeScript y la CLI existentes siguen estables. El [ADR 0011](../adr/0011-node-go-boundary.md) define la frontera y los gates de conformidad; la selección de stack no acredita que la web o Go ya funcionen.
+Fecha original 29-09-2026. **Antecedente de una propuesta retirada, no arquitectura vigente ni implementada.** El 18-10-2026 el propietario eligió una aplicación de escritorio Tauri/Rust con SurrealDB embebida y RocksDB; consultar [arquitectura de escritorio](desktop-tauri.md), [diseño de persistencia](persistencia-local.md) y [ADR 0012](../adr/0012-escritorio-tauri-rust.md). Este documento se conserva para explicar decisiones previas; Node/Go no se desarrollaron en este checkout.
 
 ## Contexto y límites de confianza
 

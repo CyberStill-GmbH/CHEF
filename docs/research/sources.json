@@ -664,5 +664,113 @@
     "claim": "Railway admite build desde Dockerfile para el servicio.",
     "kind": "primary",
     "limitation": "Build multi-stage Node+Go pendiente de prueba real."
+  },
+  {
+    "id": "TAURI-V2-IPC",
+    "url": "https://v2.tauri.app/develop/calling-rust/",
+    "consultedAt": "2026-10-18",
+    "version": "documentación Tauri v2 consultada",
+    "claim": "Tauri ofrece comandos asíncronos y eventos/canales para comunicar el frontend con Rust; recomienda canales para transmitir flujos continuos.",
+    "kind": "primary",
+    "limitation": "No valida todavía el diseño, el rendimiento ni el empaquetado de CHEF."
+  },
+  {
+    "id": "TAURI-V2-SECURITY",
+    "url": "https://v2.tauri.app/security/capabilities/",
+    "consultedAt": "2026-10-18",
+    "version": "documentación Tauri v2 consultada",
+    "claim": "Las capacidades y permisos limitan qué comandos puede invocar cada ventana y qué recursos expone la aplicación.",
+    "kind": "primary",
+    "limitation": "No reemplaza las comprobaciones de autorización y alcance dentro del código Rust."
+  },
+  {
+    "id": "SURREAL-RUST-EMBED",
+    "url": "https://surrealdb.com/docs/reference/rust/embedding",
+    "consultedAt": "2026-10-18",
+    "version": "SDK 3.3.4; Rust 1.95 o posterior",
+    "claim": "El SDK Rust 3.3.4 ofrece almacenamiento embebido en memoria, RocksDB y SurrealKV; RocksDB requiere compilador C++ y libclang.",
+    "kind": "primary",
+    "limitation": "CHEF fija 3.3.4; el build RocksDB Windows aún debe validarse con NASM, C++ y libclang instalados."
+  },
+  {
+    "id": "SURREAL-STORAGE-ENGINES",
+    "url": "https://surrealdb.com/docs/build/embedding/storage-engines",
+    "consultedAt": "2026-10-18",
+    "version": "documentación de motores consultada",
+    "claim": "SurrealDB describe RocksDB y SurrealKV para almacenamiento persistente local; Sled no aparece entre los motores embebidos documentados.",
+    "kind": "primary",
+    "limitation": "La recomendación depende de la versión de SurrealDB y del perfil de uso."
+  },
+  {
+    "id": "SURREAL-DATA-MODELS",
+    "url": "https://surrealdb.com/docs",
+    "consultedAt": "2026-10-18",
+    "version": "documentación SurrealDB consultada",
+    "claim": "SurrealDB documenta modelos relacionales, documentos, grafos y vectores en un mismo motor; Rust puede ejecutarla embebida.",
+    "kind": "primary",
+    "limitation": "La documentación no sustituye un spike de almacenamiento, migración, recuperación y empaquetado en plataformas CHEF."
+  },
+  {
+    "id": "SURREAL-VECTOR-INDEXES",
+    "url": "https://surrealdb.com/docs/learn/data-models/vector-search/vector-indexes",
+    "consultedAt": "2026-10-18",
+    "version": "documentación vectorial consultada",
+    "claim": "SurrealDB ofrece búsqueda exacta por distancia y opciones de índice aproximado HNSW/DISKANN con distintos perfiles de memoria y disco.",
+    "kind": "primary",
+    "limitation": "La búsqueda aproximada puede omitir vecinos; CHEF no ha medido un corpus ni decidido un modelo de embeddings."
+  },
+  {
+    "id": "MONGODB-SEARCH-DEPLOYMENT",
+    "url": "https://www.mongodb.com/docs/vector-search/deployment/deployment-options/",
+    "consultedAt": "2026-10-18",
+    "version": "documentación MongoDB consultada",
+    "claim": "MongoDB documenta Atlas Local para pruebas/desarrollo y operación autogestionada de mongod/mongot para Search y Vector Search.",
+    "kind": "primary",
+    "limitation": "Las opciones/versiones de despliegue cambian; verificar la versión soportada antes de una decisión futura."
+  },
+  {
+    "id": "SQLITE-RECURSIVE-CTE",
+    "url": "https://www.sqlite.org/lang_with.html",
+    "consultedAt": "2026-10-18",
+    "version": "documentación SQLite consultada",
+    "claim": "Las CTE recursivas de SQLite permiten consultas jerárquicas y recorridos de grafos modelados con relaciones.",
+    "kind": "primary",
+    "limitation": "No valida el esquema CHEF ni su rendimiento con un corpus de producción."
+  },
+  {
+    "id": "RUSQLITE-0.40",
+    "url": "https://docs.rs/crate/rusqlite/latest",
+    "consultedAt": "2026-10-18",
+    "version": "0.40.2",
+    "claim": "rusqlite ofrece bindings Rust para SQLite y la función bundled compila una versión incluida de SQLite.",
+    "kind": "primary",
+    "limitation": "El adaptador CHEF aún debe validar tamaños, concurrencia, backup y migraciones multiplataforma."
+  },
+  {
+    "id": "SURREAL-CORE-LICENSE",
+    "url": "https://docs.rs/crate/surrealdb/latest",
+    "consultedAt": "2026-10-18",
+    "version": "3.3.4",
+    "claim": "La documentación del crate indica que el código núcleo de la base se distribuye bajo Business Source License 1.1; SDKs pueden tener licencias distintas.",
+    "kind": "primary",
+    "limitation": "CHEF selecciona SurrealDB para uso local; revisar la licencia exacta del núcleo, SDK y motores incluidos en cada versión antes de distribuir."
+  },
+  {
+    "id": "BBOT-UPSTREAM",
+    "url": "https://github.com/blacklanternsecurity/bbot",
+    "consultedAt": "2026-10-18",
+    "version": "3.0.2 (pyproject.toml de la copia local)",
+    "claim": "La carpeta indicada corresponde al proyecto BBOT; su manifiesto local declara AGPL-3.0 y enlaza el repositorio upstream de Black Lantern Security.",
+    "kind": "primary",
+    "limitation": "La copia local no conserva historial Git; no permite atribuir cambios ni demostrar autoría propia sobre el árbol Python."
+  },
+  {
+    "id": "BLASTDNS-RUST-API",
+    "url": "https://github.com/blacklanternsecurity/blastdns",
+    "consultedAt": "2026-10-19",
+    "version": "2.0.1 (crates.io; documentación oficial consultada)",
+    "claim": "BlastDNS ofrece una biblioteca Rust con concurrencia limitada, tasa, reintentos, caché TTL y consultas DNS simples/completas; la versión actual declara AGPL-3.0.",
+    "kind": "primary",
+    "limitation": "El lock de BBOT local fija BlastDNS 1.9.1/GPL-3.0; la versión 2.0.1 cambia la API y la licencia. CHEF no integra ni invoca el crate hasta resolver esa compatibilidad y el contrato de scope DNS."
   }
 ]

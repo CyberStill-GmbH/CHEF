@@ -1,6 +1,6 @@
 # ADR 0011: API Node.js, persistencia Prisma y motor de correlación Go
 
-Estado: **propuesto para revisión técnica; selección de lenguajes confirmada por el propietario**. Fecha: 29-09-2026. Responsables: César (API y reglas), Jhojan (fixtures y conformidad), Diego (contrato de explicación). Sustituye la recomendación íntegramente TypeScript del [ADR 0008](0008-web-platform.md) para la web futura. No cambia el [ADR 0001](0001-core-language.md) ni el comportamiento del CLI actual hasta completar una migración verificada.
+Estado: **retirado por decisión del propietario el 18-10-2026; conservado como antecedente**. La dirección futura Node–Go queda reemplazada por la propuesta de escritorio [ADR 0012](0012-escritorio-tauri-rust.md), aún pendiente de revisión técnica. Este documento conserva el análisis original; no hubo implementación Node/Go y el núcleo TypeScript/CLI actual no se migra por cambiar este estado.
 
 ## Contexto y decisión
 
