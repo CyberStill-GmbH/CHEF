@@ -102,7 +102,6 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2",
- "tokio",
  "toml",
  "url",
 ]
@@ -112,6 +111,7 @@ name = "chef-rust-adapters"
 version = "0.1.0"
 dependencies = [
  "chef-application",
+ "chef-core",
  "getrandom 0.4.3",
  "hickory-resolver",
  "tokio",

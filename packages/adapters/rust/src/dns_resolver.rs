@@ -3,9 +3,16 @@
 //! Construir este adaptador no inicia tráfico. Cada consulta requiere que una
 //! aplicación invoque el puerto desde un caso de uso con autorización vigente.
 
-use std::{collections::BTreeSet, net::IpAddr, time::Duration};
+use std::{
+    collections::BTreeSet,
+    net::IpAddr,
+    time::{Duration, Instant},
+};
 
-use chef_application::{DnsAnswer, DnsQueryRequest, DnsResolverFailure, DnsResolverPort};
+use chef_application::{
+    DnsAnswer, DnsQueryRequest, DnsResolverFailure, DnsResolverPort, KeyedLock,
+};
+use chef_core::DnsCache;
 use hickory_resolver::{
     TokioResolver,
     config::{NameServerConfig, ResolveHosts, ResolverConfig, ResolverOpts},
@@ -17,6 +24,7 @@ const MIN_UPSTREAMS: usize = 1;
 const MAX_UPSTREAMS: usize = 4;
 const MIN_TIMEOUT: Duration = Duration::from_millis(100);
 const MAX_TIMEOUT: Duration = Duration::from_secs(10);
+const DNS_CACHE_CAPACITY: usize = 1_000;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum DnsResolverConfigError {
@@ -58,6 +66,9 @@ impl DnsResolverConfig {
 pub struct HickoryDnsResolver {
     resolver: TokioResolver,
     timeout: Duration,
+    cache: tokio::sync::Mutex<DnsCache<Vec<DnsAnswer>>>,
+    query_locks: KeyedLock,
+    monotonic_origin: Instant,
 }
 
 impl HickoryDnsResolver {
@@ -83,9 +94,14 @@ impl HickoryDnsResolver {
                 .build()
                 .map_err(|_| DnsResolverConfigError::ResolverInitialization)?;
 
+        let cache = DnsCache::new(DNS_CACHE_CAPACITY)
+            .map_err(|_| DnsResolverConfigError::ResolverInitialization)?;
         Ok(Self {
             resolver,
             timeout: config.timeout,
+            cache: tokio::sync::Mutex::new(cache),
+            query_locks: KeyedLock::default(),
+            monotonic_origin: Instant::now(),
         })
     }
 }
@@ -97,6 +113,22 @@ impl DnsResolverPort for HickoryDnsResolver {
     ) -> Result<Vec<DnsAnswer>, DnsResolverFailure> {
         let record_type = parse_record_type(request.record_type().as_str())
             .ok_or(DnsResolverFailure::InvalidResponse)?;
+        let lock_key = format!("{}|{}", request.host(), record_type);
+        let _query_guard = self
+            .query_locks
+            .lock(lock_key)
+            .await
+            .map_err(|_| DnsResolverFailure::Other)?;
+        let now = self.monotonic_origin.elapsed();
+        if let Some(cached) = self
+            .cache
+            .lock()
+            .await
+            .get(request.host(), &record_type.to_string(), now)
+            .cloned()
+        {
+            return Ok(cached);
+        }
         let query_name = dns_query_name(request.host(), request.record_type().as_str())
             .ok_or(DnsResolverFailure::InvalidResponse)?;
         let lookup =
@@ -113,7 +145,7 @@ impl DnsResolverPort for HickoryDnsResolver {
             Err(error) => return Err(map_resolver_error(error)),
         };
 
-        lookup
+        let answers = lookup
             .answers()
             .iter()
             .map(|record| {
@@ -124,7 +156,23 @@ impl DnsResolverPort for HickoryDnsResolver {
                 )
                 .map_err(|_| DnsResolverFailure::InvalidResponse)
             })
-            .collect()
+            .collect::<Result<Vec<_>, _>>()?;
+        if !answers.is_empty()
+            && let Some(ttl) = answers.iter().map(DnsAnswer::ttl).min()
+        {
+            let mut cache = self.cache.lock().await;
+            // SRV owners may contain underscores, which are intentionally not
+            // accepted as asset host keys by `DnsCache`; those results simply
+            // remain uncached while the per-query lock still applies.
+            let _ = cache.insert(
+                request.host(),
+                &record_type.to_string(),
+                answers.clone(),
+                ttl,
+                self.monotonic_origin.elapsed(),
+            );
+        }
+        Ok(answers)
     }
 }
 

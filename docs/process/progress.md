@@ -253,3 +253,7 @@ Se trasladan los workers Tokio de importación y el lock por clave desde `chef-c
 ## 28-10-2026 — Prioridad determinista de módulos
 
 `BbotModule` admite prioridad acotada 1–5 con default 3, coherente con `BaseModule` fuente; `ChefDnsRdataHints` adapta prioridad 1 de `internal.dnsresolve`, y las ramas de `internal.speculate` usan 4. `BbotEventEngine` registra y despacha por prioridad ascendente, con nombre CHEF como desempate estable. Es solo orden de ejecución local: el muestreo ponderado entre colas del `ScanIngress`, la concurrencia y el ciclo de vida fuente no están portados. Actualizados inventario, plan y alcance. Pasan `cargo check --offline --locked`, Clippy, `npm run check:docs` y `npm run check:architecture`; pruebas de orden aplazadas por indicación del propietario.
+
+## 28-10-2026 — Caché positiva en adaptador DNS
+
+`HickoryDnsResolver` ahora reutiliza `DnsCache` (hasta 1 000 entradas) y `KeyedLock` para que consultas simultáneas iguales compartan el resultado. Cachea solo conjuntos con respuestas y expira por el TTL más corto; no guarda errores ni respuestas vacías. Los propietarios SRV con guiones bajos conservan exclusión por consulta, pero no se admiten como clave de activo DNS y por eso no se cachean. El adaptador sigue sin composición Tauri y su construcción no inicia tráfico. Actualizados inventario, plan y alcance. Pasan `cargo fmt` y `cargo check --offline` del adaptador; no se ejecutan pruebas ni consultas DNS.
