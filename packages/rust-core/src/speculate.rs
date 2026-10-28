@@ -59,10 +59,15 @@ impl BbotModule for ChefCloudStorageHints {
         let Some(provider) = cloud_storage_provider(&host) else {
             return Ok(Vec::new());
         };
+        let path = if provider == "firebase-realtime-database" {
+            "/.json"
+        } else {
+            "/"
+        };
 
         Ok(vec![BbotEventDraft {
             event_type: "URL_HINT".to_owned(),
-            data: Value::String(format!("https://{host}/")),
+            data: Value::String(format!("https://{host}{path}")),
             host: Some(host),
             port: None,
             tags: vec![
@@ -112,6 +117,20 @@ fn cloud_storage_provider(host: &str) -> Option<&'static str> {
         return valid_azure_storage_account_name(labels[0]).then_some(provider);
     }
 
+    if labels.len() == 4 && labels[2..] == ["digitaloceanspaces", "com"] {
+        return (valid_bucket_name(labels[0]) && valid_digitalocean_region(labels[1]))
+            .then_some("digitalocean-spaces");
+    }
+
+    if labels.len() == 4 && labels[2..] == ["your-objectstorage", "com"] {
+        return (valid_bucket_name(labels[0]) && valid_hetzner_region(labels[1]))
+            .then_some("hetzner-object-storage");
+    }
+
+    if labels.len() == 3 && labels[1..] == ["firebaseio", "com"] {
+        return valid_firebase_database_name(labels[0]).then_some("firebase-realtime-database");
+    }
+
     if labels.len() > 3 && labels[labels.len() - 3..] == ["storage", "googleapis", "com"] {
         let bucket = labels[..labels.len() - 3].join(".");
         if valid_bucket_name(&bucket) {
@@ -154,6 +173,23 @@ fn cloud_storage_provider(host: &str) -> Option<&'static str> {
     }
     let bucket = labels[..service_marker].join(".");
     valid_bucket_name(&bucket).then_some("amazon-s3")
+}
+
+fn valid_digitalocean_region(region: &str) -> bool {
+    matches!(region, "ams3" | "fra1" | "nyc3" | "sfo2" | "sfo3" | "sgp1")
+}
+
+fn valid_hetzner_region(region: &str) -> bool {
+    matches!(region, "fsn1" | "nbg1" | "hel1")
+}
+
+fn valid_firebase_database_name(name: &str) -> bool {
+    (4..=30).contains(&name.len())
+        && name.as_bytes()[0].is_ascii_lowercase()
+        && !name.ends_with('-')
+        && name
+            .bytes()
+            .all(|byte| byte.is_ascii_lowercase() || byte.is_ascii_digit() || byte == b'-')
 }
 
 fn valid_azure_storage_account_name(name: &str) -> bool {
