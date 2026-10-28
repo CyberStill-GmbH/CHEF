@@ -10,6 +10,7 @@ import type { EvidenceCsvExportDto } from '../contracts/evidence-csv-export';
 import type { NmapEvidenceExportDto } from '../contracts/nmap-evidence-export';
 import type { AssetInventoryExportDto } from '../contracts/asset-inventory-export';
 import type { WebEvidenceReportExportDto } from '../contracts/web-evidence-report-export';
+import type { ObservedEmailExportDto } from '../contracts/observed-email-export';
 
 export interface ApiClient {
   loadSnapshot(options?: { signal?: AbortSignal }): Promise<SnapshotDto>;
@@ -37,6 +38,10 @@ export interface ApiClient {
     runId: string,
     options?: { signal?: AbortSignal },
   ): Promise<WebEvidenceReportExportDto>;
+  exportObservedEmails?(
+    runId: string,
+    options?: { signal?: AbortSignal },
+  ): Promise<ObservedEmailExportDto>;
   loadReconGraph?(
     runId: string,
     options?: { signal?: AbortSignal },

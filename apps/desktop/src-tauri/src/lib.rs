@@ -551,6 +551,35 @@ async fn export_chef_web_evidence_report(
         .map_err(|error| error.message.to_owned())
 }
 
+#[tauri::command]
+async fn export_chef_observed_emails(
+    run_id: String,
+    state: State<'_, StoreSlot>,
+) -> Result<chef_core::ChefObservedEmailExport, String> {
+    validate_run_id(&run_id)?;
+    let mut slot = state.store.lock().await;
+    if slot.is_none() {
+        *slot = Some(
+            LocalSnapshotStore::open(&state.database_path)
+                .await
+                .map_err(|error| error.to_string())?,
+        );
+    }
+    let store = slot.as_ref().expect("el almacén se abrió arriba");
+    let event_graph = store
+        .load_bbot_event_graph(&run_id)
+        .await
+        .map_err(|error| error.to_string())?
+        .ok_or_else(|| "No existen eventos fuente para esa importación".to_owned())?;
+    let recon_graph = store
+        .load_chef_recon_graph(&run_id)
+        .await
+        .map_err(|error| error.to_string())?
+        .ok_or_else(|| "No existe un grafo CHEF para esa importación".to_owned())?;
+    chef_core::export_observed_emails(&run_id, &event_graph, &recon_graph)
+        .map_err(|error| error.message.to_owned())
+}
+
 fn validate_run_id(run_id: &str) -> Result<(), String> {
     if !run_id.starts_with("run:")
         || run_id.len() == "run:".len()
@@ -603,6 +632,7 @@ pub fn run() {
             export_chef_nmap_evidence,
             export_chef_asset_inventory,
             export_chef_web_evidence_report,
+            export_chef_observed_emails,
             load_chef_config,
             parse_chef_target_seed
         ])
