@@ -29,6 +29,7 @@ export class TauriApiClient implements ApiClient {
     },
   ) {
     options?.signal?.throwIfAborted();
+    const requestId = crypto.randomUUID();
     let jobId: string | undefined;
     let cancelable = false;
     let cancelRequest: Promise<boolean> | undefined;
@@ -42,6 +43,7 @@ export class TauriApiClient implements ApiClient {
     const unlisten = await listen<unknown>('scan-log', ({ payload }) => {
       try {
         const event = decodeScanLog(payload);
+        if (event.requestId !== requestId) return;
         options?.onPhase?.(event.phase);
         if (event.phase === 'started') {
           jobId = event.jobId;
@@ -65,6 +67,7 @@ export class TauriApiClient implements ApiClient {
     try {
       if (options?.signal?.aborted) requestCancellation();
       const snapshot = await invoke<unknown>('import_bbot_jsonl', {
+        requestId,
         jsonl,
         scope,
         presetId: options?.presetId ?? null,

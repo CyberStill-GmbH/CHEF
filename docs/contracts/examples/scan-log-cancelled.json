@@ -1,6 +1,7 @@
 {
-  "schemaVersion": "1.1.0",
+  "schemaVersion": "1.2.0",
   "jobId": "job:bbot-jsonl:abcd1234:1",
+  "requestId": "00000000-0000-0000-0000-000000000002",
   "sequence": 5,
   "phase": "cancelled",
   "message": "La importación offline fue cancelada."

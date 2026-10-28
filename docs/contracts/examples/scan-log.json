@@ -1,6 +1,7 @@
 {
-  "schemaVersion": "1.1.0",
+  "schemaVersion": "1.2.0",
   "jobId": "job:demo-001",
+  "requestId": "00000000-0000-0000-0000-000000000001",
   "sequence": 2,
   "phase": "event",
   "message": "Evento de evidencia procesado desde archivo local.",

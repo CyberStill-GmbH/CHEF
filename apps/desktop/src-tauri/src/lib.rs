@@ -48,6 +48,7 @@ struct ChefTargetSeedDto {
 struct ScanLogPayload {
     schema_version: &'static str,
     job_id: String,
+    request_id: String,
     sequence: u64,
     phase: &'static str,
     message: &'static str,
@@ -78,6 +79,7 @@ async fn load_offline_demo_snapshot(
         scope,
         None,
         &jobs,
+        "00000000-0000-0000-0000-000000000000".to_owned(),
     )
     .await
 }
@@ -88,15 +90,27 @@ async fn import_bbot_jsonl(
     state: State<'_, StoreSlot>,
     config_state: State<'_, ConfigSlot>,
     jobs: State<'_, ImportJobs>,
+    request_id: String,
     jsonl: String,
     scope: ScopePolicy,
     preset_id: Option<String>,
 ) -> Result<Snapshot, String> {
+    validate_request_id(&request_id)?;
     let bytes = jsonl.into_bytes();
     if bytes.len() > 2 * 1024 * 1024 {
         return Err("El archivo BBOT supera el máximo de 2 MiB CHEF".to_owned());
     }
-    import_bbot_payload(app, state, config_state, bytes, scope, preset_id, &jobs).await
+    import_bbot_payload(
+        app,
+        state,
+        config_state,
+        bytes,
+        scope,
+        preset_id,
+        &jobs,
+        request_id,
+    )
+    .await
 }
 
 async fn import_bbot_payload(
@@ -107,6 +121,7 @@ async fn import_bbot_payload(
     scope: ScopePolicy,
     preset_id: Option<String>,
     jobs: &ImportJobs,
+    request_id: String,
 ) -> Result<Snapshot, String> {
     let _admission = jobs
         .admission
@@ -156,8 +171,9 @@ async fn import_bbot_payload(
         }
         let payload = match event {
             ImportJobEvent::Started { job_id: id } => Some(ScanLogPayload {
-                schema_version: "1.1.0",
+                schema_version: "1.2.0",
                 job_id: id,
+                request_id: request_id.clone(),
                 sequence,
                 phase: "started",
                 message: "Importación offline CHEF iniciada.",
@@ -165,8 +181,9 @@ async fn import_bbot_payload(
                 observed_at: None,
             }),
             ImportJobEvent::BbotEvent { job_id: id, event } => Some(ScanLogPayload {
-                schema_version: "1.1.0",
+                schema_version: "1.2.0",
                 job_id: id,
+                request_id: request_id.clone(),
                 sequence,
                 phase: "event",
                 message: "Evento de evidencia fuente o derivada procesado.",
@@ -174,8 +191,9 @@ async fn import_bbot_payload(
                 observed_at: Some(event.timestamp),
             }),
             ImportJobEvent::Completed { job_id: id, .. } => Some(ScanLogPayload {
-                schema_version: "1.1.0",
+                schema_version: "1.2.0",
                 job_id: id,
+                request_id: request_id.clone(),
                 sequence,
                 phase: if cancelled { "cancelled" } else { "validated" },
                 message: if cancelled {
@@ -187,8 +205,9 @@ async fn import_bbot_payload(
                 observed_at: None,
             }),
             ImportJobEvent::Failed { job_id: id, code } => Some(ScanLogPayload {
-                schema_version: "1.1.0",
+                schema_version: "1.2.0",
                 job_id: id,
+                request_id: request_id.clone(),
                 sequence,
                 phase: if code == chef_core::ErrorCode::Cancelled {
                     "cancelled"
@@ -239,8 +258,9 @@ async fn import_bbot_payload(
     app.emit(
         "scan-log",
         ScanLogPayload {
-            schema_version: "1.1.0",
+            schema_version: "1.2.0",
             job_id: job_id.clone(),
+            request_id: request_id.clone(),
             sequence,
             phase: "stored",
             message: "Snapshot y grafo guardados localmente.",
@@ -253,8 +273,9 @@ async fn import_bbot_payload(
     app.emit(
         "scan-log",
         ScanLogPayload {
-            schema_version: "1.1.0",
+            schema_version: "1.2.0",
             job_id,
+            request_id,
             sequence,
             phase: "completed",
             message: "Importación CHEF finalizada.",
@@ -426,6 +447,19 @@ fn validate_job_id(job_id: &str) -> Result<(), String> {
             .all(|byte| byte.is_ascii_lowercase() || byte.is_ascii_digit() || b":-".contains(&byte))
     {
         return Err("El identificador de trabajo CHEF no es válido".to_owned());
+    }
+    Ok(())
+}
+
+fn validate_request_id(request_id: &str) -> Result<(), String> {
+    let bytes = request_id.as_bytes();
+    if bytes.len() != 36
+        || bytes.iter().enumerate().any(|(index, byte)| match index {
+            8 | 13 | 18 | 23 => *byte != b'-',
+            _ => !byte.is_ascii_hexdigit(),
+        })
+    {
+        return Err("El identificador de solicitud CHEF no es válido".to_owned());
     }
     Ok(())
 }

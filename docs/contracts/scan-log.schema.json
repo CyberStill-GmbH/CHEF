@@ -5,14 +5,20 @@
   "description": "Evento IPC interno para la importación de evidencia offline. No autoriza ni ejecuta reconocimiento de red.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "jobId", "sequence", "phase", "message"],
+  "required": ["schemaVersion", "jobId", "requestId", "sequence", "phase", "message"],
   "properties": {
-    "schemaVersion": { "const": "1.1.0" },
+    "schemaVersion": { "const": "1.2.0" },
     "jobId": {
       "type": "string",
       "minLength": 1,
       "maxLength": 128,
       "pattern": "^[a-z0-9:-]+$"
+    },
+    "requestId": {
+      "type": "string",
+      "minLength": 36,
+      "maxLength": 36,
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
     },
     "sequence": { "type": "integer", "minimum": 1 },
     "phase": {

@@ -8,8 +8,9 @@ export type ScanLogPhase =
   | 'cancelled';
 
 export interface ScanLogDto {
-  schemaVersion: '1.1.0';
+  schemaVersion: '1.2.0';
   jobId: string;
+  requestId: string;
   sequence: number;
   phase: ScanLogPhase;
   message: string;
