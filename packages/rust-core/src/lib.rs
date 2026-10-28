@@ -12,6 +12,7 @@ mod dns_cache;
 mod dns_format;
 mod dns_policy;
 mod dns_records;
+mod dns_service_candidates;
 mod domain;
 mod event_engine;
 mod event_import;
@@ -47,6 +48,7 @@ pub use dns_cache::DnsCache;
 pub use dns_format::format_dns_rdata;
 pub use dns_policy::{DnsQueryPolicy, DnsZoneDecision};
 pub use dns_records::{DNS_RECORD_TYPES, DnsTarget, extract_dns_targets, is_dns_service_record};
+pub use dns_service_candidates::common_dns_service_candidates;
 pub use domain::{ChefError, ChefResult, ErrorCode, ServiceInput};
 pub use event_engine::{
     BbotEvent, BbotEventDraft, BbotEventEngine, BbotEventGraph, BbotModule, EventScopeGate,
