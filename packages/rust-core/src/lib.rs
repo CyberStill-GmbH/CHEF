@@ -18,7 +18,6 @@ mod dns_policy;
 mod dns_records;
 mod dns_service_candidates;
 mod dns_word_segmentation;
-mod dnsdumpster;
 mod domain;
 mod domain_export;
 mod email_export;
@@ -31,6 +30,7 @@ mod nmap;
 mod nmap_export;
 mod port_spec;
 mod presets;
+mod provider_subdomains;
 mod rate_limit;
 mod recon;
 mod speculate;
@@ -67,7 +67,6 @@ pub use dns_mutation_candidates::{
 pub use dns_policy::{DnsQueryPolicy, DnsZoneDecision};
 pub use dns_records::{DNS_RECORD_TYPES, DnsTarget, extract_dns_targets, is_dns_service_record};
 pub use dns_service_candidates::common_dns_service_candidates;
-pub use dnsdumpster::{DnsDumpsterSubdomainPage, parse_dnsdumpster_subdomains};
 pub use domain::{ChefError, ChefResult, ErrorCode, ServiceInput};
 pub use domain_export::{
     ChefObservedDomain, ChefObservedDomainEvidence, ChefObservedDomainExport,
@@ -86,6 +85,10 @@ pub use identity::{digest as digest_bytes, id as deterministic_id};
 pub use nmap_export::{ChefNmapEvidenceExport, export_nmap_evidence_xml};
 pub use port_spec::parse_port_string;
 pub use presets::{ChefPreset, PresetCatalog, ResolvedPreset};
+pub use provider_subdomains::{
+    DnsDumpsterSubdomainPage, ProviderSubdomainPage, RapidDnsSubdomainPage,
+    parse_dnsdumpster_subdomains, parse_provider_subdomains, parse_rapiddns_subdomains,
+};
 pub use rate_limit::RateLimiter;
 pub use recon::{
     ChefReconGraph, ReconAsset, ReconAssetKind, ReconEvidence, ReconRelationship,

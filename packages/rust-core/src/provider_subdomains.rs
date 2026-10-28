@@ -1,7 +1,7 @@
-//! Extrae subdominios candidatos de una respuesta DNSDumpster ya guardada.
+//! Extrae subdominios candidatos de respuestas pasivas ya guardadas.
 //!
-//! Adapta localmente la extracción de nombres de BBOT. No obtiene tokens, no
-//! hace solicitudes HTTP y no convierte resultados del proveedor en DNS actual.
+//! Adapta localmente la extracción de nombres compartida por BBOT. No obtiene
+//! tokens, no hace solicitudes HTTP y no convierte resultados en DNS actual.
 
 use std::collections::BTreeSet;
 
@@ -12,9 +12,28 @@ const MAX_HOST_TOKENS: usize = 16_384;
 const MAX_CANDIDATES: usize = 512;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct DnsDumpsterSubdomainPage {
+pub struct ProviderSubdomainPage {
     pub query_domain: String,
     pub candidates: Vec<String>,
+}
+
+pub type DnsDumpsterSubdomainPage = ProviderSubdomainPage;
+pub type RapidDnsSubdomainPage = ProviderSubdomainPage;
+
+/// Adapta la extracción in-scope del módulo DNSDumpster de BBOT.
+pub fn parse_dnsdumpster_subdomains(
+    query_domain: &str,
+    response: &[u8],
+) -> ChefResult<DnsDumpsterSubdomainPage> {
+    parse_provider_subdomains(query_domain, response)
+}
+
+/// Adapta la extracción in-scope del módulo RapidDNS de BBOT.
+pub fn parse_rapiddns_subdomains(
+    query_domain: &str,
+    response: &[u8],
+) -> ChefResult<RapidDnsSubdomainPage> {
+    parse_provider_subdomains(query_domain, response)
 }
 
 /// Extrae nombres descendientes de la raíz desde el cuerpo textual archivado.
@@ -22,26 +41,26 @@ pub struct DnsDumpsterSubdomainPage {
 /// La respuesta se procesa como texto no confiable, con límite total, límite
 /// de tokens y salida determinista. Una entrada malformada o fuera de los
 /// límites se rechaza completa; no se publican resultados parciales.
-pub fn parse_dnsdumpster_subdomains(
+pub fn parse_provider_subdomains(
     query_domain: &str,
     response: &[u8],
-) -> ChefResult<DnsDumpsterSubdomainPage> {
+) -> ChefResult<ProviderSubdomainPage> {
     if response.len() > MAX_RESPONSE_BYTES {
         return Err(ChefError::new(
             ErrorCode::LimitExceeded,
-            "La respuesta DNSDumpster supera el límite de bytes CHEF",
+            "La respuesta del proveedor supera el límite de bytes CHEF",
         ));
     }
     let query_domain = crate::host::canonical_domain(query_domain)
         .filter(|domain| crate::host::is_registrable_domain(domain))
         .ok_or(ChefError::new(
             ErrorCode::InvalidInput,
-            "La consulta DNSDumpster debe ser una raíz registrable ICANN",
+            "La consulta debe ser una raíz registrable ICANN",
         ))?;
     let text = std::str::from_utf8(response).map_err(|_| {
         ChefError::new(
             ErrorCode::InvalidInput,
-            "La respuesta DNSDumpster no contiene texto UTF-8 válido",
+            "La respuesta del proveedor no contiene texto UTF-8 válido",
         )
     })?;
 
@@ -65,7 +84,7 @@ pub fn parse_dnsdumpster_subdomains(
         collect_candidate(&text[start..], &suffix, &mut candidates, &mut token_count)?;
     }
 
-    Ok(DnsDumpsterSubdomainPage {
+    Ok(ProviderSubdomainPage {
         query_domain,
         candidates: candidates.into_iter().collect(),
     })
@@ -100,7 +119,7 @@ fn collect_candidate(
     if *token_count > MAX_HOST_TOKENS {
         return Err(ChefError::new(
             ErrorCode::LimitExceeded,
-            "La respuesta DNSDumpster supera el límite CHEF de nombres examinados",
+            "La respuesta del proveedor supera el límite CHEF de nombres examinados",
         ));
     }
 
@@ -119,7 +138,7 @@ fn collect_candidate(
         if candidates.len() > MAX_CANDIDATES {
             return Err(ChefError::new(
                 ErrorCode::LimitExceeded,
-                "La respuesta DNSDumpster supera el límite CHEF de subdominios",
+                "La respuesta del proveedor supera el límite CHEF de subdominios",
             ));
         }
     }
