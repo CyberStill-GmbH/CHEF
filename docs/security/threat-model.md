@@ -7,7 +7,7 @@ Activos: credenciales del operador, datos de clientes, exactitud del grafo, esta
 | XXE/SSRF mediante XML                      | Bloquear DTD externo/subsets y entities; parser no hace red                                                   | Core / fixture hostile                          |
 | Memoria/CPU por archivo o grafo enorme     | Lectura acotada 2 MiB, registros ≤10 000, profundidad XML ≤32; worker para ingestión interactiva              | Bytes/registros/profundidad core; worker futuro |
 | Scope spoofing al importar                 | Validate policy, IP literal canónica, exclusión gana; archivo nunca amplia scope                              | Core / OUT_OF_SCOPE                             |
-| DNS rebinding / redirect                   | Comprobar IP resuelta y scope al conectar y en cada salto; fijar conexión a IP aprobada con Host/SNI correcto | Requisito de futuros adaptadores activos        |
+| DNS rebinding / redirect                   | Comprobar IP resuelta y scope al conectar y en cada salto; fijar conexión a IP aprobada con Host/SNI correcto | Plan, ejecutor, registro revocable y Reqwest implementados; composición que valide consentimiento, scope y DNS pendiente; sin tráfico ni prueba funcional |
 | Inyección shell/path                       | Sin ejecución de shell ni paths desde XML; CLI solo lee ruta elegida                                          | Core / revisión de adapters                     |
 | Labels HTML/scripts en web/Swing           | Texto plano, sin innerHTML ni enlaces activos; saneamiento antes de UI                                        | UI pendiente; spike JTextArea                   |
 | Falsa vulnerabilidad / evidencia fabricada | Assertion explícita, regla/version/hash/locator; no afirmar autenticidad de archivo                           | Core / contratos/control negativo               |
@@ -19,7 +19,7 @@ Activos: credenciales del operador, datos de clientes, exactitud del grafo, esta
 
 ## Decisiones de riesgo
 
-El core sin red elimina varios caminos SSRF del incremento actual. No habilitar HTTP/DNS activo hasta implementar controles de conexión, redirección y cancelación. Importar un host y observarlo en un archivo no garantiza que siga siendo accesible.
+El plan, el registro local de autorizaciones y Reqwest ya definen controles de conexión, redirección, IP peer y revocación. Siguen sin componerse en Tauri y no prueban que una concesión refleje consentimiento, scope o DNS vigente. No habilitar HTTP/DNS activo hasta completar esa validación y la defensa de egress. Importar un host y observarlo en un archivo no garantiza que siga siendo accesible.
 
 La cancelación del core síncrono detecta señales ya activadas y en checkpoints. SIGINT no puede interrumpir inmediatamente el parse síncrono mientras el event loop esté ocupado; hay que migrar a worker antes de ofrecer cancelación interactiva durante ingestión. Se registra esta limitación en UI/API y backlog.
 
