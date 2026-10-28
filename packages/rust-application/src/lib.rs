@@ -1,6 +1,7 @@
 //! Casos de uso Rust de CHEF. Los adaptadores concretos se componen desde las apps.
 
 mod dns;
+mod dns_plan;
 
 pub use dns::{
     DnsAnswer, DnsAnswerDisposition, DnsAnswerEvidence, DnsAuthorizationFailure,
@@ -8,3 +9,4 @@ pub use dns::{
     DnsQueryRequest, DnsRecordType, DnsResolutionError, DnsResolutionResult, DnsResolverFailure,
     DnsResolverPort, ResolveDns,
 };
+pub use dns_plan::{DnsQueryPlan, DnsQueryPlanSettings, DnsQueryStage, PlannedDnsQuery};
