@@ -233,13 +233,35 @@ impl BbotEventEngine {
         clock: &impl Clock,
         cancelled: Option<&AtomicBool>,
     ) -> ChefResult<BbotEventGraph> {
+        self.run_offline_with_observer(seeds, config, clock, cancelled, &mut |_| Ok(()))
+    }
+
+    /// Ejecuta solo módulos offline y comunica cada evento aceptado al caller
+    /// durante la expansión. El caller puede aplicar backpressure sin exponer
+    /// capacidades de red al motor.
+    pub fn run_offline_with_observer(
+        &self,
+        seeds: Vec<BbotEvent>,
+        config: &ChefConfig,
+        clock: &impl Clock,
+        cancelled: Option<&AtomicBool>,
+        observer: &mut dyn FnMut(&BbotEvent) -> ChefResult<()>,
+    ) -> ChefResult<BbotEventGraph> {
         if self.modules.iter().any(|module| !module.offline_only()) {
             return Err(ChefError::new(
                 ErrorCode::InvalidInput,
                 "El motor offline contiene un módulo que no garantiza aislamiento de red",
             ));
         }
-        self.run(seeds, config, &OfflineEvidenceGate, clock, cancelled)
+        self.run_with_statistics_and_observer(
+            seeds,
+            config,
+            &OfflineEvidenceGate,
+            clock,
+            cancelled,
+            observer,
+        )
+        .map(|(graph, _statistics)| graph)
     }
 
     /// Ejecuta el motor y devuelve el agregado de eventos consumidos/producidos
@@ -252,6 +274,22 @@ impl BbotEventEngine {
         scope: &impl EventScopeGate,
         clock: &impl Clock,
         cancelled: Option<&AtomicBool>,
+    ) -> ChefResult<(BbotEventGraph, BbotRuntimeStatistics)> {
+        self.run_with_statistics_and_observer(seeds, config, scope, clock, cancelled, &mut |_| {
+            Ok(())
+        })
+    }
+
+    /// Variante observable del motor que llama al sink en el orden en que cada
+    /// evento supera deduplicación, validación y autorización.
+    pub fn run_with_statistics_and_observer(
+        &self,
+        seeds: Vec<BbotEvent>,
+        config: &ChefConfig,
+        scope: &impl EventScopeGate,
+        clock: &impl Clock,
+        cancelled: Option<&AtomicBool>,
+        observer: &mut dyn FnMut(&BbotEvent) -> ChefResult<()>,
     ) -> ChefResult<(BbotEventGraph, BbotRuntimeStatistics)> {
         if seeds.is_empty() || seeds.len() > self.max_events {
             return Err(ChefError::new(
@@ -293,6 +331,7 @@ impl BbotEventEngine {
             }
             let parent = event.clone();
             events.push(event);
+            observer(&parent)?;
 
             for module in &self.modules {
                 if cancelled.is_some_and(|flag| flag.load(Ordering::SeqCst)) {

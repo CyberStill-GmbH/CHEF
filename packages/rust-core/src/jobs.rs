@@ -6,9 +6,10 @@ use std::sync::{
     Arc,
     atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering},
 };
+use std::time::Duration;
 
 use tokio::{
-    sync::{Notify, mpsc},
+    sync::mpsc,
     task::{JoinError, JoinHandle},
 };
 
@@ -133,7 +134,6 @@ impl From<BbotImportResult> for ImportOutput {
 /// Handle for a bounded background import and its status stream.
 pub struct ImportTask {
     cancel: Arc<AtomicBool>,
-    cancel_notify: Arc<Notify>,
     task_counter: TaskCounter,
     events: mpsc::Receiver<ImportJobEvent>,
     worker: JoinHandle<ChefResult<ImportOutput>>,
@@ -143,14 +143,12 @@ pub struct ImportTask {
 #[derive(Debug, Clone)]
 pub struct ImportCancellation {
     cancel: Arc<AtomicBool>,
-    cancel_notify: Arc<Notify>,
 }
 
 impl ImportCancellation {
-    /// Request cancellation between records or while the event channel is blocked.
+    /// Request cancellation between records or while retrying a full event channel.
     pub fn cancel(&self) {
         self.cancel.store(true, Ordering::SeqCst);
-        self.cancel_notify.notify_one();
     }
 
     /// Check whether a cancellation request has been recorded.
@@ -170,7 +168,6 @@ impl ImportTask {
     pub fn cancellation(&self) -> ImportCancellation {
         ImportCancellation {
             cancel: Arc::clone(&self.cancel),
-            cancel_notify: Arc::clone(&self.cancel_notify),
         }
     }
 
@@ -214,8 +211,8 @@ pub async fn spawn_import_job(
 }
 
 /// Import BBOT JSONL and stream each sanitized source or derived event through the same
-/// bounded channel before `Completed`. The caller must drain events while the
-/// task runs so backpressure stays bounded.
+/// bounded channel as it passes the offline engine, before `Completed`. The caller
+/// must drain events while the task runs so backpressure stays bounded.
 pub async fn spawn_bbot_import_job(
     bytes: Vec<u8>,
     policy: ScopePolicy,
@@ -259,12 +256,9 @@ async fn spawn_import_job_inner(
         &[format.as_str(), &identity::digest(&bytes), &sequence],
     );
     let cancel = Arc::new(AtomicBool::new(false));
-    let cancel_notify = Arc::new(Notify::new());
     let task_counter = TaskCounter::default();
     let task_permit = task_counter.enter(1)?;
     let worker_cancel = Arc::clone(&cancel);
-    let stream_cancel = Arc::clone(&cancel);
-    let stream_cancel_notify = Arc::clone(&cancel_notify);
     let (tx, events) = mpsc::channel(DEFAULT_EVENT_CAPACITY);
     tx.send(ImportJobEvent::Started {
         job_id: job_id.clone(),
@@ -275,6 +269,8 @@ async fn spawn_import_job_inner(
     let worker = tokio::spawn(async move {
         let _task_permit = task_permit;
         let blocking_cancel = Arc::clone(&worker_cancel);
+        let blocking_tx = tx.clone();
+        let blocking_job_id = job_id.clone();
         let result = tokio::task::spawn_blocking(move || {
             let clock = FixedClock(imported_at);
             match format {
@@ -282,14 +278,53 @@ async fn spawn_import_job_inner(
                     ImportEvidence::execute(&bytes, &policy, &clock, Some(blocking_cancel.as_ref()))
                         .map(ImportOutput::from)
                 }
-                ImportFormat::BbotJsonl => ImportBbotEvidence::execute_with_config(
-                    &bytes,
-                    &policy,
-                    &config,
-                    &clock,
-                    Some(blocking_cancel.as_ref()),
-                )
-                .map(ImportOutput::from),
+                ImportFormat::BbotJsonl => {
+                    let mut observer = |event: &crate::BbotEvent| {
+                        if blocking_cancel.load(Ordering::SeqCst) {
+                            return Err(ChefError::new(
+                                ErrorCode::Cancelled,
+                                "Importación CHEF cancelada durante la expansión offline",
+                            ));
+                        }
+                        if stream_bbot_events {
+                            let mut message = ImportJobEvent::BbotEvent {
+                                job_id: blocking_job_id.clone(),
+                                event: Box::new(event.clone()),
+                            };
+                            loop {
+                                if blocking_cancel.load(Ordering::SeqCst) {
+                                    return Err(ChefError::new(
+                                        ErrorCode::Cancelled,
+                                        "Importación CHEF cancelada al publicar actividad",
+                                    ));
+                                }
+                                match blocking_tx.try_send(message) {
+                                    Ok(()) => break,
+                                    Err(mpsc::error::TrySendError::Full(returned)) => {
+                                        message = returned;
+                                        std::thread::sleep(Duration::from_millis(5));
+                                    }
+                                    Err(mpsc::error::TrySendError::Closed(_)) => {
+                                        return Err(ChefError::new(
+                                            ErrorCode::WorkerFailed,
+                                            "Import event receiver unavailable",
+                                        ));
+                                    }
+                                }
+                            }
+                        }
+                        Ok(())
+                    };
+                    ImportBbotEvidence::execute_with_config_and_observer(
+                        &bytes,
+                        &policy,
+                        &config,
+                        &clock,
+                        Some(blocking_cancel.as_ref()),
+                        &mut observer,
+                    )
+                    .map(ImportOutput::from)
+                }
             }
         })
         .await
@@ -299,46 +334,6 @@ async fn spawn_import_job_inner(
                 "Import worker terminated unexpectedly",
             )
         })?;
-        let result = match result {
-            Ok(output) if stream_bbot_events => {
-                let stream_result = async {
-                    if let Some(graph) = output.event_graph.as_ref() {
-                        for event in &graph.events {
-                            if stream_cancel.load(Ordering::SeqCst) {
-                                return Err(ChefError::new(
-                                    ErrorCode::Cancelled,
-                                    "Importación CHEF cancelada durante el flujo de eventos",
-                                ));
-                            }
-                            tokio::select! {
-                                _ = stream_cancel_notify.notified() => {
-                                    return Err(ChefError::new(
-                                        ErrorCode::Cancelled,
-                                        "Importación CHEF cancelada durante el flujo de eventos",
-                                    ));
-                                }
-                                result = tx.send(ImportJobEvent::BbotEvent {
-                                    job_id: job_id.clone(),
-                                    event: Box::new(event.clone()),
-                                }) => {
-                                    result.map_err(|_| ChefError::new(
-                                        ErrorCode::WorkerFailed,
-                                        "Import event receiver unavailable",
-                                    ))?;
-                                }
-                            }
-                        }
-                    }
-                    Ok::<(), ChefError>(())
-                }
-                .await;
-                match stream_result {
-                    Ok(()) => Ok(output),
-                    Err(error) => Err(error),
-                }
-            }
-            other => other,
-        };
         match &result {
             Ok(output) => {
                 let _ = tx
@@ -362,7 +357,6 @@ async fn spawn_import_job_inner(
 
     Ok(ImportTask {
         cancel,
-        cancel_notify,
         task_counter,
         events,
         worker,

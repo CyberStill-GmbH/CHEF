@@ -244,6 +244,22 @@ impl ImportBbotEvidence {
         clock: &impl Clock,
         cancelled: Option<&AtomicBool>,
     ) -> ChefResult<BbotImportResult> {
+        Self::execute_with_config_and_observer(bytes, policy, config, clock, cancelled, &mut |_| {
+            Ok(())
+        })
+    }
+
+    /// Variante de importación que notifica eventos saneados conforme el motor
+    /// offline los valida y expande. El parseo NDJSON inicial sigue siendo
+    /// atómico: ante una línea inválida no se publica un resultado parcial.
+    pub fn execute_with_config_and_observer(
+        bytes: &[u8],
+        policy: &ScopePolicy,
+        config: &ChefConfig,
+        clock: &impl Clock,
+        cancelled: Option<&AtomicBool>,
+        observer: &mut dyn FnMut(&crate::BbotEvent) -> ChefResult<()>,
+    ) -> ChefResult<BbotImportResult> {
         check_cancelled(cancelled)?;
         config.validate()?;
         if bytes.len() > policy.max_input_bytes {
@@ -259,10 +275,25 @@ impl ImportBbotEvidence {
                 config.runtime.max_events,
                 config.runtime.max_depth,
             )?;
-            event_graph =
-                engine.run_offline(event_graph.events.clone(), config, clock, cancelled)?;
+            event_graph = engine.run_offline_with_observer(
+                event_graph.events.clone(),
+                config,
+                clock,
+                cancelled,
+                observer,
+            )?;
+        } else {
+            for event in &event_graph.events {
+                check_cancelled(cancelled)?;
+                observer(event)?;
+            }
         }
+        let event_count_before_mutations = event_graph.events.len();
         append_dns_mutation_hints(&mut event_graph, config, clock, cancelled)?;
+        for event in &event_graph.events[event_count_before_mutations..] {
+            check_cancelled(cancelled)?;
+            observer(event)?;
+        }
         validate_bbot_event_graph(&event_graph)?;
         let recon_graph = crate::adapt_bbot_to_chef(&event_graph)?;
         let snapshot = ImportServices::execute(
