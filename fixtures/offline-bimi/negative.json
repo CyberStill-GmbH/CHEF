@@ -1,0 +1,5 @@
+{
+  "type": "TXT",
+  "host": "default._bimi.example.com",
+  "answer": "v=spf1 include:mail.example.com -all"
+}

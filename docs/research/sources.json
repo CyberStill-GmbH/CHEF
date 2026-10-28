@@ -799,5 +799,14 @@
     "claim": "La documentación de VirusTotal restringe la API pública para productos o servicios comerciales y diferencia ese uso de las ofertas premium.",
     "kind": "primary",
     "limitation": "Verificar las condiciones contractuales, cuenta y autorización aplicables antes de diseñar o habilitar cualquier conector remoto de CHEF; esta referencia no sustituye la revisión del acuerdo vigente."
+  },
+  {
+    "id": "BIMI-IETF-DRAFT-14",
+    "url": "https://datatracker.ietf.org/doc/html/draft-brand-indicators-for-message-identification",
+    "consultedAt": "2026-10-28",
+    "version": "Internet-Draft -14, mayo de 2026",
+    "claim": "El borrador vigente describe registros BIMI TXT en selector._bimi, exige v=BIMI1 como primer tag y establece HTTPS para URI de ubicación y evidencia; permite ignorar tags desconocidos.",
+    "kind": "primary",
+    "limitation": "Es un Internet-Draft de trabajo, no un RFC publicado; puede cambiar o caducar. CHEF solo extrae URI como pistas de registros ya importados y no implementa descubrimiento DNS, descarga, validación BIMI ni verificación de marca."
   }
 ]

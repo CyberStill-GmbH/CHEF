@@ -1,0 +1,5 @@
+{
+  "type": "TXT",
+  "host": "default._bimi.example.com",
+  "answer": "v=BIMI1; l=https://assets.example.net/brand.svg?fixture=synthetic; a=https://assets.example.net/evidence.pem"
+}
