@@ -26,6 +26,7 @@ mod email_export;
 mod event_engine;
 mod event_import;
 mod evidence_csv;
+mod fullhunt;
 mod host;
 mod identity;
 mod nmap;
@@ -84,6 +85,7 @@ pub use event_engine::{
     ModuleDescriptor,
 };
 pub use evidence_csv::{ChefEvidenceCsvExport, export_evidence_csv};
+pub use fullhunt::{FullHuntSubdomainPage, parse_fullhunt_subdomains};
 pub use host::dns_parent_zones;
 pub use identity::{digest as digest_bytes, id as deterministic_id};
 pub use nmap_export::{ChefNmapEvidenceExport, export_nmap_evidence_xml};

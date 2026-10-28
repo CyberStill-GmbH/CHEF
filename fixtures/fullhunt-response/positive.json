@@ -1,0 +1,19 @@
+{
+  "queryDomain": "example.com",
+  "response": {
+    "domain": "example.com",
+    "hosts": [
+      "api.example.com",
+      "www.example.com.",
+      "API.EXAMPLE.COM",
+      "example.com",
+      "example.com.evil.test",
+      "outside.example.net"
+    ],
+    "status": 200
+  },
+  "expectedCandidates": [
+    "api.example.com",
+    "www.example.com"
+  ]
+}

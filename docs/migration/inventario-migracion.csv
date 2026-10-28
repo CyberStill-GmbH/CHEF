@@ -103,7 +103,7 @@ chef-engine/modules/dotnetnuke.py,219,Módulo de reconocimiento,"Adaptador Rust 
 chef-engine/modules/emailformat.py,47,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
 chef-engine/modules/filedownload.py,202,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
 chef-engine/modules/fingerprintx.py,107,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
-chef-engine/modules/fullhunt.py,40,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/fullhunt.py,40,Módulo de reconocimiento,"Parcial: parse_fullhunt_subdomains normaliza offline hosts[] de JSON; limita 1 MiB/3 000 hosts/1 024 candidatos, canonicaliza y deduplica descendientes de raíz ICANN. No usa API key, consulta remota ni crea eventos/linaje; permisos, créditos, transporte e integración pendientes",Parcial
 chef-engine/modules/generic_ssrf.py,262,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
 chef-engine/modules/git.py,53,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
 chef-engine/modules/git_clone.py,105,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
