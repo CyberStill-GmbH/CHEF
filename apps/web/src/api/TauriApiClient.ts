@@ -13,6 +13,8 @@ import { decodeNmapEvidenceExport } from '../contracts/decodeNmapEvidenceExport'
 import { decodeAssetInventoryExport } from '../contracts/decodeAssetInventoryExport';
 import { decodeWebEvidenceReportExport } from '../contracts/decodeWebEvidenceReportExport';
 import { decodeObservedEmailExport } from '../contracts/decodeObservedEmailExport';
+import { decodeDomainAffinity } from '../contracts/decodeDomainAffinity';
+import { decodeDomainAffinityRequest } from '../contracts/decodeDomainAffinityRequest';
 import type { ScanLogDto } from '../contracts/scan-log';
 import type { ScopePolicyDto } from '../contracts/snapshot';
 import type { ApiClient } from './ApiClient';
@@ -209,6 +211,27 @@ export class TauriApiClient implements ApiClient {
     });
     options?.signal?.throwIfAborted();
     return decodeEventStatistics(statistics);
+  }
+
+  async analyzeDomainAffinity(
+    runId: string,
+    analysisRoots: string[],
+    options?: { signal?: AbortSignal },
+  ) {
+    options?.signal?.throwIfAborted();
+    const request = decodeDomainAffinityRequest({
+      schemaVersion: '1.0.0',
+      runId,
+      analysisRoots,
+    });
+    const report = await invoke<unknown>('analyze_chef_domain_affinity', {
+      request,
+    });
+    options?.signal?.throwIfAborted();
+    const decoded = decodeDomainAffinity(report);
+    if (decoded.runId !== runId)
+      throw new Error('El informe de afinidad corresponde a otra ejecución.');
+    return decoded;
   }
 }
 
