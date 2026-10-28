@@ -4,6 +4,7 @@ mod bbot_event_rate;
 mod dns;
 mod dns_plan;
 mod dns_plan_runner;
+mod dns_service_plan;
 mod dns_wildcard;
 mod import_history;
 
@@ -18,6 +19,7 @@ pub use dns_plan::{DnsQueryPlan, DnsQueryPlanSettings, DnsQueryStage, PlannedDns
 pub use dns_plan_runner::{
     DnsPlanExecution, DnsPlanQueryResult, DnsPlanTermination, ExecuteDnsPlan,
 };
+pub use dns_service_plan::{DnsServiceQueryCandidate, DnsServiceQueryPlan};
 pub use dns_wildcard::{
     DnsWildcardAssessment, DnsWildcardBaseline, DnsWildcardDisposition, DnsWildcardPlanExecution,
     DnsWildcardPlanStatus, DnsWildcardProbeExecution, DnsWildcardProbeGroup, DnsWildcardProbePlan,
