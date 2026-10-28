@@ -322,3 +322,7 @@ Se añadió `parse_dnsdumpster_subdomains` en `chef-core` para extraer hostnames
 ### 28-10-2026 — Parser compartido de respuestas pasivas RapidDNS
 
 Se generalizó la extracción acotada como `parse_provider_subdomains`; `parse_dnsdumpster_subdomains` y `parse_rapiddns_subdomains` delegan en la misma implementación. RapidDNS obtiene la misma validación de raíz ICANN, etiquetas, canonicalización, deduplicación y límites que DNSDumpster, sin consultar el proveedor ni producir una observación. Fixtures sintéticos positivos/negativos para RapidDNS. Sus módulos fuente pasan a parcial: inventario 56 parciales, 380 pendientes y 30 exclusiones (466 filas). Quedan por hacer transporte autorizado, integración con eventos/linaje y pruebas funcionales; estas últimas siguen aplazadas por el propietario.
+
+### 28-10-2026 — Normalizador offline de crt.sh
+
+Se añadió `parse_crtsh_subdomains` en Rust para normalizar JSON archivado de crt.sh: 2 MiB, 2 048 certificados y 1 024 candidatos como máximos; deduplica IDs, analiza SAN separados por líneas, excluye wildcard y acepta solo subdominios canónicos de una raíz registrable ICANN. No consulta crt.sh ni presenta nombres de certificados como DNS actual. La consulta remota, la emisión de eventos con procedencia y la validación funcional quedan pendientes; fixtures sintéticos positivos/negativos añadidos. `crt.py` pasa a parcial: inventario 57 parciales, 379 pendientes y 30 exclusiones (466 filas). No se ejecutaron tests funcionales.
