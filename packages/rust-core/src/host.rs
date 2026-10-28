@@ -74,6 +74,25 @@ pub(crate) fn domain_parent_candidates(value: &str, include_self: bool) -> Vec<S
     parents
 }
 
+/// Cuenta las etiquetas por debajo del dominio registrable según la PSL.
+/// Para sufijos ausentes de la PSL usa el mismo respaldo conservador de dos
+/// etiquetas empleado por el parser de origen; IP y entradas inválidas tienen
+/// profundidad cero. La cifra sirve como criterio de revisión, no como scope.
+pub fn subdomain_depth(value: &str) -> usize {
+    let Some(host) = canonical_domain(value) else {
+        return 0;
+    };
+    let host_labels = host.split('.').count();
+    let domain_labels = psl::domain(host.as_bytes())
+        .map(|domain| {
+            String::from_utf8_lossy(domain.as_bytes())
+                .split('.')
+                .count()
+        })
+        .unwrap_or(2);
+    host_labels.saturating_sub(domain_labels)
+}
+
 pub(crate) fn hosts_match(host: &str, allowed: &str) -> bool {
     let (Some(host), Some(allowed)) = (canonical_host(host), canonical_host(allowed)) else {
         return false;

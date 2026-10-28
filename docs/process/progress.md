@@ -160,3 +160,7 @@ Se centralizó en `host.rs` la derivación acotada de padres de dominio, adaptad
 ## 28-10-2026 — Candidatos DNS desde prefijos
 
 Se añadió `generate_dns_name_candidates` en `dns_candidates.rs`, adaptación local de la composición de nombres del helper DNS: canonicaliza una raíz, filtra prefijos inválidos, deduplica manteniendo orden y limita la lista a 10 000 resultados. No hace consultas, no genera observaciones y no descarga wordlists. Canarios aleatorios, resolvers y ejecución `massdns` permanecen pendientes y apagados hasta contar con scope autorizado. Con las clasificaciones de salidas y el generador DNS, el inventario queda en 25 parciales, 420 pendientes y 21 exclusiones de 466 archivos. Pasaron formato, compilación/Clippy del core, `npm run check:docs` y `git diff --check`; pruebas funcionales aplazadas.
+
+## 28-10-2026 — Preflight DNS local
+
+Se portaron `has_excessive_digits` y `subdomain_depth` como señales locales para preparar una futura política de fuerza bruta DNS. La heurística numérica informa posibles nombres generados automáticamente, pero no invalida activos ni descarta evidencia; la profundidad usa la PSL local y un respaldo acotado para sufijos ausentes. Ninguna de estas señales autoriza tráfico. El adaptador activo, la carga de resolvers y la ejecución de consultas permanecen pendientes.

@@ -10,6 +10,30 @@ use crate::{ChefError, ChefResult, ErrorCode};
 const MAX_INPUT_PREFIXES: usize = 100_000;
 const MAX_CANDIDATES: usize = 10_000;
 
+/// Señala nombres DNS con patrones numéricos que el módulo de origen omite al
+/// preparar fuerza bruta. Es una pista de calidad; no invalida ni elimina el
+/// nombre de evidencia CHEF.
+pub fn has_excessive_digits(value: &str) -> bool {
+    let mut digit_runs = 0;
+    let mut run_length = 0;
+    let mut long_run = false;
+
+    for character in value.chars() {
+        if character.is_ascii_digit() {
+            run_length += 1;
+        } else if run_length > 0 {
+            digit_runs += 1;
+            long_run |= run_length > 3;
+            run_length = 0;
+        }
+    }
+    if run_length > 0 {
+        digit_runs += 1;
+        long_run |= run_length > 3;
+    }
+    digit_runs > 2 || long_run
+}
+
 /// Resultado explicable de una generación local de candidatos.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DnsCandidateBatch {
