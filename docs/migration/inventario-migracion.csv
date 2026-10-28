@@ -161,7 +161,7 @@ chef-engine/modules/otx.py,36,Módulo de reconocimiento,"Adaptador Rust CHEF tip
 chef-engine/modules/output/__init__.py,0,Salida,Sin comportamiento funcional propio; el registro dinámico de paquetes se reemplaza por módulos Rust compilados y composición explícita en Tauri.,Excluido
 chef-engine/modules/output/asset_inventory.py,377,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
 chef-engine/modules/output/base.py,95,Salida,"El ciclo de vida genérico de plugins de salida (callbacks, colas y archivos por módulo) no aplica; CHEF compone comandos Tauri, SurrealDB local y exportaciones de Snapshot.",Excluido
-chef-engine/modules/output/csv.py,89,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
+chef-engine/modules/output/csv.py,89,Salida,"Parcial: export_chef_evidence_csv con contrato evidence-csv-export 1.0.0, filas deterministas por activo/evidencia, IDs y linaje, descarga local. Omite el módulo importado porque su identificador no tiene procedencia verificada; no exporta payloads originales, scope_distance, IPs resueltas ni rutas de descubrimiento y conserva claves CHEF ya proyectadas. No reproduce columnas dinámicas ni escritura incremental a disco.",Parcial
 chef-engine/modules/output/discord.py,17,Salida,Excluido: publica evidencia en Discord; CHEF local no envía datos a chats. El único destino remoto previsto es DefectDojo con vista previa y consentimiento explícito.,Excluido
 chef-engine/modules/output/elastic.py,31,Salida,Excluido: envía eventos a un Elasticsearch remoto; CHEF usa SurrealDB local y no replica evidencia a otro backend.,Excluido
 chef-engine/modules/output/emails.py,38,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente

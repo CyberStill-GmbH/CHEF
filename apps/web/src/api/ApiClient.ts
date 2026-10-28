@@ -6,6 +6,7 @@ import type { EventStatisticsDto } from '../contracts/event-statistics';
 import type { ScopePolicyDto } from '../contracts/snapshot';
 import type { TargetSeedDto } from '../contracts/target-seed';
 import type { ObservedDomainExportDto } from '../contracts/observed-domain-export';
+import type { EvidenceCsvExportDto } from '../contracts/evidence-csv-export';
 
 export interface ApiClient {
   loadSnapshot(options?: { signal?: AbortSignal }): Promise<SnapshotDto>;
@@ -17,6 +18,10 @@ export interface ApiClient {
     runId: string,
     options?: { signal?: AbortSignal },
   ): Promise<ObservedDomainExportDto>;
+  exportEvidenceCsv?(
+    runId: string,
+    options?: { signal?: AbortSignal },
+  ): Promise<EvidenceCsvExportDto>;
   loadReconGraph?(
     runId: string,
     options?: { signal?: AbortSignal },

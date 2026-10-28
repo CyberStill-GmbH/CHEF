@@ -19,6 +19,7 @@ mod domain;
 mod domain_export;
 mod event_engine;
 mod event_import;
+mod evidence_csv;
 mod host;
 mod identity;
 mod jobs;
@@ -67,6 +68,7 @@ pub use event_engine::{
     BbotEvent, BbotEventDraft, BbotEventEngine, BbotEventGraph, BbotModule, EventScopeGate,
     ModuleDescriptor,
 };
+pub use evidence_csv::{ChefEvidenceCsvExport, export_evidence_csv};
 pub use jobs::{
     ImportCancellation, ImportFormat, ImportJobEvent, ImportOutput, ImportTask,
     spawn_bbot_import_job, spawn_bbot_import_job_with_config, spawn_import_job,

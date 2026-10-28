@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://chef.invalid/contracts/evidence-csv-export.schema.json",
+  "title": "Exportación CHEF de evidencia CSV",
+  "description": "CSV local determinista de evidencia y activos CHEF; no contiene datos crudos ni afirma alcance.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "runId",
+    "fileName",
+    "contentType",
+    "scopeStatus",
+    "rowCount",
+    "csv"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "runId": {
+      "type": "string",
+      "minLength": 5,
+      "maxLength": 128,
+      "pattern": "^run:[a-z0-9:-]+$"
+    },
+    "fileName": {
+      "type": "string",
+      "maxLength": 147,
+      "pattern": "^chef-evidencia-run-[a-z0-9-]+\\.csv$"
+    },
+    "contentType": { "const": "text/csv; charset=utf-8" },
+    "scopeStatus": { "const": "not_asserted" },
+    "rowCount": { "type": "integer", "minimum": 0, "maximum": 40000 },
+    "csv": { "type": "string", "minLength": 1, "maxLength": 2097152 }
+  }
+}

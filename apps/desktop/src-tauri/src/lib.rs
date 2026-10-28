@@ -452,6 +452,30 @@ async fn export_chef_observed_domains(
         .map_err(|error| error.message.to_owned())
 }
 
+#[tauri::command]
+async fn export_chef_evidence_csv(
+    run_id: String,
+    state: State<'_, StoreSlot>,
+) -> Result<chef_core::ChefEvidenceCsvExport, String> {
+    validate_run_id(&run_id)?;
+    let mut slot = state.store.lock().await;
+    if slot.is_none() {
+        *slot = Some(
+            LocalSnapshotStore::open(&state.database_path)
+                .await
+                .map_err(|error| error.to_string())?,
+        );
+    }
+    let graph = slot
+        .as_ref()
+        .expect("el almacén se abrió arriba")
+        .load_chef_recon_graph(&run_id)
+        .await
+        .map_err(|error| error.to_string())?
+        .ok_or_else(|| "No existe un grafo CHEF para esa importación".to_owned())?;
+    chef_core::export_evidence_csv(&run_id, &graph).map_err(|error| error.message.to_owned())
+}
+
 fn validate_run_id(run_id: &str) -> Result<(), String> {
     if !run_id.starts_with("run:")
         || run_id.len() == "run:".len()
@@ -500,6 +524,7 @@ pub fn run() {
             load_chef_event_statistics,
             export_chef_snapshot,
             export_chef_observed_domains,
+            export_chef_evidence_csv,
             load_chef_config,
             parse_chef_target_seed
         ])

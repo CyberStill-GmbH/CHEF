@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "1.0.0",
+  "runId": "run:fixture-001",
+  "fileName": "chef-evidencia-run-fixture-001.csv",
+  "contentType": "text/csv; charset=utf-8",
+  "scopeStatus": "not_asserted",
+  "rowCount": 2,
+  "csv": "\"id_activo\",\"tipo_activo\",\"clave_activo\",\"calificacion\",\"id_evidencia\",\"id_evento_origen\",\"tipo_evento\",\"observado_en\",\"localizador\",\"id_evidencia_padre\",\"redactado\"\r\n\"asset-001\",\"domain\",\"'=example.invalid\",\"hint\",\"evidence-001\",\"event-001\",\"DNS_NAME_HINT\",\"2026-10-28T12:00:00.000Z\",\"/events/1\",\"evidence-parent\",\"false\"\r\n\"\",\"\",\"\",\"\",\"evidence-002\",\"event-002\",\"UNMAPPED_EVENT\",\"2026-10-28T12:00:01.000Z\",\"/events/2\",\"\",\"true\"\r\n"
+}

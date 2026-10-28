@@ -8,6 +8,7 @@ import { decodeChefConfig } from '../contracts/decodeChefConfig';
 import { decodeEventStatistics } from '../contracts/decodeEventStatistics';
 import { decodeTargetSeed } from '../contracts/decodeTargetSeed';
 import { decodeObservedDomainExport } from '../contracts/decodeObservedDomainExport';
+import { decodeEvidenceCsvExport } from '../contracts/decodeEvidenceCsvExport';
 import type { ScanLogDto } from '../contracts/scan-log';
 import type { ScopePolicyDto } from '../contracts/snapshot';
 import type { ApiClient } from './ApiClient';
@@ -134,6 +135,15 @@ export class TauriApiClient implements ApiClient {
     });
     options?.signal?.throwIfAborted();
     return decodeObservedDomainExport(exported);
+  }
+
+  async exportEvidenceCsv(runId: string, options?: { signal?: AbortSignal }) {
+    options?.signal?.throwIfAborted();
+    const exported = await invoke<unknown>('export_chef_evidence_csv', {
+      runId,
+    });
+    options?.signal?.throwIfAborted();
+    return decodeEvidenceCsvExport(exported);
   }
 
   async loadReconGraph(runId: string, options?: { signal?: AbortSignal }) {
