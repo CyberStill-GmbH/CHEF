@@ -117,14 +117,14 @@ pub fn parse_chef_target_seed(input: &str) -> ChefResult<ChefTargetSeed> {
         });
     }
 
-    if let Ok(url) = Url::parse(&format!("tcp://{value}"))
-        && !crate::url_tools::has_userinfo(&url)
-        && url.query().is_none()
-        && url.fragment().is_none()
-        && url.path() == "/"
-        && let Some(port) = url.port().filter(|port| *port > 0)
+    let is_tcp_endpoint = !value.contains("://")
+        || value
+            .get(..6)
+            .is_some_and(|scheme| scheme.eq_ignore_ascii_case("tcp://"));
+    if is_tcp_endpoint
+        && let Some((host, Some(port))) = crate::host::split_host_port(value)
+        && port > 0
     {
-        let host = url_host(url.host().ok_or_else(invalid_target)?);
         let netloc = format_netloc(&host, port);
         return Ok(ChefTargetSeed {
             kind: ChefTargetKind::TcpEndpoint,
