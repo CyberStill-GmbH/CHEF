@@ -3,6 +3,9 @@
 
 use std::path::Path;
 
+use chef_application::{
+    IMPORT_HISTORY_MAX_PAGE_SIZE, ImportHistoryError, ImportHistoryPort, ImportRunSummary,
+};
 use chef_core::{BbotEventGraph, BbotImportResult, ChefReconGraph, ImportOutput, Snapshot};
 use serde_json::{Value, json};
 use surrealdb::{
@@ -213,6 +216,78 @@ impl LocalSnapshotStore {
         }
         Ok(Some(snapshot))
     }
+}
+
+impl ImportHistoryPort for LocalSnapshotStore {
+    async fn list_recent(&self, limit: usize) -> Result<Vec<ImportRunSummary>, ImportHistoryError> {
+        if limit == 0 || limit > IMPORT_HISTORY_MAX_PAGE_SIZE {
+            return Err(ImportHistoryError::InvalidLimit);
+        }
+
+        let mut response = self
+            .db
+            .query(
+                r#"SELECT run_id, schema_version,
+                          snapshot.run.id AS snapshot_run_id,
+                          snapshot.run.state AS state,
+                          snapshot.run.startedAt AS started_at,
+                          snapshot.run.finishedAt AS finished_at,
+                          array::len(snapshot.evidence) AS evidence_count,
+                          array::len(snapshot.observations) AS observation_count,
+                          array::len(snapshot.assets) AS asset_count
+                   FROM snapshots
+                   ORDER BY snapshot.run.startedAt DESC, run_id ASC
+                   LIMIT $limit"#,
+            )
+            .bind(("limit", limit as u64))
+            .await
+            .map_err(|_| ImportHistoryError::Unavailable)?;
+        let rows = response
+            .take::<Vec<Value>>(0)
+            .map_err(|_| ImportHistoryError::Unavailable)?;
+        rows.into_iter().map(parse_import_history_row).collect()
+    }
+}
+
+fn parse_import_history_row(value: Value) -> Result<ImportRunSummary, ImportHistoryError> {
+    let run_id = value
+        .get("run_id")
+        .and_then(Value::as_str)
+        .ok_or(ImportHistoryError::InvalidRecord)?;
+    let schema_version = value
+        .get("schema_version")
+        .and_then(Value::as_str)
+        .ok_or(ImportHistoryError::InvalidRecord)?;
+    if !SUPPORTED_SNAPSHOT_VERSIONS.contains(&schema_version)
+        || value.get("snapshot_run_id").and_then(Value::as_str) != Some(run_id)
+    {
+        return Err(ImportHistoryError::InvalidRecord);
+    }
+    let string_field = |name| {
+        value
+            .get(name)
+            .and_then(Value::as_str)
+            .map(str::to_owned)
+            .ok_or(ImportHistoryError::InvalidRecord)
+    };
+    let count_field = |name| {
+        value
+            .get(name)
+            .and_then(Value::as_u64)
+            .and_then(|count| usize::try_from(count).ok())
+            .ok_or(ImportHistoryError::InvalidRecord)
+    };
+
+    Ok(ImportRunSummary {
+        run_id: run_id.to_owned(),
+        schema_version: schema_version.to_owned(),
+        state: string_field("state")?,
+        started_at: string_field("started_at")?,
+        finished_at: string_field("finished_at")?,
+        evidence_count: count_field("evidence_count")?,
+        observation_count: count_field("observation_count")?,
+        asset_count: count_field("asset_count")?,
+    })
 }
 
 fn validate_snapshot_key(snapshot: &Snapshot, run_id: &str) -> Result<(), StorageError> {

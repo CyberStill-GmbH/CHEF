@@ -5,6 +5,7 @@ mod dns;
 mod dns_plan;
 mod dns_plan_runner;
 mod dns_wildcard;
+mod import_history;
 
 pub use bbot_event_rate::{BbotEventRateCounter, BbotEventRateError, BbotEventRateSnapshot};
 pub use dns::{
@@ -20,4 +21,8 @@ pub use dns_plan_runner::{
 pub use dns_wildcard::{
     DnsWildcardAssessment, DnsWildcardBaseline, DnsWildcardDisposition, DnsWildcardProbeSet,
     DnsWildcardRecordAssessment,
+};
+pub use import_history::{
+    IMPORT_HISTORY_MAX_PAGE_SIZE, ImportHistoryError, ImportHistoryPort, ImportRunSummary,
+    ListImportRuns,
 };
