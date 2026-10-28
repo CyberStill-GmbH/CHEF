@@ -116,12 +116,13 @@ impl PresetCatalog {
             ChefPreset {
                 id: "offline_hints".to_owned(),
                 name: "Importación con pistas offline".to_owned(),
-                description: "Además de importar evidencia, sugiere nombres DNS, puertos TCP, organizaciones, almacenamiento en la nube y dominios padre con fuentes locales; expande rangos CIDR con límite, sin consultas ni conexiones.".to_owned(),
+                description: "Además de importar evidencia, sugiere nombres DNS, puertos TCP, organizaciones, almacenamiento en la nube, dominios padre y destinos TLS-RPT desde datos locales; expande rangos CIDR con límite, sin consultas ni conexiones.".to_owned(),
                 includes: vec!["offline_import".to_owned()],
                 modules: BTreeMap::from([
                     ("chef_ip_range_expansion".to_owned(), true),
                     ("chef_dns_parent_hints".to_owned(), true),
                     ("chef_dns_rdata_hints".to_owned(), true),
+                    ("chef_tlsrpt_url_hints".to_owned(), true),
                     ("chef_dns_mutation_hints".to_owned(), true),
                     ("chef_common_port_hints".to_owned(), true),
                     ("chef_cloud_storage_hints".to_owned(), true),

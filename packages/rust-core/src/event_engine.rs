@@ -246,6 +246,7 @@ impl BbotEventEngine {
         engine.register(Box::new(crate::speculate::ChefUrlParentHints))?;
         engine.register(Box::new(crate::speculate::ChefDnsParentHints))?;
         engine.register(Box::new(crate::speculate::ChefDnsRdataHints))?;
+        engine.register(Box::new(crate::speculate::ChefTlsRptUrlHints))?;
         engine.register(Box::new(crate::speculate::ChefCommonPortHints))?;
         engine.register(Box::new(crate::speculate::ChefOrgStubHints))?;
         engine.register(Box::new(crate::speculate::ChefCloudStorageHints))?;

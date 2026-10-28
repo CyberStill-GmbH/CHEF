@@ -24,9 +24,11 @@ pub(crate) struct ChefDnsParentHints;
 pub(crate) struct ChefCommonPortHints;
 pub(crate) struct ChefOrgStubHints;
 pub(crate) struct ChefDnsRdataHints;
+pub(crate) struct ChefTlsRptUrlHints;
 pub(crate) struct ChefCloudStorageHints;
 
 const MAX_DNS_RDATA_HINTS_PER_EVENT: usize = 32;
+const MAX_TLSRPT_URL_HINTS_PER_EVENT: usize = 32;
 
 /// Reconoce únicamente nombres DNS ya observados que siguen convenciones de
 /// endpoints de almacenamiento AWS S3, Google Cloud Storage o Azure. No busca
@@ -269,6 +271,118 @@ pub(crate) fn is_generated_dns_rdata_hint(event: &BbotEvent) -> bool {
             .tags
             .iter()
             .any(|tag| tag == "chef:derived-dns-rdata-hint")
+}
+
+/// Extrae destinos HTTP(S) de informes TLS-RPT ya importados como TXT.
+/// Ignora contactos `mailto:` para no derivar ni añadir datos personales.
+impl BbotModule for ChefTlsRptUrlHints {
+    fn descriptor(&self) -> ModuleDescriptor {
+        ModuleDescriptor {
+            name: "chef_tlsrpt_url_hints",
+            watches: &["RAW_DNS_RECORD"],
+            produces: &["URL_HINT"],
+        }
+    }
+
+    fn offline_only(&self) -> bool {
+        true
+    }
+
+    fn handle(
+        &self,
+        event: &BbotEvent,
+        _config: &ChefConfig,
+        _clock: &dyn Clock,
+    ) -> ChefResult<Vec<BbotEventDraft>> {
+        if event.data_redacted {
+            return Ok(Vec::new());
+        }
+        let Some(data) = event.data.as_object() else {
+            return Ok(Vec::new());
+        };
+        if !data
+            .get("type")
+            .and_then(Value::as_str)
+            .is_some_and(|record_type| record_type.eq_ignore_ascii_case("TXT"))
+            || !data
+                .get("host")
+                .and_then(Value::as_str)
+                .is_some_and(is_tlsrpt_owner)
+        {
+            return Ok(Vec::new());
+        }
+        let Some(answer) = data.get("answer").and_then(Value::as_str) else {
+            return Ok(Vec::new());
+        };
+        if answer.len() > 8 * 1024 || answer.chars().any(char::is_control) {
+            return Ok(Vec::new());
+        }
+        let Some(uris) = tlsrpt_report_uris(answer) else {
+            return Ok(Vec::new());
+        };
+
+        let mut hints = BTreeSet::new();
+        for uri in uris {
+            let Some((url, host, port)) = checked_url_attribute(uri) else {
+                continue;
+            };
+            hints.insert((url, host, port));
+            if hints.len() == MAX_TLSRPT_URL_HINTS_PER_EVENT {
+                break;
+            }
+        }
+
+        Ok(hints
+            .into_iter()
+            .map(|(url, host, port)| BbotEventDraft {
+                event_type: "URL_HINT".to_owned(),
+                data: Value::String(url),
+                host: Some(host),
+                port,
+                tags: vec![
+                    "chef:derived-tls-report-url-hint".to_owned(),
+                    "chef:tls-report:rua".to_owned(),
+                ],
+            })
+            .collect())
+    }
+}
+
+fn is_tlsrpt_owner(owner: &str) -> bool {
+    let labels = owner.trim_end_matches('.').split('.').collect::<Vec<_>>();
+    if labels.len() < 4
+        || !labels[0].eq_ignore_ascii_case("_smtp")
+        || !labels[1].eq_ignore_ascii_case("_tls")
+    {
+        return false;
+    }
+    let domain = labels[2..].join(".");
+    let Some(canonical) = crate::canonical_fqdn_or_ip(&domain) else {
+        return false;
+    };
+    canonical.parse::<IpAddr>().is_err()
+}
+
+fn tlsrpt_report_uris(answer: &str) -> Option<Vec<&str>> {
+    let (version, directives) = answer.split_once(';')?;
+    let version = version.trim().to_ascii_lowercase();
+    let version = version.strip_prefix("v=tlsrptv")?;
+    if version.is_empty() || !version.bytes().all(|byte| byte.is_ascii_digit()) {
+        return None;
+    }
+
+    Some(
+        directives
+            .split(';')
+            .filter_map(|directive| {
+                let (key, value) = directive.trim().split_once('=')?;
+                key.trim().eq_ignore_ascii_case("rua").then_some(value)
+            })
+            .flat_map(|value| value.split(','))
+            .map(str::trim)
+            .filter(|uri| !uri.is_empty() && !uri.to_ascii_lowercase().starts_with("mailto:"))
+            .collect(),
+    )
 }
 
 /// Adaptación offline y acotada del puente IP_RANGE -> IP_ADDRESS de BBOT.
