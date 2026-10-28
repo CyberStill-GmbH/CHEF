@@ -19,7 +19,7 @@ use chef_core::{
     deterministic_id, digest_bytes,
 };
 
-use crate::{BbotEventRateCounter, BbotEventRateSnapshot};
+use crate::{ImportEventRateCounter, ImportEventRateSnapshot};
 
 const DEFAULT_EVENT_CAPACITY: usize = 16;
 static NEXT_JOB_SEQUENCE: AtomicU64 = AtomicU64::new(1);
@@ -95,7 +95,7 @@ pub enum ImportJobEvent {
         event: Box<BbotEvent>,
         /// Velocidad de publicación offline medida dentro del worker, nunca
         /// velocidad de reconocimiento de red.
-        rate: BbotEventRateSnapshot,
+        rate: ImportEventRateSnapshot,
     },
     Completed {
         job_id: String,
@@ -277,7 +277,7 @@ async fn spawn_import_job_inner(
         let result = tokio::task::spawn_blocking(move || {
             let clock = FixedClock(imported_at);
             let monotonic_origin = Instant::now();
-            let mut event_rate = BbotEventRateCounter::default();
+            let mut event_rate = ImportEventRateCounter::default();
             match format {
                 ImportFormat::NmapXml => {
                     ImportEvidence::execute(&bytes, &policy, &clock, Some(blocking_cancel.as_ref()))

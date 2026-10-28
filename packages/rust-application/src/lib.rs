@@ -1,19 +1,18 @@
 //! Casos de uso Rust de CHEF. Los adaptadores concretos se componen desde las apps.
 
-mod bbot_event_rate;
 mod dns;
 mod dns_plan;
 mod dns_plan_runner;
 mod dns_service_plan;
 mod dns_service_plan_runner;
 mod dns_wildcard;
+mod event_rate;
 mod http_execution;
 mod http_plan;
 mod import_history;
 mod import_jobs;
 mod keyed_lock;
 
-pub use bbot_event_rate::{BbotEventRateCounter, BbotEventRateError, BbotEventRateSnapshot};
 pub use dns::{
     DnsAnswer, DnsAnswerDisposition, DnsAnswerEvidence, DnsAuthorizationFailure,
     DnsAuthorizationPort, DnsAuthorizationReceipt, DnsCancellation, DnsLookupOutcome,
@@ -34,6 +33,7 @@ pub use dns_wildcard::{
     DnsWildcardPlanStatus, DnsWildcardProbeExecution, DnsWildcardProbeGroup, DnsWildcardProbePlan,
     DnsWildcardProbeSet, DnsWildcardRecordAssessment, ExecuteDnsWildcardPlan,
 };
+pub use event_rate::{ImportEventRateCounter, ImportEventRateError, ImportEventRateSnapshot};
 pub use http_execution::{
     ExecuteHttpPlan, HttpAuthorizationControl, HttpAuthorizationFailure, HttpAuthorizationPort,
     HttpAuthorizationReceipt, HttpAuthorizationUse, HttpCancellation, HttpExecutionError,
