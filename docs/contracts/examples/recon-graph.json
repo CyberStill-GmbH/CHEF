@@ -69,6 +69,18 @@
       ]
     },
     {
+      "id": "asset-dns-rdata-hint-example",
+      "kind": "domain",
+      "key": "mail.example.net",
+      "qualification": "hint",
+      "firstSeen": "2026-10-18T00:00:00.000Z",
+      "lastSeen": "2026-10-18T00:00:00.000Z",
+      "evidenceIds": [
+        "evidence-dns-rdata-hint-example",
+        "evidence-dns-rdata-source-example"
+      ]
+    },
+    {
       "id": "asset-organization-example",
       "kind": "organization",
       "key": "bücher",
@@ -186,6 +198,26 @@
       "observedAt": "2026-10-18T00:00:00.000Z",
       "locator": "rule:dns.offline_mutation@4;reason=cross_root_label,static_wordlist",
       "module": "chef_dns_mutation_hints",
+      "redacted": false
+    },
+    {
+      "id": "evidence-dns-rdata-source-example",
+      "sourceEventId": "event-dns-rdata-source-example",
+      "parentEvidenceId": "evidence-dns-target-example",
+      "eventType": "RAW_DNS_RECORD",
+      "observedAt": "2026-10-18T00:00:00.000Z",
+      "locator": "/events/dns-mx-record",
+      "module": "dnsresolve",
+      "redacted": false
+    },
+    {
+      "id": "evidence-dns-rdata-hint-example",
+      "sourceEventId": "event-dns-rdata-hint-example",
+      "parentEvidenceId": "evidence-dns-rdata-source-example",
+      "eventType": "DNS_NAME_HINT",
+      "observedAt": "2026-10-18T00:00:00.000Z",
+      "locator": "chef:dns-rdata:mx",
+      "module": "chef_dns_rdata_hints",
       "redacted": false
     }
   ],

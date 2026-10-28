@@ -2,8 +2,10 @@
 //! Las salidas son pistas o miembros derivados con linaje; no se hace DNS ni
 //! se visitan endpoints, y el módulo no tiene acceso a red.
 
-use serde_json::Value;
+use std::collections::BTreeSet;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
+
+use serde_json::Value;
 use url::{Host, Url};
 
 use crate::{
@@ -19,6 +21,80 @@ pub(crate) struct ChefUrlAttributeHints;
 pub(crate) struct ChefDnsParentHints;
 pub(crate) struct ChefCommonPortHints;
 pub(crate) struct ChefOrgStubHints;
+pub(crate) struct ChefDnsRdataHints;
+
+const MAX_DNS_RDATA_HINTS_PER_EVENT: usize = 32;
+
+/// Adapta la parte offline de `internal.dnsresolve` que interpreta registros
+/// `RAW_DNS_RECORD` ya presentes en un JSONL. No consulta DNS ni crea hechos
+/// observados: publica nombres de destino como pistas con el registro padre.
+impl BbotModule for ChefDnsRdataHints {
+    fn descriptor(&self) -> ModuleDescriptor {
+        ModuleDescriptor {
+            name: "chef_dns_rdata_hints",
+            watches: &["RAW_DNS_RECORD"],
+            produces: &["DNS_NAME_HINT"],
+        }
+    }
+
+    fn offline_only(&self) -> bool {
+        true
+    }
+
+    fn handle(
+        &self,
+        event: &BbotEvent,
+        _config: &ChefConfig,
+        _clock: &dyn Clock,
+    ) -> ChefResult<Vec<BbotEventDraft>> {
+        if event.data_redacted {
+            return Ok(Vec::new());
+        }
+        let Some(data) = event.data.as_object() else {
+            return Ok(Vec::new());
+        };
+        let Some(record_type) = data.get("type").and_then(Value::as_str) else {
+            return Ok(Vec::new());
+        };
+        let record_type = record_type.trim().to_ascii_uppercase();
+        if !matches!(
+            record_type.as_str(),
+            "MX" | "NAPTR" | "NS" | "SOA" | "SRV" | "TXT"
+        ) {
+            return Ok(Vec::new());
+        }
+        let Some(answer) = data.get("answer").and_then(Value::as_str) else {
+            return Ok(Vec::new());
+        };
+
+        let targets = crate::extract_dns_targets(&record_type, answer)?;
+        let names = targets
+            .into_iter()
+            .filter_map(|target| crate::host::canonical_domain(&target.value))
+            .collect::<BTreeSet<_>>();
+        let record_tag = format!("chef:dns-rdata:{}", record_type.to_ascii_lowercase());
+        Ok(names
+            .into_iter()
+            .take(MAX_DNS_RDATA_HINTS_PER_EVENT)
+            .map(|name| BbotEventDraft {
+                event_type: "DNS_NAME_HINT".to_owned(),
+                data: Value::String(name.clone()),
+                host: Some(name),
+                port: None,
+                tags: vec!["chef:derived-dns-rdata-hint".to_owned(), record_tag.clone()],
+            })
+            .collect())
+    }
+}
+
+pub(crate) fn is_generated_dns_rdata_hint(event: &BbotEvent) -> bool {
+    event.event_type == "DNS_NAME_HINT"
+        && event.module.as_deref() == Some("chef_dns_rdata_hints")
+        && event
+            .tags
+            .iter()
+            .any(|tag| tag == "chef:derived-dns-rdata-hint")
+}
 
 /// Adaptación offline y acotada del puente IP_RANGE -> IP_ADDRESS de BBOT.
 /// No resuelve nombres ni abre conexiones; cada IP conserva el evento CIDR

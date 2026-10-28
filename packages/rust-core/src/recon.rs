@@ -135,7 +135,8 @@ pub fn adapt_bbot_to_chef(graph: &BbotEventGraph) -> ChefResult<ChefReconGraph> 
                 add_named_asset(&mut assets, ReconAssetKind::Domain, event, &evidence_id)
             }
             "DNS_NAME_HINT"
-                if crate::dns_mutation_candidates::is_generated_dns_mutation_hint(event) =>
+                if crate::dns_mutation_candidates::is_generated_dns_mutation_hint(event)
+                    || crate::speculate::is_generated_dns_rdata_hint(event) =>
             {
                 add_named_asset(&mut assets, ReconAssetKind::Domain, event, &evidence_id)
             }
@@ -192,6 +193,23 @@ pub fn adapt_bbot_to_chef(graph: &BbotEventGraph) -> ChefResult<ChefReconGraph> 
                         }
                     }
                 }
+                asset.evidence_ids.sort();
+            }
+        }
+
+        if mapped
+            && crate::speculate::is_generated_dns_rdata_hint(event)
+            && let Some(parent_id) = event.parent_id.as_deref()
+            && events_by_id.contains_key(parent_id)
+            && let Some(name) =
+                event_value(event).and_then(|value| crate::host::canonical_domain(&value))
+        {
+            let asset_key = asset_id(ReconAssetKind::Domain, &name);
+            let source_evidence_id = identity::id("chef-evidence", &[parent_id]);
+            if let Some(asset) = assets.get_mut(&asset_key)
+                && !asset.evidence_ids.contains(&source_evidence_id)
+            {
+                asset.evidence_ids.push(source_evidence_id);
                 asset.evidence_ids.sort();
             }
         }
@@ -450,7 +468,8 @@ fn add_named_asset(
 fn named_asset_qualification(kind: ReconAssetKind, event: &BbotEvent) -> Option<String> {
     let qualification = match kind {
         ReconAssetKind::Domain
-            if crate::dns_mutation_candidates::is_generated_dns_mutation_hint(event) =>
+            if crate::dns_mutation_candidates::is_generated_dns_mutation_hint(event)
+                || crate::speculate::is_generated_dns_rdata_hint(event) =>
         {
             Some("hint")
         }
