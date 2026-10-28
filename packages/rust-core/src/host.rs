@@ -163,6 +163,17 @@ pub(crate) fn domain_parent_candidates(value: &str, include_self: bool) -> Vec<S
     parents
 }
 
+/// Devuelve zonas padre DNS de la más general a la más específica.
+///
+/// Solo usa una raíz registrable ICANN presente en la PSL integrada; el
+/// resultado organiza contexto local y no concede autorización para consultar.
+pub fn dns_parent_zones(value: &str) -> Vec<String> {
+    domain_parent_candidates(value, false)
+        .into_iter()
+        .rev()
+        .collect()
+}
+
 pub(crate) fn hosts_match(host: &str, allowed: &str) -> bool {
     let (Some(host), Some(allowed)) = (canonical_host(host), canonical_host(allowed)) else {
         return false;

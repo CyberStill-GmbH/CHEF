@@ -77,6 +77,7 @@ pub use event_engine::{
     ModuleDescriptor,
 };
 pub use evidence_csv::{ChefEvidenceCsvExport, export_evidence_csv};
+pub use host::dns_parent_zones;
 pub use jobs::{
     ImportCancellation, ImportFormat, ImportJobEvent, ImportOutput, ImportTask,
     spawn_bbot_import_job, spawn_bbot_import_job_with_config, spawn_import_job,
