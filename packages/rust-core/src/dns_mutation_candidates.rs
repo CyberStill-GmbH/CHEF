@@ -8,12 +8,13 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use crate::{BbotEvent, ChefResult, identity};
 
-const RULE_ID: &str = "dns.cross_root_mutation";
-const RULE_VERSION: &str = "1";
+const RULE_ID: &str = "dns.offline_mutation";
+const RULE_VERSION: &str = "2";
 const MAX_INPUT_EVENTS: usize = 10_000;
 const MAX_ROOTS: usize = 50;
 const MAX_CANDIDATES: usize = 10_000;
 const MAX_CANDIDATES_PER_ROOT: usize = 100;
+const MAX_PROPOSALS_PER_ROOT: usize = 2_000;
 
 /// Límites para una generación local de candidatos; nunca habilitan consultas.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -40,6 +41,12 @@ pub enum DnsMutationReason {
     ExtractedWord,
     /// Se añadió un sufijo numérico corto a una etiqueta observada en la raíz.
     NumericSuffix,
+    /// Se ajustó un bloque numérico ya presente en una etiqueta.
+    NumberAdjustment,
+    /// Se añadió un modificador operativo o una letra al inicio/final.
+    WordCloudModifier,
+    /// La etiqueta base se conservó como posible mutación local.
+    WordCloudBase,
 }
 
 /// Nombre propuesto por una regla CHEF; no representa una resolución DNS.
@@ -75,6 +82,11 @@ struct CandidateAccumulator {
     reasons: BTreeSet<DnsMutationReason>,
     root_source_id: Option<String>,
     mutation_source_id: Option<String>,
+}
+
+struct ProposalEvidence<'a> {
+    root_source_id: Option<&'a str>,
+    mutation_source_id: &'a str,
 }
 
 /// Deriva propuestas acotadas usando exclusivamente eventos `DNS_NAME` ya
@@ -157,7 +169,7 @@ pub fn generate_dns_mutation_candidates(
         };
         let mut proposals: BTreeMap<String, CandidateAccumulator> = BTreeMap::new();
 
-        // Port offline del cruce de etiquetas de otras raíces.
+        // Cruza etiquetas/palabras de otras raíces de este mismo lote.
         for donor_root in &ranked_roots {
             if donor_root == root {
                 continue;
@@ -174,8 +186,12 @@ pub fn generate_dns_mutation_candidates(
                     label,
                     root,
                     DnsMutationReason::CrossRootLabel,
-                    Some(root_source_id),
-                    donor_source_id,
+                    ProposalEvidence {
+                        root_source_id: Some(root_source_id),
+                        mutation_source_id: donor_source_id,
+                    },
+                    MAX_PROPOSALS_PER_ROOT,
+                    &mut truncated,
                 ));
                 for word in extract_words(label) {
                     duplicates_suppressed += usize::from(add_proposal(
@@ -183,28 +199,35 @@ pub fn generate_dns_mutation_candidates(
                         &word,
                         root,
                         DnsMutationReason::ExtractedWord,
-                        Some(root_source_id),
-                        donor_source_id,
+                        ProposalEvidence {
+                            root_source_id: Some(root_source_id),
+                            mutation_source_id: donor_source_id,
+                        },
+                        MAX_PROPOSALS_PER_ROOT,
+                        &mut truncated,
                     ));
                 }
             }
         }
 
-        // Mutación local limitada: sufijos 1–3 de etiquetas de la raíz.
+        // Adapta mutaciones locales de números, letras y modificadores.
         for (label, source_ids) in root_sources {
             let Some(source_id) = source_ids.iter().next() else {
                 continue;
             };
-            for word in extract_words(label) {
-                for suffix in 1..=3 {
-                    let mutation = format!("{word}{suffix}");
+            for (mutation, reasons) in crate::wordcloud::mutations(label) {
+                for reason in reasons {
                     duplicates_suppressed += usize::from(add_proposal(
                         &mut proposals,
                         &mutation,
                         root,
-                        DnsMutationReason::NumericSuffix,
-                        None,
-                        source_id,
+                        reason,
+                        ProposalEvidence {
+                            root_source_id: None,
+                            mutation_source_id: source_id,
+                        },
+                        MAX_PROPOSALS_PER_ROOT,
+                        &mut truncated,
                     ));
                 }
             }
@@ -299,7 +322,6 @@ pub(crate) fn is_generated_dns_mutation_hint(event: &BbotEvent) -> bool {
         return false;
     };
     if label.is_empty()
-        || label.contains('.')
         || crate::host::domain_parent_candidates(&name, false)
             .last()
             .map(String::as_str)
@@ -374,7 +396,12 @@ pub(crate) fn is_generated_dns_mutation_hint(event: &BbotEvent) -> bool {
         && reason_names.iter().all(|reason| {
             matches!(
                 *reason,
-                "cross_root_label" | "extracted_word" | "numeric_suffix"
+                "cross_root_label"
+                    | "extracted_word"
+                    | "numeric_suffix"
+                    | "number_adjustment"
+                    | "wordcloud_modifier"
+                    | "wordcloud_base"
             )
         })
         && reason_names.iter().all(|reason| {
@@ -395,8 +422,9 @@ fn add_proposal(
     label: &str,
     root: &str,
     reason: DnsMutationReason,
-    root_source_id: Option<&str>,
-    mutation_source_id: &str,
+    evidence: ProposalEvidence<'_>,
+    max_proposals: usize,
+    truncated: &mut bool,
 ) -> bool {
     let Some(name) = crate::host::canonical_domain(&format!("{label}.{root}")) else {
         return false;
@@ -404,16 +432,29 @@ fn add_proposal(
     let Some(candidate_label) = name.strip_suffix(&format!(".{root}")) else {
         return false;
     };
-    if candidate_label.is_empty() || candidate_label.contains('.') {
+    if candidate_label.is_empty() {
         return false;
     }
     let duplicate = proposals.contains_key(&name);
+    if !duplicate && proposals.len() >= max_proposals {
+        *truncated = true;
+        if proposals
+            .last_key_value()
+            .is_some_and(|(largest, _)| name.as_str() >= largest.as_str())
+        {
+            return false;
+        }
+        proposals.pop_last();
+    }
     let accumulator = proposals.entry(name).or_default();
     accumulator.reasons.insert(reason);
-    if let Some(source_id) = root_source_id {
+    if let Some(source_id) = evidence.root_source_id {
         retain_lexicographically_first(&mut accumulator.root_source_id, source_id);
     }
-    retain_lexicographically_first(&mut accumulator.mutation_source_id, mutation_source_id);
+    retain_lexicographically_first(
+        &mut accumulator.mutation_source_id,
+        evidence.mutation_source_id,
+    );
     duplicate
 }
 

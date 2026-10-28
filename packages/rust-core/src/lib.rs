@@ -33,6 +33,7 @@ mod text_policy;
 mod url_fingerprint;
 mod url_policy;
 mod url_tools;
+mod wordcloud;
 
 pub use application::{
     BbotImportResult, Clock, FixedClock, ImportBbotEvidence, ImportEvidence, SystemClock,

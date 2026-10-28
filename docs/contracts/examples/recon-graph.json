@@ -184,7 +184,7 @@
       "parentEvidenceId": "evidence-dns-target-example",
       "eventType": "DNS_NAME_HINT",
       "observedAt": "2026-10-18T00:00:00.000Z",
-      "locator": "rule:dns.cross_root_mutation@1;reason=cross_root_label",
+      "locator": "rule:dns.offline_mutation@2;reason=cross_root_label",
       "module": "chef_dns_mutation_hints",
       "redacted": false
     }
