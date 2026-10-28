@@ -6,11 +6,13 @@ import type { SnapshotDto } from '../contracts/snapshot';
 interface SnapshotExportButtonProps {
   client: ApiClient;
   snapshot: SnapshotDto;
+  hasReconGraph: boolean;
 }
 
 export function SnapshotExportButton({
   client,
   snapshot,
+  hasReconGraph,
 }: SnapshotExportButtonProps) {
   const [status, setStatus] = useState('');
   const [busy, setBusy] = useState(false);
@@ -41,6 +43,32 @@ export function SnapshotExportButton({
     }
   }
 
+  async function exportObservedDomains() {
+    if (client.exportObservedDomains === undefined || busy) return;
+    setBusy(true);
+    setStatus('Preparando dominios observados con su evidencia…');
+    try {
+      const exported = await client.exportObservedDomains(snapshot.run.id);
+      const blob = new Blob([`${JSON.stringify(exported, null, 2)}\n`], {
+        type: 'application/json;charset=utf-8',
+      });
+      const objectUrl = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = objectUrl;
+      anchor.download = `chef-dominios-observados-${safeFilePart(snapshot.run.id)}.json`;
+      anchor.hidden = true;
+      document.body.append(anchor);
+      anchor.click();
+      anchor.remove();
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
+      setStatus('Dominios observados descargados con evidencia y procedencia.');
+    } catch {
+      setStatus('No se pudieron exportar los dominios observados.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <section aria-labelledby="snapshot-export-title">
       <h2 id="snapshot-export-title">Exportación local</h2>
@@ -51,6 +79,20 @@ export function SnapshotExportButton({
       >
         {busy ? 'Preparando…' : 'Descargar snapshot JSON'}
       </button>
+      <button
+        type="button"
+        disabled={
+          busy || client.exportObservedDomains === undefined || !hasReconGraph
+        }
+        onClick={() => void exportObservedDomains()}
+      >
+        {busy ? 'Preparando…' : 'Descargar dominios observados JSON'}
+      </button>
+      <p>
+        La lista incluye nombres sustentados por eventos DNS_NAME directos.
+        Excluye candidatos y nombres sin resolver; no afirma alcance ni
+        propiedad.
+      </p>
       <p role="status" aria-live="polite">
         {status}
       </p>

@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "1.0.0",
+  "runId": "run:fixture-001",
+  "scopeStatus": "not_asserted",
+  "domains": [
+    {
+      "assetId": "chef-recon-asset-domain-www-example-com",
+      "name": "www.example.com",
+      "qualification": "observed",
+      "evidence": [
+        {
+          "id": "chef-evidence-domain-event-001",
+          "sourceEventId": "event-001",
+          "eventType": "DNS_NAME",
+          "observedAt": "2026-10-28T10:15:30Z"
+        }
+      ]
+    }
+  ]
+}

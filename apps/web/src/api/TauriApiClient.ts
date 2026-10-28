@@ -7,6 +7,7 @@ import { decodeScanLog } from '../contracts/decodeScanLog';
 import { decodeChefConfig } from '../contracts/decodeChefConfig';
 import { decodeEventStatistics } from '../contracts/decodeEventStatistics';
 import { decodeTargetSeed } from '../contracts/decodeTargetSeed';
+import { decodeObservedDomainExport } from '../contracts/decodeObservedDomainExport';
 import type { ScanLogDto } from '../contracts/scan-log';
 import type { ScopePolicyDto } from '../contracts/snapshot';
 import type { ApiClient } from './ApiClient';
@@ -121,6 +122,18 @@ export class TauriApiClient implements ApiClient {
     const snapshot = await invoke<unknown>('export_chef_snapshot', { runId });
     options?.signal?.throwIfAborted();
     return decodeSnapshot(snapshot);
+  }
+
+  async exportObservedDomains(
+    runId: string,
+    options?: { signal?: AbortSignal },
+  ) {
+    options?.signal?.throwIfAborted();
+    const exported = await invoke<unknown>('export_chef_observed_domains', {
+      runId,
+    });
+    options?.signal?.throwIfAborted();
+    return decodeObservedDomainExport(exported);
   }
 
   async loadReconGraph(runId: string, options?: { signal?: AbortSignal }) {
