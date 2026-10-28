@@ -302,3 +302,8 @@ Se recalculó el estado de las 466 filas del inventario y se corrigieron los tot
 ### 28-10-2026 — Decisión sobre enumeración de archivos en buckets
 
 Se revisaron `bucket_file_enum.py` y su prueba de origen. El módulo descarga el índice XML remoto del bucket, extrae hasta 50 rutas de objeto y las ofrece a un flujo posterior de descarga. CHEF no conserva cuerpos HTTP ni debe persistir estos nombres de objetos potencialmente sensibles; por ello se excluyen ambos archivos en lugar de convertir la salida en observaciones o disponibilidad confirmada. La clasificación de hosts de proveedores ya observados permanece como pista offline independiente. Inventario actualizado: 50 parciales, 384 pendientes y 32 exclusiones justificadas (466 archivos). No se ejecutaron pruebas.
+
+
+### 28-10-2026 — Decisión sobre descargas de archivos remotos
+
+Se revisaron `filedownload.py` y su prueba de origen, además de sus usos desde enumeración de buckets, BIMI y extracción. El módulo descarga cuerpos de URLs a disco, permite conservar artefactos sensibles y obtiene una base MIME remota. CHEF no persiste cuerpos HTTP ni habilita escritura filesystem arbitraria; se excluyen el módulo y su prueba del alcance actual. La extracción de documentos queda como decisión separada de ingestión local, no como descarga implícita. Inventario: 50 parciales, 382 pendientes y 34 exclusiones justificadas (466 archivos). No se ejecutaron pruebas.
