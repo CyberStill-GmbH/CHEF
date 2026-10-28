@@ -227,6 +227,24 @@ assert.equal(
   assetInventoryExportExample.rowCount + 1,
 );
 assert.ok(assetInventoryCsvLines[0].includes('ids_hallazgos_candidatos_json'));
+const webEvidenceReportExportSchema = JSON.parse(
+  readFileSync('docs/contracts/web-evidence-report-export.schema.json', 'utf8'),
+);
+const validateWebEvidenceReportExport = ajv.compile(
+  webEvidenceReportExportSchema,
+);
+const webEvidenceReportExportExample = JSON.parse(
+  readFileSync(
+    'docs/contracts/examples/web-evidence-report-export.json',
+    'utf8',
+  ),
+);
+assert.ok(
+  validateWebEvidenceReportExport(webEvidenceReportExportExample),
+  JSON.stringify(validateWebEvidenceReportExport.errors),
+);
+assert.match(webEvidenceReportExportExample.html, /Content-Security-Policy/);
+assert.doesNotMatch(webEvidenceReportExportExample.html, /<script\b|<link\b/i);
 const chefConfigSchema = JSON.parse(
   readFileSync('docs/contracts/chef-config.schema.json', 'utf8'),
 );
