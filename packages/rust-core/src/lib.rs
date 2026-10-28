@@ -35,6 +35,7 @@ mod speculate;
 mod statistics;
 mod target_seed;
 mod text_policy;
+mod tlsrpt;
 mod url_fingerprint;
 mod url_policy;
 mod url_tools;

@@ -114,7 +114,7 @@ pub fn export_observed_emails(
     Ok(export)
 }
 
-fn valid_address(address: &str) -> bool {
+pub(crate) fn valid_address(address: &str) -> bool {
     if address.is_empty()
         || address.len() > 254
         || address.trim() != address

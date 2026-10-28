@@ -808,5 +808,14 @@
     "claim": "El borrador vigente describe registros BIMI TXT en selector._bimi, exige v=BIMI1 como primer tag y establece HTTPS para URI de ubicación y evidencia; permite ignorar tags desconocidos.",
     "kind": "primary",
     "limitation": "Es un Internet-Draft de trabajo, no un RFC publicado; puede cambiar o caducar. CHEF solo extrae URI como pistas de registros ya importados y no implementa descubrimiento DNS, descarga, validación BIMI ni verificación de marca."
+  },
+  {
+    "id": "RFC8460-TLS-RPT",
+    "url": "https://www.rfc-editor.org/rfc/rfc8460.html",
+    "consultedAt": "2026-10-28",
+    "version": "RFC 8460, septiembre de 2018",
+    "claim": "TLS-RPT usa registros TXT bajo _smtp._tls; la versión definida es TLSRPTv1 y rua admite URI mailto y https en una lista separada por comas.",
+    "kind": "primary",
+    "limitation": "CHEF interpreta solo registros importados, deriva direcciones y URL_HINT con linaje y no consulta DNS, envía reportes ni visita URI. Un endpoint o correo no implica que esté disponible o sea válido."
   }
 ]
