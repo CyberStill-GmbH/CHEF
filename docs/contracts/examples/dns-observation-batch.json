@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "1.0.0",
+  "batchId": "dns-batch:demo-srv-001",
+  "termination": "completed",
+  "observations": [
+    {
+      "ownerName": "_sip._tcp.example.invalid",
+      "scopeHost": "example.invalid",
+      "recordType": "SRV",
+      "observedAt": "2026-10-28T12:00:00.000Z",
+      "resolutionHops": 0,
+      "authorizationId": "demo-authorization-001",
+      "authorizationScopeDigest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "sourceEvidenceId": "chef-evidence:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "outcome": {
+        "status": "answers",
+        "answers": [
+          {
+            "recordType": "SRV",
+            "ttlSeconds": 300,
+            "disposition": "follow_up_allowed",
+            "rdataSha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+            "targetCandidates": ["voice.example.invalid"]
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -2,6 +2,7 @@
 
 mod bbot_event_rate;
 mod dns;
+mod dns_observation;
 mod dns_plan;
 mod dns_plan_runner;
 mod dns_service_plan;
@@ -15,6 +16,10 @@ pub use dns::{
     DnsAuthorizationPort, DnsAuthorizationReceipt, DnsCancellation, DnsLookupOutcome,
     DnsQueryRequest, DnsRecordType, DnsResolutionError, DnsResolutionResult, DnsResolverFailure,
     DnsResolverPort, ResolveDns,
+};
+pub use dns_observation::{
+    DNS_OBSERVATION_SCHEMA_VERSION, DnsObservationAnswer, DnsObservationBatch, DnsObservationError,
+    DnsObservationOutcome, DnsQueryObservation,
 };
 pub use dns_plan::{DnsQueryPlan, DnsQueryPlanSettings, DnsQueryStage, PlannedDnsQuery};
 pub use dns_plan_runner::{

@@ -5,10 +5,13 @@ use crate::{
     DnsAuthorizationPort, DnsCancellation, DnsResolutionError, DnsResolutionResult,
     DnsResolverPort, DnsServiceQueryPlan, ResolveDns,
 };
+use chef_core::Clock;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DnsServiceQueryResult {
     pub owner_name: String,
+    pub source_evidence_id: Option<String>,
+    pub observed_at: String,
     pub resolution: DnsResolutionResult,
 }
 
@@ -47,6 +50,7 @@ where
         &self,
         plan: &DnsServiceQueryPlan,
         cancellation: &DnsCancellation,
+        clock: &impl Clock,
     ) -> DnsServicePlanExecution {
         let mut results = Vec::with_capacity(plan.candidates().len());
         let resolver = ResolveDns::new(self.resolver, self.authorization);
@@ -64,6 +68,8 @@ where
             match resolver.execute(request, cancellation).await {
                 Ok(resolution) => results.push(DnsServiceQueryResult {
                     owner_name: candidate.owner_name().to_owned(),
+                    source_evidence_id: candidate.source_evidence_id().map(str::to_owned),
+                    observed_at: clock.now(),
                     resolution,
                 }),
                 Err(error) => {

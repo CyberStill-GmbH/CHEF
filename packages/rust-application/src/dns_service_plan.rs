@@ -15,6 +15,7 @@ const MAX_DNS_SERVICE_QUERIES: usize = 256;
 pub struct DnsServiceQueryCandidate {
     owner_name: String,
     root_domain: String,
+    source_evidence_id: Option<String>,
 }
 
 impl DnsServiceQueryCandidate {
@@ -28,6 +29,10 @@ impl DnsServiceQueryCandidate {
 
     pub fn request(&self) -> Result<DnsQueryRequest, DnsResolutionError> {
         DnsQueryRequest::for_srv_owner(&self.owner_name, &self.root_domain, 0)
+    }
+
+    pub fn source_evidence_id(&self) -> Option<&str> {
+        self.source_evidence_id.as_deref()
     }
 }
 
@@ -44,6 +49,24 @@ impl DnsServiceQueryPlan {
     /// de propietario SRV y no deben convertirse en activos observados ni
     /// ejecutarse antes de una autorización por consulta.
     pub fn for_root_domain(root_domain: &str) -> Result<Self, DnsResolutionError> {
+        Self::build(root_domain, None)
+    }
+
+    /// Prepara candidatos vinculados a la evidencia importada que originó el dominio.
+    pub fn for_imported_root_domain(
+        root_domain: &str,
+        source_evidence_id: &str,
+    ) -> Result<Self, DnsResolutionError> {
+        if !is_evidence_id(source_evidence_id) {
+            return Err(DnsResolutionError::InvalidQuery);
+        }
+        Self::build(root_domain, Some(source_evidence_id.to_owned()))
+    }
+
+    fn build(
+        root_domain: &str,
+        source_evidence_id: Option<String>,
+    ) -> Result<Self, DnsResolutionError> {
         let seed =
             parse_chef_target_seed(root_domain).map_err(|_| DnsResolutionError::InvalidQuery)?;
         if seed.kind != ChefTargetKind::DnsName {
@@ -63,6 +86,7 @@ impl DnsServiceQueryPlan {
             .map(|owner_name| DnsServiceQueryCandidate {
                 owner_name,
                 root_domain: root_domain.clone(),
+                source_evidence_id: source_evidence_id.clone(),
             })
             .collect();
 
@@ -79,4 +103,10 @@ impl DnsServiceQueryPlan {
     pub fn candidates(&self) -> &[DnsServiceQueryCandidate] {
         &self.candidates
     }
+}
+
+fn is_evidence_id(value: &str) -> bool {
+    value.len() == 78
+        && value.starts_with("chef-evidence:")
+        && value[14..].bytes().all(|byte| byte.is_ascii_hexdigit())
 }
