@@ -11,15 +11,26 @@ interface Props {
 export function EvidenceImportPanel({ client, onImported }: Props) {
   const [jsonlFile, setJsonlFile] = useState<File | null>(null);
   const [scopeFile, setScopeFile] = useState<File | null>(null);
+  const [dnsWordlistFile, setDnsWordlistFile] = useState<File | null>(null);
   const [presetId, setPresetId] = useState('');
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState('');
 
   async function importFile() {
     if (!jsonlFile || !scopeFile || !client.importBbotJsonl || busy) return;
-    if (jsonlFile.size > 2 * 1024 * 1024 || scopeFile.size > 64 * 1024) {
+    if (
+      jsonlFile.size > 2 * 1024 * 1024 ||
+      scopeFile.size > 64 * 1024 ||
+      (dnsWordlistFile && dnsWordlistFile.size > 2 * 1024 * 1024)
+    ) {
       setStatus(
-        'El JSONL admite hasta 2 MiB y la política de scope hasta 64 KiB.',
+        'El JSONL y la lista DNS admiten hasta 2 MiB cada uno; la política de scope, hasta 64 KiB.',
+      );
+      return;
+    }
+    if (dnsWordlistFile && presetId !== 'offline_hints') {
+      setStatus(
+        'Para usar una lista DNS, selecciona el perfil “Importación con pistas offline”.',
       );
       return;
     }
@@ -27,13 +38,15 @@ export function EvidenceImportPanel({ client, onImported }: Props) {
     setBusy(true);
     setStatus('Validando e importando evidencia local…');
     try {
-      const [jsonl, scopeText] = await Promise.all([
+      const [jsonl, scopeText, dnsWordlist] = await Promise.all([
         jsonlFile.text(),
         scopeFile.text(),
+        dnsWordlistFile?.text(),
       ]);
       const scope = parseScopePolicy(JSON.parse(scopeText));
       const snapshot = await client.importBbotJsonl(jsonl, scope, {
         ...(presetId ? { presetId } : {}),
+        ...(dnsWordlist !== undefined ? { dnsWordlist } : {}),
       });
       onImported(snapshot);
       setStatus('Importación terminada y guardada en el almacén local CHEF.');
@@ -72,6 +85,17 @@ export function EvidenceImportPanel({ client, onImported }: Props) {
           accept="application/json,.json"
           onChange={(event) =>
             setScopeFile(event.currentTarget.files?.[0] ?? null)
+          }
+        />
+      </label>
+      <label>
+        Lista DNS local opcional (.txt, hasta 2 MiB)
+        <input
+          type="file"
+          accept="text/plain,.txt"
+          disabled={busy}
+          onChange={(event) =>
+            setDnsWordlistFile(event.currentTarget.files?.[0] ?? null)
           }
         />
       </label>

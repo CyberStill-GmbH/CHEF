@@ -244,6 +244,19 @@ impl ImportBbotEvidence {
         clock: &impl Clock,
         cancelled: Option<&AtomicBool>,
     ) -> ChefResult<BbotImportResult> {
+        Self::execute_with_config_and_wordlist(bytes, policy, config, None, clock, cancelled)
+    }
+
+    /// Importa JSONL BBOT y, si se entrega, usa una lista local ya elegida por
+    /// la interfaz. El dominio solo analiza su texto y nunca lee el archivo.
+    pub fn execute_with_config_and_wordlist(
+        bytes: &[u8],
+        policy: &ScopePolicy,
+        config: &ChefConfig,
+        dns_wordlist: Option<&str>,
+        clock: &impl Clock,
+        cancelled: Option<&AtomicBool>,
+    ) -> ChefResult<BbotImportResult> {
         check_cancelled(cancelled)?;
         config.validate()?;
         if bytes.len() > policy.max_input_bytes {
@@ -262,7 +275,7 @@ impl ImportBbotEvidence {
             event_graph =
                 engine.run_offline(event_graph.events.clone(), config, clock, cancelled)?;
         }
-        append_dns_mutation_hints(&mut event_graph, config, clock, cancelled)?;
+        append_dns_mutation_hints(&mut event_graph, config, dns_wordlist, clock, cancelled)?;
         validate_bbot_event_graph(&event_graph)?;
         let recon_graph = crate::adapt_bbot_to_chef(&event_graph)?;
         let snapshot = ImportServices::execute(
@@ -285,15 +298,22 @@ impl ImportBbotEvidence {
 fn append_dns_mutation_hints(
     graph: &mut crate::BbotEventGraph,
     config: &ChefConfig,
+    dns_wordlist: Option<&str>,
     clock: &impl Clock,
     cancelled: Option<&AtomicBool>,
 ) -> ChefResult<()> {
-    if !config
+    let module_enabled = config
         .modules
         .get("chef_dns_mutation_hints")
         .copied()
-        .unwrap_or(false)
-    {
+        .unwrap_or(false);
+    if dns_wordlist.is_some() && !module_enabled {
+        return Err(ChefError::new(
+            ErrorCode::InvalidInput,
+            "Una lista DNS local requiere habilitar chef_dns_mutation_hints con offline_hints",
+        ));
+    }
+    if !module_enabled {
         return Ok(());
     }
 
@@ -301,12 +321,14 @@ fn append_dns_mutation_hints(
     if remaining == 0 {
         return Ok(());
     }
-    let batch = crate::generate_dns_mutation_candidates(
+    let parsed_wordlist = dns_wordlist.map(crate::parse_dns_wordlist).transpose()?;
+    let batch = crate::generate_dns_mutation_candidates_with_wordlist(
         &graph.events,
         crate::DnsMutationCandidateOptions {
             max_candidates: remaining,
             max_candidates_per_root: 100,
         },
+        parsed_wordlist.as_ref(),
     )?;
     let events_by_id = graph
         .events
@@ -358,6 +380,7 @@ fn append_dns_mutation_hints(
                 crate::DnsMutationReason::WordCloudModifier => "wordcloud_modifier",
                 crate::DnsMutationReason::WordCloudBase => "wordcloud_base",
                 crate::DnsMutationReason::StaticWordlist => "static_wordlist",
+                crate::DnsMutationReason::LocalWordlist => "local_wordlist",
             })
             .collect::<Vec<_>>();
         let mut tags = vec!["chef:derived-dns-mutation-hint".to_owned()];
@@ -384,6 +407,7 @@ fn append_dns_mutation_hints(
                 "ruleVersion": candidate.rule_version,
                 "reasons": reasons,
                 "sourceEventIds": candidate.source_event_ids,
+                "wordlistSha256": candidate.wordlist_sha256,
             }),
             metadata_redacted: false,
             host: Some(candidate.name),
@@ -395,10 +419,14 @@ fn append_dns_mutation_hints(
             tags,
             module: Some("chef_dns_mutation_hints".to_owned()),
             locator: format!(
-                "rule:{}@{};reason={}",
+                "rule:{}@{};reason={}{}",
                 candidate.rule_id,
                 candidate.rule_version,
-                reasons.join(",")
+                reasons.join(","),
+                candidate
+                    .wordlist_sha256
+                    .as_deref()
+                    .map_or_else(String::new, |digest| format!(";wordlist={digest}"))
             ),
             depth,
             scope_distance: parent.scope_distance.saturating_add(1),

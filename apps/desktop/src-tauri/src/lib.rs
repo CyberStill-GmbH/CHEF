@@ -1,7 +1,8 @@
 use std::path::PathBuf;
 
 use chef_core::{
-    Clock, ImportJobEvent, ScopePolicy, Snapshot, SystemClock, spawn_bbot_import_job_with_config,
+    Clock, ImportJobEvent, ScopePolicy, Snapshot, SystemClock,
+    spawn_bbot_import_job_with_config_and_wordlist,
 };
 use chef_storage::LocalSnapshotStore;
 use serde::Serialize;
@@ -69,6 +70,7 @@ async fn load_offline_demo_snapshot(
         EVENT_FIXTURE.to_vec(),
         scope,
         None,
+        None,
     )
     .await
 }
@@ -81,12 +83,19 @@ async fn import_bbot_jsonl(
     jsonl: String,
     scope: ScopePolicy,
     preset_id: Option<String>,
+    dns_wordlist: Option<String>,
 ) -> Result<Snapshot, String> {
     let bytes = jsonl.into_bytes();
     if bytes.len() > 2 * 1024 * 1024 {
         return Err("El archivo BBOT supera el máximo de 2 MiB CHEF".to_owned());
     }
-    import_bbot_payload(app, state, config_state, bytes, scope, preset_id).await
+    if dns_wordlist
+        .as_ref()
+        .is_some_and(|wordlist| wordlist.len() > 2 * 1024 * 1024)
+    {
+        return Err("La lista DNS supera el máximo de 2 MiB CHEF".to_owned());
+    }
+    import_bbot_payload(app, state, config_state, bytes, scope, preset_id, dns_wordlist).await
 }
 
 async fn import_bbot_payload(
@@ -96,6 +105,7 @@ async fn import_bbot_payload(
     bytes: Vec<u8>,
     scope: ScopePolicy,
     preset_id: Option<String>,
+    dns_wordlist: Option<String>,
 ) -> Result<Snapshot, String> {
     let mut config = load_runtime_config(config_state.config_path.clone()).await?;
     if let Some(preset_id) = preset_id {
@@ -106,9 +116,15 @@ async fn import_bbot_payload(
             .apply(&mut config)
             .map_err(|error| error.message.to_owned())?;
     }
-    let task = spawn_bbot_import_job_with_config(bytes, scope, SystemClock.now(), config)
-        .await
-        .map_err(|error| error.message.to_owned())?;
+    let task = spawn_bbot_import_job_with_config_and_wordlist(
+        bytes,
+        scope,
+        SystemClock.now(),
+        config,
+        dns_wordlist,
+    )
+    .await
+    .map_err(|error| error.message.to_owned())?;
     let mut task = task;
     let mut sequence = 0_u64;
     let mut job_id: Option<String> = None;

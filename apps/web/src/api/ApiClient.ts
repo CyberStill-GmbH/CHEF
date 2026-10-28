@@ -23,7 +23,11 @@ export interface ApiClient {
   importBbotJsonl?(
     jsonl: string,
     scope: ScopePolicyDto,
-    options?: { signal?: AbortSignal; presetId?: string },
+    options?: {
+      signal?: AbortSignal;
+      presetId?: string;
+      dnsWordlist?: string;
+    },
   ): Promise<SnapshotDto>;
   listenScanLogs?(
     listener: (event: ScanLogDto) => void,

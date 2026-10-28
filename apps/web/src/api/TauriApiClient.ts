@@ -21,13 +21,18 @@ export class TauriApiClient implements ApiClient {
   async importBbotJsonl(
     jsonl: string,
     scope: ScopePolicyDto,
-    options?: { signal?: AbortSignal; presetId?: string },
+    options?: {
+      signal?: AbortSignal;
+      presetId?: string;
+      dnsWordlist?: string;
+    },
   ) {
     options?.signal?.throwIfAborted();
     const snapshot = await invoke<unknown>('import_bbot_jsonl', {
       jsonl,
       scope,
       presetId: options?.presetId ?? null,
+      dnsWordlist: options?.dnsWordlist ?? null,
     });
     options?.signal?.throwIfAborted();
     return decodeSnapshot(snapshot);
