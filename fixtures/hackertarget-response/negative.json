@@ -1,0 +1,5 @@
+{
+  "queryDomain": "example.com",
+  "response": "outside.example.net,192.0.2.12\nexample.com.evil.test,192.0.2.13\nnotexample.com,192.0.2.14\n*.example.com,192.0.2.15\n",
+  "expectedCandidates": []
+}
