@@ -10,6 +10,7 @@ mod config_merge;
 mod contracts;
 mod dns_cache;
 mod dns_format;
+mod dns_mutation_candidates;
 mod dns_policy;
 mod dns_records;
 mod dns_service_candidates;
@@ -29,6 +30,7 @@ mod speculate;
 mod statistics;
 mod target_seed;
 mod text_policy;
+mod url_fingerprint;
 mod url_policy;
 mod url_tools;
 
@@ -46,6 +48,10 @@ pub use config_merge::{
 pub use contracts::{ScopePolicy, Snapshot};
 pub use dns_cache::DnsCache;
 pub use dns_format::format_dns_rdata;
+pub use dns_mutation_candidates::{
+    DnsMutationCandidate, DnsMutationCandidateBatch, DnsMutationCandidateOptions,
+    DnsMutationReason, generate_dns_mutation_candidates,
+};
 pub use dns_policy::{DnsQueryPolicy, DnsZoneDecision};
 pub use dns_records::{DNS_RECORD_TYPES, DnsTarget, extract_dns_targets, is_dns_service_record};
 pub use dns_service_candidates::common_dns_service_candidates;
@@ -72,6 +78,7 @@ pub use statistics::{
 };
 pub use target_seed::{ChefTargetKind, ChefTargetSeed, parse_chef_target_seed};
 pub use text_policy::{escape_terminal_controls, is_printable_text, truncate_text};
+pub use url_fingerprint::url_shape_fingerprint;
 pub use url_policy::{canonical_fqdn_or_ip, url_path_depth};
 
 #[cfg(test)]
