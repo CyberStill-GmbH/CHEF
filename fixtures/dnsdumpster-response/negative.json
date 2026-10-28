@@ -1,0 +1,5 @@
+{
+  "queryDomain": "example.com",
+  "response": "example.com.evil.test notexample.com _private.example.com -bad.example.com",
+  "expectedCandidates": []
+}

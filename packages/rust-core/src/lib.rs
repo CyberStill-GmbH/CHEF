@@ -18,6 +18,7 @@ mod dns_policy;
 mod dns_records;
 mod dns_service_candidates;
 mod dns_word_segmentation;
+mod dnsdumpster;
 mod domain;
 mod domain_export;
 mod email_export;
@@ -66,6 +67,7 @@ pub use dns_mutation_candidates::{
 pub use dns_policy::{DnsQueryPolicy, DnsZoneDecision};
 pub use dns_records::{DNS_RECORD_TYPES, DnsTarget, extract_dns_targets, is_dns_service_record};
 pub use dns_service_candidates::common_dns_service_candidates;
+pub use dnsdumpster::{DnsDumpsterSubdomainPage, parse_dnsdumpster_subdomains};
 pub use domain::{ChefError, ChefResult, ErrorCode, ServiceInput};
 pub use domain_export::{
     ChefObservedDomain, ChefObservedDomainEvidence, ChefObservedDomainExport,
