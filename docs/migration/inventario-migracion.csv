@@ -178,7 +178,7 @@ chef-engine/modules/output/slack.py,32,Salida,Excluido: publica evidencia en Sla
 chef-engine/modules/output/splunk.py,56,Salida,Excluido: envía eventos a Splunk remoto; CHEF usa SurrealDB local y no replica evidencia a otro backend.,Excluido
 chef-engine/modules/output/sqlite.py,35,Salida,Excluido por decisión explícita del propietario: CHEF usa SurrealDB embebida con RocksDB y no SQLite.,Excluido
 chef-engine/modules/output/stdout.py,92,Salida,Adaptado parcialmente a la terminal xterm.js: Tauri envía eventos scan-log tipados y saneados; no se replica la salida arbitraria ni las opciones de CLI de BBOT.,Parcial
-chef-engine/modules/output/subdomains.py,45,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
+chef-engine/modules/output/subdomains.py,45,Salida,"export_chef_observed_domains adapta DNS_NAME directos a observed-domain-export 1.0.0, orden determinista y evidencia; excluye unresolved/hints. Parcial: el grafo no conserva in_scope_only, por ello scopeStatus=not_asserted y no equivale al filtro de BBOT",Parcial
 chef-engine/modules/output/teams.py,101,Salida,Excluido: publica evidencia en Microsoft Teams; CHEF local no envía datos a chats. El único destino remoto previsto es DefectDojo con vista previa y consentimiento explícito.,Excluido
 chef-engine/modules/output/txt.py,34,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
 chef-engine/modules/output/web_parameters.py,55,Salida,"Excluido por minimización de datos: CHEF descarta query, path, cuerpo y cabeceras HTTP; no retiene parámetros fuente que puedan exportarse.",Excluido

@@ -5,6 +5,7 @@ import type { ChefConfigDto } from '../contracts/chef-config';
 import type { EventStatisticsDto } from '../contracts/event-statistics';
 import type { ScopePolicyDto } from '../contracts/snapshot';
 import type { TargetSeedDto } from '../contracts/target-seed';
+import type { ObservedDomainExportDto } from '../contracts/observed-domain-export';
 
 export interface ApiClient {
   loadSnapshot(options?: { signal?: AbortSignal }): Promise<SnapshotDto>;
@@ -12,6 +13,10 @@ export interface ApiClient {
     runId: string,
     options?: { signal?: AbortSignal },
   ): Promise<SnapshotDto>;
+  exportObservedDomains?(
+    runId: string,
+    options?: { signal?: AbortSignal },
+  ): Promise<ObservedDomainExportDto>;
   loadReconGraph?(
     runId: string,
     options?: { signal?: AbortSignal },

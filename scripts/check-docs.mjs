@@ -165,6 +165,21 @@ assert.ok(
   ),
   JSON.stringify(validateScanLog.errors),
 );
+const observedDomainExportSchema = JSON.parse(
+  readFileSync('docs/contracts/observed-domain-export.schema.json', 'utf8'),
+);
+const validateObservedDomainExport = ajv.compile(observedDomainExportSchema);
+assert.ok(
+  validateObservedDomainExport(
+    JSON.parse(
+      readFileSync(
+        'docs/contracts/examples/observed-domain-export.json',
+        'utf8',
+      ),
+    ),
+  ),
+  JSON.stringify(validateObservedDomainExport.errors),
+);
 const chefConfigSchema = JSON.parse(
   readFileSync('docs/contracts/chef-config.schema.json', 'utf8'),
 );

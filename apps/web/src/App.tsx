@@ -169,7 +169,11 @@ export function App({ client = defaultClient }: AppProps) {
             </dl>
           </section>
           {client.exportSnapshot !== undefined && (
-            <SnapshotExportButton client={client} snapshot={state.snapshot} />
+            <SnapshotExportButton
+              client={client}
+              snapshot={state.snapshot}
+              hasReconGraph={state.reconGraph !== undefined}
+            />
           )}
           <AssetList
             assets={state.snapshot.assets}
