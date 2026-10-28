@@ -77,6 +77,7 @@ chef_url_attribute_hints = true
 chef_ip_range_expansion = true
 chef_dns_parent_hints = true
 chef_dns_rdata_hints = true
+chef_dns_tlsrpt_hints = true
 chef_common_port_hints = true
 chef_org_stub_hints = true
 chef_dns_mutation_hints = true
@@ -93,3 +94,5 @@ La migración a Rust no cambia por sí sola el formato wire. El núcleo Rust deb
 ## Exportación explícita de correo
 
 `export_chef_observed_emails` adapta parcialmente `modules/output/emails.py` con `observed-email-export 1.0.0` ([esquema](observed-email-export.schema.json), [ejemplo sintético](examples/observed-email-export.json)). Exporta JSON solo desde eventos existentes de tipo `EMAIL_ADDRESS`, deduplicando la dirección exacta y conservando cada ID de evidencia, fecha y evidencia padre. En React la acción identifica el archivo como dato personal y exige pulsar «Confirmar y descargar»; el destino es exclusivamente local. `scopeStatus: not_asserted` evita presentar como dentro de scope el filtro `in_scope_only` del origen, que CHEF no conserva. No deduce correos a partir de `USERNAME`, no transforma mayúsculas, no publica información a servicios remotos y limita la salida a 2 MiB. No cambia Snapshot ni el grafo persistido. Las pruebas funcionales de deduplicación, evidencia, formato inválido y límites quedan pendientes para la fase indicada por el propietario.
+
+Con `offline_hints`, `chef_dns_tlsrpt_hints` procesa solo TXT `_smtp._tls` ya importados con una etiqueta `v=TLSRPTvN`. La lista `rua` se limita a 32 pistas por registro: `mailto:` produce únicamente un `DNS_NAME_HINT` del dominio, y HTTP(S) un `URL_HINT` del origen, sin ruta, query ni fragmento. Las pistas retienen el evento TXT como padre y usan tipos ya reconocidos por `recon-graph 1.4.0`; Snapshot y el esquema del grafo no cambian. No se consulta DNS/HTTP ni se publican direcciones de correo completas. El módulo de origen desactiva `emit_raw_dns_records` por omisión, así que la importación puede carecer del TXT requerido.

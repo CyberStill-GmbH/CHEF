@@ -15,6 +15,7 @@ mod dns_mutation_candidates;
 mod dns_policy;
 mod dns_records;
 mod dns_service_candidates;
+mod dns_tlsrpt;
 mod dns_word_segmentation;
 mod domain;
 mod domain_export;

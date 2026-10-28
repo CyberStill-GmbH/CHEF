@@ -136,7 +136,8 @@ pub fn adapt_bbot_to_chef(graph: &BbotEventGraph) -> ChefResult<ChefReconGraph> 
             }
             "DNS_NAME_HINT"
                 if crate::dns_mutation_candidates::is_generated_dns_mutation_hint(event)
-                    || crate::speculate::is_generated_dns_rdata_hint(event) =>
+                    || crate::speculate::is_generated_dns_rdata_hint(event)
+                    || crate::dns_tlsrpt::is_generated_dns_tlsrpt_hint(event) =>
             {
                 add_named_asset(&mut assets, ReconAssetKind::Domain, event, &evidence_id)
             }
