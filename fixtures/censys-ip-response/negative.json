@@ -1,0 +1,30 @@
+{
+  "queryIp": "2001:db8::1",
+  "response": {
+    "code": 200,
+    "status": "OK",
+    "result": {
+      "ip": "2001:db8::1",
+      "services": [
+        {
+          "http": { "request": { "uri": "https://attacker.example.net/admin?token=synthetic" } },
+          "tls": {
+            "certificates": {
+              "leaf_data": {
+                "names": ["2001:db8::2", "bad_label", "https://host.example.net/path"]
+              }
+            }
+          }
+        }
+      ],
+      "dns": { "names": ["2001:db8::2", "bad_label"] }
+    }
+  },
+  "expected": {
+    "portHints": [],
+    "dnsNameHints": [],
+    "urlHints": [],
+    "technologyHints": [],
+    "protocolHints": []
+  }
+}
