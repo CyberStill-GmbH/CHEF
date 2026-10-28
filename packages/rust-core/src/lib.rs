@@ -13,6 +13,7 @@ mod dns_cache;
 mod dns_format;
 mod dns_mutation_candidates;
 mod dns_policy;
+mod dns_policy_records;
 mod dns_records;
 mod dns_service_candidates;
 mod dns_word_segmentation;
