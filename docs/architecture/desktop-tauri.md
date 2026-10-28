@@ -58,6 +58,8 @@ Los logs siguen el contrato interno [scan-log 1.0.0](../contracts/scan-log.schem
 
 Los eventos de Tauri son asíncronos y su sistema no ofrece seguridad de tipos en compilación. Por eso el payload tiene versión, esquema y validador de runtime TypeScript. Para flujos de salida de alto volumen, se medirá la necesidad de lotes o un canal dedicado. Xterm.js es una vista de salida; no expone una shell interactiva.
 
+`BbotEventRateCounter` porta la ventana móvil de `scanner.stats.SpeedCounter`: el caller entrega tiempo monotónico, la ventana predeterminada es 60 segundos y un límite de muestras marca los conteos como límite inferior si se alcanza. El contador no lee tiempo de pared ni observa timestamps importados. Sigue pendiente conectarlo al worker y definir un DTO versionado de progreso; cuando se exponga, se denominará velocidad de procesamiento offline, nunca velocidad de reconocimiento de red.
+
 El simulador offline usa exclusivamente fixtures, muestra “Simulación” en la UI y no resuelve DNS, abre sockets ni consulta proveedores. Una futura tarea activa requerirá aprobación escrita del objetivo, allowlist resuelta, protocolo/puertos, cuotas, cancelación comprobada, registro de auditoría y entorno de laboratorio. Un botón de interfaz no equivale a autorización.
 
 ## Persistencia local y grafo
