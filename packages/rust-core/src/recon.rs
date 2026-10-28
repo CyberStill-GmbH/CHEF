@@ -206,11 +206,11 @@ pub fn adapt_bbot_to_chef(graph: &BbotEventGraph) -> ChefResult<ChefReconGraph> 
         {
             let asset_key = asset_id(ReconAssetKind::Domain, &name);
             let source_evidence_id = identity::id("chef-evidence", &[parent_id]);
-            if let Some(asset) = assets.get_mut(&asset_key) {
-                if !asset.evidence_ids.contains(&source_evidence_id) {
-                    asset.evidence_ids.push(source_evidence_id);
-                    asset.evidence_ids.sort();
-                }
+            if let Some(asset) = assets.get_mut(&asset_key)
+                && !asset.evidence_ids.contains(&source_evidence_id)
+            {
+                asset.evidence_ids.push(source_evidence_id);
+                asset.evidence_ids.sort();
             }
         }
 
