@@ -91,56 +91,39 @@ fn parse_bimi_record(record: &str) -> Vec<(&'static str, &str)> {
         return Vec::new();
     }
 
-    let Some(location_field) = fields.next() else {
-        return Vec::new();
-    };
-    let location = if location_field.trim().is_empty() {
-        None
-    } else {
-        let Some((key, value)) = parse_bimi_field(location_field) else {
+    let mut location = None;
+    let mut authority = None;
+    let mut stage = 0_u8;
+    for field in fields {
+        let field = field.trim();
+        if field.is_empty() {
+            continue;
+        }
+        let Some((key, value)) = parse_bimi_field(field) else {
             return Vec::new();
         };
-        if !key.eq_ignore_ascii_case("l") {
-            return Vec::new();
-        }
-        Some((key, value))
-    };
-    let authority = match fields.next() {
-        Some(field) if !field.trim().is_empty() => {
-            let Some((key, value)) = parse_bimi_field(field) else {
-                return Vec::new();
-            };
-            if !key.eq_ignore_ascii_case("a") {
+        if key.eq_ignore_ascii_case("l") && stage == 0 {
+            if !valid_bimi_url(value, true) {
                 return Vec::new();
             }
-            Some((key, value))
+            location = Some(value);
+            stage = 1;
+        } else if key.eq_ignore_ascii_case("a") && stage <= 1 {
+            if !valid_bimi_url(value, false) {
+                return Vec::new();
+            }
+            authority = Some(value);
+            stage = 2;
+        } else {
+            return Vec::new();
         }
-        _ => None,
-    };
-    if fields.any(|field| !field.trim().is_empty()) {
-        return Vec::new();
     }
 
     let mut links = Vec::new();
-    if let Some(("l", value)) = location
-        && !value.is_empty()
-        && value.len() <= 255
-        && (value
-            .get(..7)
-            .is_some_and(|scheme| scheme.eq_ignore_ascii_case("http://"))
-            || value
-                .get(..8)
-                .is_some_and(|scheme| scheme.eq_ignore_ascii_case("https://")))
-    {
+    if let Some(value) = location.filter(|value| !value.is_empty()) {
         links.push(("bimi-location", value));
     }
-    if let Some(("a", value)) = authority
-        && !value.is_empty()
-        && value.len() <= 255
-        && value
-            .get(..8)
-            .is_some_and(|scheme| scheme.eq_ignore_ascii_case("https://"))
-    {
+    if let Some(value) = authority.filter(|value| !value.is_empty()) {
         links.push(("bimi-authority", value));
     }
     links
@@ -149,6 +132,18 @@ fn parse_bimi_record(record: &str) -> Vec<(&'static str, &str)> {
 fn parse_bimi_field(field: &str) -> Option<(&str, &str)> {
     let (key, value) = field.trim().split_once('=')?;
     Some((key.trim(), value.trim()))
+}
+
+fn valid_bimi_url(value: &str, allow_http: bool) -> bool {
+    value.is_empty()
+        || (value.len() <= 255
+            && (value
+                .get(..8)
+                .is_some_and(|scheme| scheme.eq_ignore_ascii_case("https://"))
+                || (allow_http
+                    && value
+                        .get(..7)
+                        .is_some_and(|scheme| scheme.eq_ignore_ascii_case("http://")))))
 }
 
 /// Adaptación offline y acotada del puente IP_RANGE -> IP_ADDRESS de BBOT.
