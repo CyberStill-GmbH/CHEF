@@ -158,34 +158,34 @@ chef-engine/modules/ntlm.py,144,Módulo de reconocimiento,"Adaptador Rust CHEF t
 chef-engine/modules/nuclei.py,494,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
 chef-engine/modules/oauth.py,183,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
 chef-engine/modules/otx.py,36,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
-chef-engine/modules/output/__init__.py,0,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
+chef-engine/modules/output/__init__.py,0,Salida,Sin comportamiento funcional propio; el registro dinámico de paquetes se reemplaza por módulos Rust compilados y composición explícita en Tauri.,Excluido
 chef-engine/modules/output/asset_inventory.py,377,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
-chef-engine/modules/output/base.py,95,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
+chef-engine/modules/output/base.py,95,Salida,"El ciclo de vida genérico de plugins de salida (callbacks, colas y archivos por módulo) no aplica; CHEF compone comandos Tauri, SurrealDB local y exportaciones de Snapshot.",Excluido
 chef-engine/modules/output/csv.py,89,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
-chef-engine/modules/output/discord.py,17,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
-chef-engine/modules/output/elastic.py,31,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
+chef-engine/modules/output/discord.py,17,Salida,Excluido: publica evidencia en Discord; CHEF local no envía datos a chats. El único destino remoto previsto es DefectDojo con vista previa y consentimiento explícito.,Excluido
+chef-engine/modules/output/elastic.py,31,Salida,Excluido: envía eventos a un Elasticsearch remoto; CHEF usa SurrealDB local y no replica evidencia a otro backend.,Excluido
 chef-engine/modules/output/emails.py,38,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
 chef-engine/modules/output/json.py,39,Salida,Exportación local Snapshot CHEF JSON desde Tauri; el JSONL fuente se conserva por separado,Parcial
-chef-engine/modules/output/kafka.py,48,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
-chef-engine/modules/output/mongo.py,93,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
-chef-engine/modules/output/mysql.py,53,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
-chef-engine/modules/output/nats.py,51,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
-chef-engine/modules/output/neo4j.py,161,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
+chef-engine/modules/output/kafka.py,48,Salida,Excluido: transmite eventos a un broker Kafka remoto; el flujo local CHEF no habilita publicación externa.,Excluido
+chef-engine/modules/output/mongo.py,93,Salida,Excluido: persiste en MongoDB como alternativa de backend; la decisión CHEF es SurrealDB embebida con RocksDB.,Excluido
+chef-engine/modules/output/mysql.py,53,Salida,Excluido: persiste en MySQL como alternativa de backend; la decisión CHEF es SurrealDB embebida con RocksDB.,Excluido
+chef-engine/modules/output/nats.py,51,Salida,Excluido: transmite eventos a un broker NATS remoto; el flujo local CHEF no habilita publicación externa.,Excluido
+chef-engine/modules/output/neo4j.py,161,Salida,Excluido: persiste en Neo4j como alternativa de grafo; la decisión CHEF es SurrealDB embebida con RocksDB.,Excluido
 chef-engine/modules/output/nmap_xml.py,172,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
-chef-engine/modules/output/postgres.py,51,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
-chef-engine/modules/output/rabbitmq.py,63,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
-chef-engine/modules/output/slack.py,32,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
-chef-engine/modules/output/splunk.py,56,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
-chef-engine/modules/output/sqlite.py,35,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
-chef-engine/modules/output/stdout.py,92,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
+chef-engine/modules/output/postgres.py,51,Salida,Excluido: persiste en PostgreSQL como alternativa de backend; la decisión CHEF es SurrealDB embebida con RocksDB.,Excluido
+chef-engine/modules/output/rabbitmq.py,63,Salida,Excluido: transmite eventos a un broker RabbitMQ remoto; el flujo local CHEF no habilita publicación externa.,Excluido
+chef-engine/modules/output/slack.py,32,Salida,Excluido: publica evidencia en Slack; CHEF local no envía datos a chats. El único destino remoto previsto es DefectDojo con vista previa y consentimiento explícito.,Excluido
+chef-engine/modules/output/splunk.py,56,Salida,Excluido: envía eventos a Splunk remoto; CHEF usa SurrealDB local y no replica evidencia a otro backend.,Excluido
+chef-engine/modules/output/sqlite.py,35,Salida,Excluido por decisión explícita del propietario: CHEF usa SurrealDB embebida con RocksDB y no SQLite.,Excluido
+chef-engine/modules/output/stdout.py,92,Salida,Adaptado parcialmente a la terminal xterm.js: Tauri envía eventos scan-log tipados y saneados; no se replica la salida arbitraria ni las opciones de CLI de BBOT.,Parcial
 chef-engine/modules/output/subdomains.py,45,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
-chef-engine/modules/output/teams.py,101,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
+chef-engine/modules/output/teams.py,101,Salida,Excluido: publica evidencia en Microsoft Teams; CHEF local no envía datos a chats. El único destino remoto previsto es DefectDojo con vista previa y consentimiento explícito.,Excluido
 chef-engine/modules/output/txt.py,34,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
-chef-engine/modules/output/web_parameters.py,55,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
+chef-engine/modules/output/web_parameters.py,55,Salida,"Excluido por minimización de datos: CHEF descarta query, path, cuerpo y cabeceras HTTP; no retiene parámetros fuente que puedan exportarse.",Excluido
 chef-engine/modules/output/web_report.py,104,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
-chef-engine/modules/output/webhook.py,68,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
-chef-engine/modules/output/websocket.py,73,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
-chef-engine/modules/output/zeromq.py,46,Salida,Salida CHEF versionada o integración de exportación con permiso,Pendiente
+chef-engine/modules/output/webhook.py,68,Salida,Excluido: envía cada evento mediante HTTP a un endpoint configurado; CHEF no habilita destinos arbitrarios ni exportación remota implícita.,Excluido
+chef-engine/modules/output/websocket.py,73,Salida,Excluido: transmite eventos por WebSocket a otro servicio; el flujo local CHEF no habilita publicación externa.,Excluido
+chef-engine/modules/output/zeromq.py,46,Salida,Excluido: publica eventos ZeroMQ fuera del proceso; CHEF conserva la comunicación por IPC Tauri y almacenamiento local.,Excluido
 chef-engine/modules/paramminer_cookies.py,45,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
 chef-engine/modules/paramminer_getparams.py,92,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
 chef-engine/modules/paramminer_headers.py,359,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
