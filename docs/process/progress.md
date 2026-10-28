@@ -204,3 +204,7 @@ Validación estática del incremento: formato Rust, `cargo check --locked --offl
 ## 28-10-2026 — Pistas desde registros DNS importados
 
 Se adaptó la parte local de `modules/internal/dnsresolve.py` que interpreta respuestas `RAW_DNS_RECORD`: `chef_dns_rdata_hints` consume MX/NAPTR/NS/SOA/SRV/TXT ya presentes en un JSONL, limita a 32 nombres canónicos por evento y produce `DNS_NAME_HINT` con vínculo al evento padre. La proyección CHEF marca el dominio `hint` y asocia la evidencia tanto al derivado como al registro importado. Se activa solo con `offline_hints`; no hace consultas, no inventa respuestas, no procesa A/AAAA como activos y no altera scope ni Snapshot. Se mantiene `recon-graph 1.4.0` y se amplía su ejemplo. Las pruebas positivas/negativas y de límites quedan pendientes para la fase indicada por el propietario. No se modificó la copia local de origen.
+
+## 28-10-2026 — Alias y nombres PTR desde RDATA DNS
+
+`chef_dns_rdata_hints` amplía su parser offline para procesar CNAME, ANAME y PTR importados, además de MX/NAPTR/NS/SOA/SRV/TXT. Cada destino canónico produce `DNS_NAME_HINT` con el registro original como padre; el límite de 32 nombres por evento y el estado `hint` se mantienen. No interpreta A/AAAA como pista, no consulta DNS ni modifica Snapshot o scope. El cambio reutiliza `recon-graph 1.4.0`; equivalencia positiva/negativa y límites pendientes para la fase de pruebas.
