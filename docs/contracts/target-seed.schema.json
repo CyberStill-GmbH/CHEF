@@ -1,15 +1,15 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://chef.invalid/contracts/target-seed/1.1.0",
-  "title": "Clasificación local de objetivo CHEF 1.1.0",
-  "description": "Resultado del parser Rust de objetivos literales. ASN se clasifica sin expandir sus redes ni consultar fuentes; el contrato no autoriza ni ejecuta reconocimiento.",
+  "$id": "https://chef.invalid/contracts/target-seed/1.2.0",
+  "title": "Clasificación local de semillas CHEF 1.2.0",
+  "description": "Resultado del parser Rust para objetivos literales y etiquetas de organización. ASN no se expande ni consulta; una organización no confirma propiedad; el contrato no autoriza ni ejecuta reconocimiento.",
   "type": "object",
   "additionalProperties": false,
   "required": ["schemaVersion", "kind", "data", "host", "port"],
   "properties": {
-    "schemaVersion": { "enum": ["1.0.0", "1.1.0"] },
+    "schemaVersion": { "enum": ["1.0.0", "1.1.0", "1.2.0"] },
     "kind": {
-      "enum": ["asn", "ipAddress", "ipRange", "dnsName", "url", "tcpEndpoint"]
+      "enum": ["asn", "organization", "ipAddress", "ipRange", "dnsName", "url", "tcpEndpoint"]
     },
     "data": { "type": "string", "minLength": 1, "maxLength": 8192 },
     "host": { "type": ["string", "null"], "minLength": 1, "maxLength": 253 },
@@ -30,6 +30,23 @@
       "then": {
         "if": { "properties": { "kind": { "const": "asn" } } },
         "then": { "properties": { "host": { "const": null } } },
+        "else": {
+          "properties": {
+            "host": { "type": "string", "minLength": 1, "maxLength": 253 }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "schemaVersion": { "const": "1.2.0" } } },
+      "then": {
+        "if": { "properties": { "kind": { "enum": ["asn", "organization"] } } },
+        "then": {
+          "properties": {
+            "host": { "const": null },
+            "port": { "const": null }
+          }
+        },
         "else": {
           "properties": {
             "host": { "type": "string", "minLength": 1, "maxLength": 253 }

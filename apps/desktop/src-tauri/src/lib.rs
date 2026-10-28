@@ -229,6 +229,7 @@ fn parse_chef_target_seed(input: String) -> Result<ChefTargetSeedDto, String> {
         chef_core::parse_chef_target_seed(&input).map_err(|error| error.message.to_owned())?;
     let kind = match seed.kind {
         chef_core::ChefTargetKind::Asn => "asn",
+        chef_core::ChefTargetKind::Organization => "organization",
         chef_core::ChefTargetKind::IpAddress => "ipAddress",
         chef_core::ChefTargetKind::IpRange => "ipRange",
         chef_core::ChefTargetKind::DnsName => "dnsName",
@@ -236,7 +237,7 @@ fn parse_chef_target_seed(input: String) -> Result<ChefTargetSeedDto, String> {
         chef_core::ChefTargetKind::TcpEndpoint => "tcpEndpoint",
     };
     Ok(ChefTargetSeedDto {
-        schema_version: "1.1.0",
+        schema_version: "1.2.0",
         kind,
         data: seed.data,
         host: seed.host,

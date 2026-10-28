@@ -9,6 +9,7 @@ interface Props {
 
 const kindLabels: Record<TargetSeedDto['kind'], string> = {
   asn: 'Sistema autónomo (ASN)',
+  organization: 'Organización candidata',
   ipAddress: 'Dirección IP',
   ipRange: 'Rango CIDR',
   dnsName: 'Nombre DNS',
@@ -57,9 +58,11 @@ export function TargetSeedPanel({ client }: Props) {
     <section aria-labelledby="target-seed-title" className="target-seed-panel">
       <h2 id="target-seed-title">Preparar objetivo</h2>
       <p>
-        Rust clasifica ASN, IP, CIDR, dominio, URL o endpoint TCP. La vista
-        previa ASN no expande rangos ni consulta fuentes. Ninguna entrada se
-        agrega al scope, confirma existencia o inicia reconocimiento.
+        Rust clasifica ASN, organización, IP, CIDR, dominio, URL o endpoint
+        TCP. La vista previa ASN no expande rangos ni consulta fuentes. Una
+        organización es solo una etiqueta aportada por el usuario: no confirma
+        propiedad. Ninguna entrada se agrega al scope, confirma existencia o
+        inicia reconocimiento.
       </p>
       <form
         onSubmit={(event) => {
@@ -74,7 +77,7 @@ export function TargetSeedPanel({ client }: Props) {
           autoComplete="off"
           spellCheck={false}
           maxLength={8192}
-          placeholder="portal.example.invalid o https://portal.example.invalid"
+          placeholder="portal.example.invalid, https://portal.example.invalid o ORG:Acme"
           value={input}
           disabled={busy}
           onChange={(event) => {
