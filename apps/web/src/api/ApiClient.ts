@@ -9,6 +9,7 @@ import type { ObservedDomainExportDto } from '../contracts/observed-domain-expor
 import type { EvidenceCsvExportDto } from '../contracts/evidence-csv-export';
 import type { NmapEvidenceExportDto } from '../contracts/nmap-evidence-export';
 import type { AssetInventoryExportDto } from '../contracts/asset-inventory-export';
+import type { WebEvidenceReportExportDto } from '../contracts/web-evidence-report-export';
 
 export interface ApiClient {
   loadSnapshot(options?: { signal?: AbortSignal }): Promise<SnapshotDto>;
@@ -32,6 +33,10 @@ export interface ApiClient {
     runId: string,
     options?: { signal?: AbortSignal },
   ): Promise<AssetInventoryExportDto>;
+  exportWebEvidenceReport?(
+    runId: string,
+    options?: { signal?: AbortSignal },
+  ): Promise<WebEvidenceReportExportDto>;
   loadReconGraph?(
     runId: string,
     options?: { signal?: AbortSignal },

@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://chef.invalid/contracts/web-evidence-report-export.schema.json",
+  "title": "Informe local de evidencia web CHEF",
+  "description": "Documento HTML estático construido desde activos, relaciones y evidencia CHEF. No afirma alcance ni vulnerabilidades confirmadas.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "runId",
+    "fileName",
+    "contentType",
+    "scopeStatus",
+    "endpointCount",
+    "candidateFindingCount",
+    "html"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "runId": {
+      "type": "string",
+      "minLength": 5,
+      "maxLength": 128,
+      "pattern": "^run:[a-z0-9:-]+$"
+    },
+    "fileName": {
+      "type": "string",
+      "maxLength": 160,
+      "pattern": "^chef-informe-web-run-[a-z0-9-]+\\.html$"
+    },
+    "contentType": { "const": "text/html; charset=utf-8" },
+    "scopeStatus": { "const": "not_asserted" },
+    "endpointCount": { "type": "integer", "minimum": 0, "maximum": 20000 },
+    "candidateFindingCount": { "type": "integer", "minimum": 0, "maximum": 40000 },
+    "html": { "type": "string", "minLength": 1, "maxLength": 2097152 }
+  }
+}

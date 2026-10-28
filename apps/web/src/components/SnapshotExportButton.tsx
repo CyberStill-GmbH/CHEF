@@ -143,6 +143,32 @@ export function SnapshotExportButton({
     }
   }
 
+  async function exportWebEvidenceReport() {
+    if (client.exportWebEvidenceReport === undefined || busy) return;
+    setBusy(true);
+    setStatus('Preparando informe local de evidencia web…');
+    try {
+      const exported = await client.exportWebEvidenceReport(snapshot.run.id);
+      const blob = new Blob([exported.html], { type: exported.contentType });
+      const objectUrl = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = objectUrl;
+      anchor.download = exported.fileName;
+      anchor.hidden = true;
+      document.body.append(anchor);
+      anchor.click();
+      anchor.remove();
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
+      setStatus(
+        `Informe descargado (${exported.endpointCount} endpoints y ${exported.candidateFindingCount} candidatos relacionados).`,
+      );
+    } catch {
+      setStatus('No se pudo exportar el informe web CHEF.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <section aria-labelledby="snapshot-export-title">
       <h2 id="snapshot-export-title">Exportación local</h2>
@@ -209,6 +235,21 @@ export function SnapshotExportButton({
         Resume hosts e IP, puertos abiertos, endpoints, tecnologías e IDs de
         hallazgos candidatos solo cuando el grafo conserva la relación y
         evidencia. No exporta descripciones ni clasifica riesgo o alcance.
+      </p>
+      <button
+        type="button"
+        disabled={
+          busy || client.exportWebEvidenceReport === undefined || !hasReconGraph
+        }
+        onClick={() => void exportWebEvidenceReport()}
+      >
+        {busy ? 'Preparando…' : 'Descargar informe web HTML'}
+      </button>
+      <p>
+        Informe estático y local de endpoints, tecnologías, hallazgos candidatos
+        y evidencia relacionada. No carga recursos remotos ni afirma alcance;
+        tecnología y candidato se relacionan con el host, no con una URL
+        individual.
       </p>
       <p role="status" aria-live="polite">
         {status}
