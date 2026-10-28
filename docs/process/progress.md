@@ -257,3 +257,11 @@ Se trasladan los workers Tokio de importación y el lock por clave desde `chef-c
 ## 28-10-2026 — Caché positiva en adaptador DNS
 
 `HickoryDnsResolver` ahora reutiliza `DnsCache` (hasta 1 000 entradas) y `KeyedLock` para que consultas simultáneas iguales compartan el resultado. Cachea solo conjuntos con respuestas y expira por el TTL más corto; no guarda errores ni respuestas vacías. Los propietarios SRV con guiones bajos conservan exclusión por consulta, pero no se admiten como clave de activo DNS y por eso no se cachean. El adaptador sigue sin composición Tauri y su construcción no inicia tráfico. Actualizados inventario, plan y alcance. Pasan `cargo fmt` y `cargo check --offline` del adaptador; no se ejecutan pruebas ni consultas DNS.
+
+## 28-10-2026 — Planificación determinista por productor
+
+`BbotEventEngine` reemplaza la cola FIFO única por una cola de ingreso y una cola FIFO por módulo productor. La selección ponderada usa cinco turnos de ingreso y `6 - prioridad` por módulo, con orden determinista CHEF; se adapta el peso de `ScanIngress` sin copiar su aleatoriedad. El planificador mantiene semillas si el motor no registra módulos. Se actualizan el alcance y el inventario; la regresión de equidad y orden queda pendiente de la fase de pruebas. Pasaron `cargo fmt --check`, `cargo check --offline --locked`, Clippy de `rust-core`, `npm run check:docs`, `npm run check:architecture` y `git diff --check`. No se ejecutaron pruebas.
+
+## 28-10-2026 — Pistas offline de almacenamiento cloud
+
+`chef_cloud_storage_hints` adapta una parte offline de `internal.cloudcheck` y de los módulos de buckets Amazon/Google: desde `DNS_NAME` o `URL` ya observados reconoce hosts con forma de bucket S3 o Google Cloud Storage, y produce un `URL_HINT` con tag de proveedor y linaje. El perfil `offline_hints` lo habilita; el perfil predeterminado sigue sin derivaciones. No genera permutaciones, consulta firmas remotas, hace solicitudes ni confirma existencia, permisos o propiedad. Reutiliza `URL_HINT`, por lo que no cambia Snapshot ni la versión del grafo. Quedan pendientes convenciones, proveedores y controles funcionales; no se ejecutaron pruebas por indicación del propietario.

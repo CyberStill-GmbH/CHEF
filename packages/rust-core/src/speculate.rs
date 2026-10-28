@@ -15,6 +15,8 @@ use crate::{
 const MAX_URL_PARENT_HINTS: usize = 32;
 const MAX_IP_RANGE_MEMBERS: usize = 256;
 const MAX_ORG_STUBS_PER_EVENT: usize = 64;
+const MIN_BUCKET_LABEL_BYTES: usize = 3;
+const MAX_BUCKET_LABEL_BYTES: usize = 63;
 
 pub(crate) struct ChefUrlParentHints;
 pub(crate) struct ChefUrlAttributeHints;
@@ -22,8 +24,154 @@ pub(crate) struct ChefDnsParentHints;
 pub(crate) struct ChefCommonPortHints;
 pub(crate) struct ChefOrgStubHints;
 pub(crate) struct ChefDnsRdataHints;
+pub(crate) struct ChefCloudStorageHints;
 
 const MAX_DNS_RDATA_HINTS_PER_EVENT: usize = 32;
+
+/// Reconoce únicamente nombres DNS ya observados que siguen las convenciones
+/// de endpoints de almacenamiento de AWS S3 o Google Cloud Storage. No busca
+/// permutaciones, consulta al proveedor ni confirma existencia/permisos.
+impl BbotModule for ChefCloudStorageHints {
+    fn descriptor(&self) -> ModuleDescriptor {
+        ModuleDescriptor {
+            name: "chef_cloud_storage_hints",
+            watches: &["DNS_NAME", "URL"],
+            produces: &["URL_HINT"],
+        }
+    }
+
+    fn offline_only(&self) -> bool {
+        true
+    }
+
+    fn handle(
+        &self,
+        event: &BbotEvent,
+        _config: &ChefConfig,
+        _clock: &dyn Clock,
+    ) -> ChefResult<Vec<BbotEventDraft>> {
+        if event.data_redacted {
+            return Ok(Vec::new());
+        }
+        let Some(host) = observed_cloud_host(event) else {
+            return Ok(Vec::new());
+        };
+        let Some(provider) = cloud_storage_provider(&host) else {
+            return Ok(Vec::new());
+        };
+
+        Ok(vec![BbotEventDraft {
+            event_type: "URL_HINT".to_owned(),
+            data: Value::String(format!("https://{host}/")),
+            host: Some(host),
+            port: None,
+            tags: vec![
+                "chef:derived-cloud-storage-hint".to_owned(),
+                format!("chef:cloud-storage-provider:{provider}"),
+            ],
+        }])
+    }
+}
+
+fn observed_cloud_host(event: &BbotEvent) -> Option<String> {
+    match event.event_type.as_str() {
+        "DNS_NAME" => event.data.as_str().and_then(crate::host::canonical_domain),
+        "URL" => {
+            let value = event.data.as_str()?;
+            if value.len() > 8_192 || value.chars().any(char::is_control) {
+                return None;
+            }
+            let url = Url::parse(value).ok()?;
+            if !matches!(url.scheme(), "http" | "https")
+                || !url.username().is_empty()
+                || url.password().is_some()
+            {
+                return None;
+            }
+            url.host_str().and_then(crate::host::canonical_domain)
+        }
+        _ => None,
+    }
+}
+
+fn cloud_storage_provider(host: &str) -> Option<&'static str> {
+    let labels = host.split('.').collect::<Vec<_>>();
+    if labels.len() > 3 && labels[labels.len() - 3..] == ["storage", "googleapis", "com"] {
+        let bucket = labels[..labels.len() - 3].join(".");
+        if valid_bucket_name(&bucket) {
+            return Some("google-cloud-storage");
+        }
+    }
+
+    if labels.len() <= 3 || labels[labels.len() - 2..] != ["amazonaws", "com"] {
+        return None;
+    }
+    let aws_labels = &labels[..labels.len() - 2];
+    let service_marker = aws_labels
+        .iter()
+        .rposition(|label| *label == "s3" || label.starts_with("s3-"))?;
+    if service_marker == 0 {
+        return None;
+    }
+    let service = aws_labels[service_marker];
+    match service {
+        "s3" => match aws_labels.get(service_marker + 1..) {
+            Some([]) => {}
+            Some([region]) if valid_aws_region(region) => {}
+            _ => return None,
+        },
+        service if service.starts_with("s3-website-") => {
+            if !aws_labels[service_marker + 1..].is_empty()
+                || !valid_aws_region(service.trim_start_matches("s3-website-"))
+            {
+                return None;
+            }
+        }
+        service if service.starts_with("s3-") => {
+            if !aws_labels[service_marker + 1..].is_empty()
+                || !valid_aws_region(service.trim_start_matches("s3-"))
+            {
+                return None;
+            }
+        }
+        _ => return None,
+    }
+    let bucket = labels[..service_marker].join(".");
+    valid_bucket_name(&bucket).then_some("amazon-s3")
+}
+
+fn valid_aws_region(region: &str) -> bool {
+    let parts = region.split('-').collect::<Vec<_>>();
+    parts.len() >= 3
+        && parts[..parts.len() - 1]
+            .iter()
+            .all(|part| !part.is_empty() && part.bytes().all(|byte| byte.is_ascii_lowercase()))
+        && parts
+            .last()
+            .is_some_and(|part| !part.is_empty() && part.bytes().all(|byte| byte.is_ascii_digit()))
+}
+
+fn valid_bucket_name(bucket: &str) -> bool {
+    if !(MIN_BUCKET_LABEL_BYTES..=MAX_BUCKET_LABEL_BYTES).contains(&bucket.len())
+        || bucket.parse::<IpAddr>().is_ok()
+        || bucket.starts_with('.')
+        || bucket.ends_with('.')
+        || bucket.contains("..")
+        || bucket.contains(".-")
+        || bucket.contains("-.")
+        || !bucket.bytes().all(|byte| {
+            byte.is_ascii_lowercase() || byte.is_ascii_digit() || matches!(byte, b'.' | b'-')
+        })
+    {
+        return false;
+    }
+    bucket.split('.').all(|label| {
+        !label.is_empty()
+            && label.len() <= MAX_BUCKET_LABEL_BYTES
+            && !label.starts_with('-')
+            && !label.ends_with('-')
+    })
+}
 
 /// Adapta la parte offline de `internal.dnsresolve` que interpreta registros
 /// `RAW_DNS_RECORD` ya presentes en un JSONL. No consulta DNS ni crea hechos
