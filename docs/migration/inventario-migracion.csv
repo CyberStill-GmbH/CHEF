@@ -27,7 +27,7 @@ chef-engine/core/helpers/diff.py,376,Motor/escáner,Aplicación Rust/Tokio y pue
 chef-engine/core/helpers/dns/__init__.py,1,Helper DNS,Puerto/adaptador DNS Rust; ejecución desactivada sin scope autorizado,Pendiente
 chef-engine/core/helpers/dns/brute.py,190,Helper DNS,Puerto/adaptador DNS Rust; ejecución desactivada sin scope autorizado,Pendiente
 chef-engine/core/helpers/dns/dns.py,469,Helper DNS,"dns_policy.rs adapta omisiones y circuit breaker acotado por zona/type; dns_cache.rs añade caché TTL LRU bounded por host/tipo con tiempo monotónico, todavía sin conectar a un resolver. BlastDNS, batch, wildcard y conectividad del adaptador siguen pendientes",Parcial
-chef-engine/core/helpers/dns/helpers.py,299,Helper DNS,"dns_records.rs adapta DNS_RECORD_TYPES, service_record y extract_targets de RDATA/TXT-SPF con límite de 64 KiB; dns_format.rs conserva record_to_text con límite de 64 KiB; el catálogo common_srvs sigue pendiente",Parcial
+chef-engine/core/helpers/dns/helpers.py,299,Helper DNS,"dns_records.rs adapta DNS_RECORD_TYPES, service_record y extract_targets de RDATA/TXT-SPF con límite de 64 KiB; dns_format.rs conserva record_to_text con límite de 64 KiB; dns_service_candidates.rs porta 142 etiquetas common_srvs para generar nombres candidatos desde raíz ICANN, sin resolver ni confirmar; frecuencias del sondeo de origen no verificadas",Parcial
 chef-engine/core/helpers/files.py,166,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
 chef-engine/core/helpers/git.py,30,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
 chef-engine/core/helpers/helper.py,369,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
@@ -94,7 +94,7 @@ chef-engine/modules/dnsbimi.py,134,Módulo de reconocimiento,"Adaptador Rust CHE
 chef-engine/modules/dnsbrute.py,71,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
 chef-engine/modules/dnsbrute_mutations.py,156,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
 chef-engine/modules/dnscaa.py,130,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
-chef-engine/modules/dnscommonsrv.py,43,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/dnscommonsrv.py,43,Módulo de reconocimiento,"common_dns_service_candidates genera nombres de servicio como candidatos offline; brute force con massdns, validación de respuestas y recursión siguen pendientes y requieren adaptador DNS autorizado",Parcial
 chef-engine/modules/dnsdumpster.py,75,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
 chef-engine/modules/dnstlsrpt.py,130,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
 chef-engine/modules/docker_pull.py,234,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
