@@ -2,6 +2,7 @@
 
 mod dns;
 mod dns_plan;
+mod dns_plan_runner;
 
 pub use dns::{
     DnsAnswer, DnsAnswerDisposition, DnsAnswerEvidence, DnsAuthorizationFailure,
@@ -10,3 +11,6 @@ pub use dns::{
     DnsResolverPort, ResolveDns,
 };
 pub use dns_plan::{DnsQueryPlan, DnsQueryPlanSettings, DnsQueryStage, PlannedDnsQuery};
+pub use dns_plan_runner::{
+    DnsPlanExecution, DnsPlanQueryResult, DnsPlanTermination, ExecuteDnsPlan,
+};
