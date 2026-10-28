@@ -5,7 +5,7 @@ use chef_core::{
     spawn_bbot_import_job_with_config,
 };
 use chef_storage::LocalSnapshotStore;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, Manager, State};
 use tokio::sync::Mutex;
 
@@ -405,6 +405,68 @@ struct EventStatisticsDto {
     statistics: chef_core::BbotEventStatistics,
 }
 
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct DomainAffinityReportDto {
+    schema_version: &'static str,
+    run_id: String,
+    analysis_roots: Vec<String>,
+    candidates: Vec<chef_core::DomainAffinityCandidate>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+struct DomainAffinityRequestDto {
+    schema_version: String,
+    run_id: String,
+    analysis_roots: Vec<String>,
+}
+
+#[tauri::command]
+async fn analyze_chef_domain_affinity(
+    request: DomainAffinityRequestDto,
+    state: State<'_, StoreSlot>,
+) -> Result<DomainAffinityReportDto, String> {
+    if request.schema_version != "1.0.0" {
+        return Err("La versión de solicitud de afinidad CHEF no es compatible".to_owned());
+    }
+    let run_id = request.run_id;
+    let analysis_roots = chef_core::canonicalize_domain_analysis_roots(&request.analysis_roots)
+        .map_err(|error| error.message.to_owned())?;
+    validate_run_id(&run_id)?;
+    if analysis_roots.is_empty()
+        || analysis_roots.len() > 64
+        || analysis_roots.iter().any(|root| root.len() > 253)
+    {
+        return Err("La lista de raíces de afinidad CHEF está fuera de límites".to_owned());
+    }
+
+    let mut slot = state.store.lock().await;
+    if slot.is_none() {
+        *slot = Some(
+            LocalSnapshotStore::open(&state.database_path)
+                .await
+                .map_err(|error| error.to_string())?,
+        );
+    }
+    let graph = slot
+        .as_ref()
+        .expect("el almacén se abrió arriba")
+        .load_bbot_event_graph(&run_id)
+        .await
+        .map_err(|error| error.to_string())?
+        .ok_or_else(|| "No existen eventos de origen para esa importación".to_owned())?;
+    drop(slot);
+    let candidates = chef_core::summarize_domain_affinity(&graph, &analysis_roots)
+        .map_err(|error| error.message.to_owned())?;
+    Ok(DomainAffinityReportDto {
+        schema_version: "1.0.0",
+        run_id,
+        analysis_roots,
+        candidates,
+    })
+}
+
 #[tauri::command]
 async fn export_chef_snapshot(
     run_id: String,
@@ -497,8 +559,7 @@ async fn export_chef_nmap_evidence(
         .await
         .map_err(|error| error.to_string())?
         .ok_or_else(|| "No existe un grafo CHEF para esa importación".to_owned())?;
-    chef_core::export_nmap_evidence_xml(&run_id, &graph)
-        .map_err(|error| error.message.to_owned())
+    chef_core::export_nmap_evidence_xml(&run_id, &graph).map_err(|error| error.message.to_owned())
 }
 
 #[tauri::command]
@@ -522,8 +583,7 @@ async fn export_chef_asset_inventory(
         .await
         .map_err(|error| error.to_string())?
         .ok_or_else(|| "No existe un grafo CHEF para esa importación".to_owned())?;
-    chef_core::export_asset_inventory_csv(&run_id, &graph)
-        .map_err(|error| error.message.to_owned())
+    chef_core::export_asset_inventory_csv(&run_id, &graph).map_err(|error| error.message.to_owned())
 }
 
 #[tauri::command]
@@ -547,8 +607,7 @@ async fn export_chef_web_evidence_report(
         .await
         .map_err(|error| error.to_string())?
         .ok_or_else(|| "No existe un grafo CHEF para esa importación".to_owned())?;
-    chef_core::export_web_evidence_report(&run_id, &graph)
-        .map_err(|error| error.message.to_owned())
+    chef_core::export_web_evidence_report(&run_id, &graph).map_err(|error| error.message.to_owned())
 }
 
 #[tauri::command]
@@ -626,6 +685,7 @@ pub fn run() {
             cancel_import_job,
             load_chef_recon_graph,
             load_chef_event_statistics,
+            analyze_chef_domain_affinity,
             export_chef_snapshot,
             export_chef_observed_domains,
             export_chef_evidence_csv,

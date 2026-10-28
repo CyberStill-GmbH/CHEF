@@ -11,6 +11,7 @@ import type { NmapEvidenceExportDto } from '../contracts/nmap-evidence-export';
 import type { AssetInventoryExportDto } from '../contracts/asset-inventory-export';
 import type { WebEvidenceReportExportDto } from '../contracts/web-evidence-report-export';
 import type { ObservedEmailExportDto } from '../contracts/observed-email-export';
+import type { DomainAffinityReportDto } from '../contracts/domain-affinity';
 
 export interface ApiClient {
   loadSnapshot(options?: { signal?: AbortSignal }): Promise<SnapshotDto>;
@@ -50,6 +51,11 @@ export interface ApiClient {
     runId: string,
     options?: { signal?: AbortSignal },
   ): Promise<EventStatisticsDto>;
+  analyzeDomainAffinity?(
+    runId: string,
+    analysisRoots: string[],
+    options?: { signal?: AbortSignal },
+  ): Promise<DomainAffinityReportDto>;
   importBbotJsonl?(
     jsonl: string,
     scope: ScopePolicyDto,

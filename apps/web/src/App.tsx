@@ -15,6 +15,7 @@ import type { BbotEventStatisticsDto } from './contracts/event-statistics';
 import { EventStatisticsPanel } from './components/EventStatisticsPanel';
 import { EvidenceImportPanel } from './components/EvidenceImportPanel';
 import { TargetSeedPanel } from './components/TargetSeedPanel';
+import { DomainAffinityPanel } from './components/DomainAffinityPanel';
 
 const ScanLogTerminal = lazy(async () => {
   const module = await import('./components/ScanLogTerminal');
@@ -153,7 +154,10 @@ export function App({ client = defaultClient }: AppProps) {
       {state.status === 'success' && (
         <>
           {client.importBbotJsonl !== undefined && (
-            <EvidenceImportPanel client={client} onImported={handleBbotImported} />
+            <EvidenceImportPanel
+              client={client}
+              onImported={handleBbotImported}
+            />
           )}
           <section aria-labelledby="snapshot-summary-title">
             <h2 id="snapshot-summary-title">Resumen del snapshot</h2>
@@ -183,6 +187,15 @@ export function App({ client = defaultClient }: AppProps) {
           {eventStatistics !== null && (
             <EventStatisticsPanel statistics={eventStatistics} />
           )}
+          {client.analyzeDomainAffinity !== undefined &&
+            state.reconGraph !== undefined && (
+              <DomainAffinityPanel
+                key={state.snapshot.run.id}
+                client={client}
+                runId={state.snapshot.run.id}
+                reconGraph={state.reconGraph}
+              />
+            )}
           {state.reconGraph !== undefined && (
             <ReconGraphPanel graph={state.reconGraph} />
           )}
