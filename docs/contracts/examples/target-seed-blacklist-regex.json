@@ -1,0 +1,7 @@
+{
+  "schemaVersion": "1.3.0",
+  "kind": "blacklistRegex",
+  "data": "^.*\\.example\\.invalid$",
+  "host": null,
+  "port": null
+}

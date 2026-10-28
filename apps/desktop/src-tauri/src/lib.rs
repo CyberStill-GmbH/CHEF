@@ -57,7 +57,8 @@ async fn load_offline_demo_snapshot(
     config_state: State<'_, ConfigSlot>,
 ) -> Result<Snapshot, String> {
     const EVENT_FIXTURE: &[u8] = include_bytes!("../../../../fixtures/event-import/events.ndjson");
-    const SCOPE_FIXTURE: &[u8] = include_bytes!("../../../../fixtures/event-import/demo-scope.json");
+    const SCOPE_FIXTURE: &[u8] =
+        include_bytes!("../../../../fixtures/event-import/demo-scope.json");
 
     let scope: ScopePolicy = serde_json::from_slice(SCOPE_FIXTURE)
         .map_err(|_| "La política del fixture CHEF no es válida".to_owned())?;
@@ -230,6 +231,11 @@ fn parse_chef_target_seed(input: String) -> Result<ChefTargetSeedDto, String> {
     let kind = match seed.kind {
         chef_core::ChefTargetKind::Asn => "asn",
         chef_core::ChefTargetKind::Organization => "organization",
+        chef_core::ChefTargetKind::EmailAddress => "emailAddress",
+        chef_core::ChefTargetKind::Username => "username",
+        chef_core::ChefTargetKind::Filesystem => "filesystem",
+        chef_core::ChefTargetKind::MobileApp => "mobileApp",
+        chef_core::ChefTargetKind::BlacklistRegex => "blacklistRegex",
         chef_core::ChefTargetKind::IpAddress => "ipAddress",
         chef_core::ChefTargetKind::IpRange => "ipRange",
         chef_core::ChefTargetKind::DnsName => "dnsName",
@@ -237,7 +243,7 @@ fn parse_chef_target_seed(input: String) -> Result<ChefTargetSeedDto, String> {
         chef_core::ChefTargetKind::TcpEndpoint => "tcpEndpoint",
     };
     Ok(ChefTargetSeedDto {
-        schema_version: "1.2.0",
+        schema_version: "1.3.0",
         kind,
         data: seed.data,
         host: seed.host,

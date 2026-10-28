@@ -11,7 +11,7 @@ chef-engine/core/config/models.py,488,Motor/escáner,"Configuración TOML tipada
 chef-engine/core/core.py,224,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
 chef-engine/core/event/__init__.py,3,Modelo/eventos,"Evidencia, activos tipados, linaje y relaciones CHEF",Pendiente
 chef-engine/core/event/base.py,2482,Modelo/eventos,"Grafo fuente CHEF con UUID, linaje, redacción, deduplicación y límites; importa OPEN_*_PORT y HTTP_RESPONSE saneado; scope_distance ausente usa default fuente de referencia 10, null se rechaza y parserVersion es 1.1.0; distingue unresolved y pistas en recon-graph 1.4.0",Parcial
-chef-engine/core/event/helpers.py,305,Modelo/eventos,"packages/rust-core/src/target_seed.rs; clasifica IP, CIDR, DNS, URL HTTP(S), host:puerto, ASN sin expansión y semillas ORG/ORG_STUB como etiquetas CHEF; correo y semillas USERNAME/FILESYSTEM/MOBILE_APP/BLACKLIST_REGEX pendientes",Parcial
+chef-engine/core/event/helpers.py,305,Modelo/eventos,"packages/rust-core/src/target_seed.rs y target-seed 1.3.0; clasifica IP/CIDR/DNS/URL/endpoint/ASN/ORG y semillas email, USERNAME, FILESYSTEM, MOBILE_APP y BLACKLIST_REGEX; no accede a disco/red, no evalúa regex y no modifica scope. Registry/prioridad/hash Python no portados; expansión ASN queda fuera del parser",Parcial
 chef-engine/core/event/spill.py,225,Modelo/eventos,Excluido: CHEF descarta cuerpo y cabeceras HTTP antes de persistir; no necesita caché temporal ni spill a disco. El importador limita archivo/línea y usa canales Tokio acotados.,Excluido
 chef-engine/core/flags.py,25,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
 chef-engine/core/helpers/__init__.py,4,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
@@ -42,7 +42,7 @@ chef-engine/core/helpers/regex.py,113,Motor/escáner,Aplicación Rust/Tokio y pu
 chef-engine/core/helpers/regexes.py,224,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
 chef-engine/core/helpers/simhash.py,116,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
 chef-engine/core/helpers/url.py,235,Motor/escáner,"url_tools.rs canonicaliza HTTP(S) para objetivos/activos; url_policy.rs porta profundidad de ruta y validación de FQDN/IP; utilidades de parámetros y fingerprint pendientes",Parcial
-chef-engine/core/helpers/validators.py,363,Motor/escáner,"host.rs y url_policy.rs validan/canonicalizan IDNA, FQDN e IP para scope, importación y grafo; correo y otros validadores siguen pendientes",Parcial
+chef-engine/core/helpers/validators.py,363,Motor/escáner,"host.rs y url_policy.rs validan/canonicalizan IDNA, FQDN e IP para scope, importación y grafo; target_seed.rs valida/canonicaliza el correo explícito necesario para clasificar EMAIL_ADDRESS; los demás validadores y la equivalencia completa de validate_email siguen pendientes",Parcial
 chef-engine/core/helpers/web/__init__.py,1,Helper HTTP,Puerto/adaptador HTTP Rust; ejecución desactivada sin scope autorizado,Pendiente
 chef-engine/core/helpers/web/envelopes.py,382,Helper HTTP,Puerto/adaptador HTTP Rust; ejecución desactivada sin scope autorizado,Pendiente
 chef-engine/core/helpers/web/response_event.py,96,Helper HTTP,Puerto/adaptador HTTP Rust; ejecución desactivada sin scope autorizado,Pendiente

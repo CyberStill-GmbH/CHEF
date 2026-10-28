@@ -70,7 +70,7 @@ La importación y escritura son atómicas: primero validar snapshot, referencias
 
 `load_chef_config` lee `config.toml` opcional desde el directorio de configuración que entrega Tauri, con lectura limitada a 64 KiB y parseo TOML en un worker. Las capas se fusionan y validan en el core antes de que React reciba el DTO versionado. No se copian configuraciones externas ni archivos de secretos; la configuración CHEF no admite claves API ni tokens y el archivo ausente usa defaults tipados sin escribir en disco. El almacén de secretos del sistema operativo será un puerto separado si se aprueban conectores.
 
-El comando `parse_chef_target_seed` ofrece clasificación local de IP, CIDR, DNS, URL HTTP(S) y endpoint TCP. React lo invoca bajo demanda y valida la respuesta `target-seed 1.0.0`; el resultado no modifica `config.toml` ni `ScopePolicy`, y no activa el motor de reconocimiento.
+El comando `parse_chef_target_seed` ofrece clasificación local de IP, CIDR, DNS, URL HTTP(S), endpoint TCP, ASN, organización y semillas de contexto (correo, usuario, ruta, app móvil y patrón). React lo invoca bajo demanda y valida `target-seed 1.3.0`; el resultado no modifica `config.toml` ni `ScopePolicy`, y no accede a filesystem/red ni activa el motor de reconocimiento.
 
 Las transformaciones offline disponibles se activan en `[modules]` (`chef_url_parents`, `chef_url_attribute_hints` y `chef_ip_range_expansion`); por omisión todas están deshabilitadas. No activar una clave de módulo convierte el ScopePolicy importado en permiso de red.
 

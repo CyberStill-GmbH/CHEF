@@ -1,15 +1,15 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://chef.invalid/contracts/target-seed/1.2.0",
-  "title": "Clasificación local de semillas CHEF 1.2.0",
-  "description": "Resultado del parser Rust para objetivos literales y etiquetas de organización. ASN no se expande ni consulta; una organización no confirma propiedad; el contrato no autoriza ni ejecuta reconocimiento.",
+  "$id": "https://chef.invalid/contracts/target-seed/1.3.0",
+  "title": "Clasificación local de semillas CHEF 1.3.0",
+  "description": "Clasificador local de semillas de red y contexto. No accede al disco, descarga apps, evalúa patrones, resuelve hosts, autoriza scope ni ejecuta reconocimiento.",
   "type": "object",
   "additionalProperties": false,
   "required": ["schemaVersion", "kind", "data", "host", "port"],
   "properties": {
-    "schemaVersion": { "enum": ["1.0.0", "1.1.0", "1.2.0"] },
+    "schemaVersion": { "enum": ["1.0.0", "1.1.0", "1.2.0", "1.3.0"] },
     "kind": {
-      "enum": ["asn", "organization", "ipAddress", "ipRange", "dnsName", "url", "tcpEndpoint"]
+      "enum": ["asn", "organization", "emailAddress", "username", "filesystem", "mobileApp", "blacklistRegex", "ipAddress", "ipRange", "dnsName", "url", "tcpEndpoint"]
     },
     "data": { "type": "string", "minLength": 1, "maxLength": 8192 },
     "host": { "type": ["string", "null"], "minLength": 1, "maxLength": 253 },
@@ -20,7 +20,7 @@
       "if": { "properties": { "schemaVersion": { "const": "1.0.0" } } },
       "then": {
         "properties": {
-          "kind": { "not": { "const": "asn" } },
+          "kind": { "not": { "enum": ["asn", "organization", "emailAddress", "username", "filesystem", "mobileApp", "blacklistRegex"] } },
           "host": { "type": "string", "minLength": 1, "maxLength": 253 }
         }
       }
@@ -32,6 +32,7 @@
         "then": { "properties": { "host": { "const": null } } },
         "else": {
           "properties": {
+            "kind": { "not": { "enum": ["organization", "emailAddress", "username", "filesystem", "mobileApp", "blacklistRegex"] } },
             "host": { "type": "string", "minLength": 1, "maxLength": 253 }
           }
         }
@@ -41,6 +42,24 @@
       "if": { "properties": { "schemaVersion": { "const": "1.2.0" } } },
       "then": {
         "if": { "properties": { "kind": { "enum": ["asn", "organization"] } } },
+        "then": {
+          "properties": {
+            "host": { "const": null },
+            "port": { "const": null }
+          }
+        },
+        "else": {
+          "properties": {
+            "kind": { "not": { "enum": ["emailAddress", "username", "filesystem", "mobileApp", "blacklistRegex"] } },
+            "host": { "type": "string", "minLength": 1, "maxLength": 253 }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "schemaVersion": { "const": "1.3.0" } } },
+      "then": {
+        "if": { "properties": { "kind": { "enum": ["asn", "organization", "username", "filesystem", "mobileApp", "blacklistRegex"] } } },
         "then": {
           "properties": {
             "host": { "const": null },

@@ -1,0 +1,7 @@
+{
+  "schemaVersion": "1.3.0",
+  "kind": "mobileApp",
+  "data": "https://apps.example.invalid/app/123",
+  "host": null,
+  "port": null
+}

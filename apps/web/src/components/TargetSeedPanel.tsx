@@ -10,6 +10,11 @@ interface Props {
 const kindLabels: Record<TargetSeedDto['kind'], string> = {
   asn: 'Sistema autónomo (ASN)',
   organization: 'Organización candidata',
+  emailAddress: 'Correo electrónico (host candidato)',
+  username: 'Nombre de usuario',
+  filesystem: 'Ruta declarada (sin acceso al disco)',
+  mobileApp: 'Aplicación móvil (sin descarga)',
+  blacklistRegex: 'Patrón de exclusión (sin evaluar)',
   ipAddress: 'Dirección IP',
   ipRange: 'Rango CIDR',
   dnsName: 'Nombre DNS',
@@ -33,14 +38,14 @@ export function TargetSeedPanel({ client }: Props) {
     requestRef.current = controller;
     setBusy(true);
     setResult(null);
-    setStatus('Clasificando el objetivo localmente…');
+    setStatus('Clasificando la semilla localmente…');
     try {
       const parsed = await client.parseTargetSeed(input, {
         signal: controller.signal,
       });
       if (controller.signal.aborted) return;
       setResult(parsed);
-      setStatus('Objetivo clasificado. No se consultó el host.');
+      setStatus('Semilla clasificada localmente. No se consultaron recursos.');
     } catch (error) {
       if (controller.signal.aborted) return;
       setStatus(
@@ -56,13 +61,13 @@ export function TargetSeedPanel({ client }: Props) {
 
   return (
     <section aria-labelledby="target-seed-title" className="target-seed-panel">
-      <h2 id="target-seed-title">Preparar objetivo</h2>
+      <h2 id="target-seed-title">Clasificar semilla</h2>
       <p>
-        Rust clasifica ASN, organización, IP, CIDR, dominio, URL o endpoint
-        TCP. La vista previa ASN no expande rangos ni consulta fuentes. Una
-        organización es solo una etiqueta aportada por el usuario: no confirma
-        propiedad. Ninguna entrada se agrega al scope, confirma existencia o
-        inicia reconocimiento.
+        Rust clasifica semillas de red, correo, usuario, ruta, app móvil y
+        patrón. Solo analiza el texto recibido: no accede al disco, descarga
+        apps, evalúa patrones, consulta fuentes ni resuelve hosts. Una
+        organización o un host de correo son candidatos, no prueban propiedad.
+        Ninguna entrada se agrega al scope ni inicia reconocimiento.
       </p>
       <form
         onSubmit={(event) => {
@@ -70,14 +75,14 @@ export function TargetSeedPanel({ client }: Props) {
           void parseTarget();
         }}
       >
-        <label htmlFor="chef-target-input">Objetivo literal</label>
+        <label htmlFor="chef-target-input">Semilla literal</label>
         <input
           id="chef-target-input"
           type="text"
           autoComplete="off"
           spellCheck={false}
           maxLength={8192}
-          placeholder="portal.example.invalid, https://portal.example.invalid o ORG:Acme"
+          placeholder="portal.example.invalid, ORG:Acme, USERNAME:ana o REGEX:…"
           value={input}
           disabled={busy}
           onChange={(event) => {
@@ -97,17 +102,25 @@ export function TargetSeedPanel({ client }: Props) {
         <dl className="target-seed-result">
           <dt>Tipo</dt>
           <dd>{kindLabels[result.kind]}</dd>
-          <dt>Valor CHEF</dt>
+          <dt>Valor reconocido</dt>
           <dd className="target-seed-value">{result.data}</dd>
           {result.host !== null && (
             <>
-              <dt>Host</dt>
+              <dt>
+                {result.kind === 'emailAddress'
+                  ? 'Dominio de correo (pista)'
+                  : 'Host candidato'}
+              </dt>
               <dd>{result.host}</dd>
             </>
           )}
           {result.port !== null && (
             <>
-              <dt>Puerto objetivo</dt>
+              <dt>
+                {result.kind === 'emailAddress'
+                  ? 'Puerto declarado'
+                  : 'Puerto candidato'}
+              </dt>
               <dd>{result.port}</dd>
             </>
           )}

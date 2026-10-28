@@ -1,0 +1,7 @@
+{
+  "schemaVersion": "1.3.0",
+  "kind": "emailAddress",
+  "data": "analyst@example.invalid",
+  "host": "example.invalid",
+  "port": null
+}
