@@ -93,8 +93,12 @@ export class FixtureApiClient implements ApiClient {
     return exported;
   }
 
-  async loadReconGraph(_runId: string, options?: { signal?: AbortSignal }) {
+  async loadReconGraph(runId: string, options?: { signal?: AbortSignal }) {
     options?.signal?.throwIfAborted();
+    const snapshot = decodeSnapshot(fixture);
+    if (snapshot.run.id !== runId) {
+      throw new Error('No existe ese grafo CHEF.');
+    }
     return decodeReconGraph(reconGraph);
   }
 
@@ -117,22 +121,28 @@ export class FixtureApiClient implements ApiClient {
       runId,
       analysisRoots,
     });
+    const template = decodeDomainAffinity(domainAffinity);
+    if (request.runId !== template.runId) {
+      throw new Error(
+        'El informe fixture solo corresponde a su ejecución de demostración.',
+      );
+    }
     const roots = [
       ...new Set(
-        request.analysisRoots.map((root) => root.trim().toLowerCase()),
+        request.analysisRoots.map((root) =>
+          root.trim().toLowerCase().replace(/\.$/, ''),
+        ),
       ),
-    ];
-    const template = decodeDomainAffinity(domainAffinity);
+    ].sort();
     const candidates =
       roots.length === 1 && roots[0] === 'example.org'
         ? template.candidates.map((candidate) => ({
-          ...candidate,
-          analysisRoots: roots,
+            ...candidate,
+            analysisRoots: roots,
           }))
         : [];
     const report = decodeDomainAffinity({
       ...template,
-      runId: request.runId,
       analysisRoots: roots,
       candidates,
     });
