@@ -15,7 +15,9 @@
       "allowed_protocols": [],
       "max_scope_distance": 0
     },
-    "modules": {},
+    "modules": {
+      "chef_dns_mutation_hints": false
+    },
     "sources": {},
     "defectdojo": {
       "enabled": false,

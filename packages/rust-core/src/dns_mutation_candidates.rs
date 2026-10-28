@@ -268,6 +268,128 @@ pub fn generate_dns_mutation_candidates(
     })
 }
 
+pub(crate) fn is_generated_dns_mutation_hint(event: &BbotEvent) -> bool {
+    if event.event_type != "DNS_NAME_HINT"
+        || event.module.as_deref() != Some("chef_dns_mutation_hints")
+        || event.source_id.is_some()
+        || event.source_uuid.is_some()
+        || !event
+            .tags
+            .iter()
+            .any(|tag| tag == "chef:derived-dns-mutation-hint")
+    {
+        return false;
+    }
+
+    let Some(root) = event
+        .metadata
+        .get("root")
+        .and_then(serde_json::Value::as_str)
+    else {
+        return false;
+    };
+    let Some(name) = event
+        .host
+        .as_deref()
+        .and_then(crate::host::canonical_domain)
+    else {
+        return false;
+    };
+    let Some(label) = name.strip_suffix(&format!(".{root}")) else {
+        return false;
+    };
+    if label.is_empty()
+        || label.contains('.')
+        || crate::host::domain_parent_candidates(&name, false)
+            .last()
+            .map(String::as_str)
+            != Some(root)
+        || event.data.as_str() != Some(name.as_str())
+    {
+        return false;
+    }
+
+    let expected_candidate_id = identity::id(RULE_ID, &[RULE_VERSION, root, &name]);
+    let expected_event_id = identity::id("chef-dns-mutation-event", &[&expected_candidate_id]);
+    if event.id != expected_event_id
+        || event
+            .metadata
+            .get("candidateId")
+            .and_then(serde_json::Value::as_str)
+            != Some(expected_candidate_id.as_str())
+        || event
+            .metadata
+            .get("ruleId")
+            .and_then(serde_json::Value::as_str)
+            != Some(RULE_ID)
+        || event
+            .metadata
+            .get("ruleVersion")
+            .and_then(serde_json::Value::as_str)
+            != Some(RULE_VERSION)
+    {
+        return false;
+    }
+
+    let Some(source_ids) = event
+        .metadata
+        .get("sourceEventIds")
+        .and_then(serde_json::Value::as_array)
+    else {
+        return false;
+    };
+    if source_ids.is_empty()
+        || source_ids.len() > 2
+        || source_ids
+            .iter()
+            .filter_map(serde_json::Value::as_str)
+            .collect::<BTreeSet<_>>()
+            .len()
+            != source_ids.len()
+        || source_ids
+            .iter()
+            .any(|source_id| source_id.as_str().is_none_or(str::is_empty))
+        || event.parent_id.as_deref().is_none_or(|parent_id| {
+            !source_ids
+                .iter()
+                .any(|source_id| source_id.as_str() == Some(parent_id))
+        })
+    {
+        return false;
+    }
+
+    let Some(reasons) = event
+        .metadata
+        .get("reasons")
+        .and_then(serde_json::Value::as_array)
+    else {
+        return false;
+    };
+    let reason_names = reasons
+        .iter()
+        .filter_map(serde_json::Value::as_str)
+        .collect::<Vec<_>>();
+    !reason_names.is_empty()
+        && reason_names.len() == reasons.len()
+        && reason_names.iter().all(|reason| {
+            matches!(
+                *reason,
+                "cross_root_label" | "extracted_word" | "numeric_suffix"
+            )
+        })
+        && reason_names.iter().all(|reason| {
+            event
+                .tags
+                .iter()
+                .any(|tag| tag == &format!("chef:dns-mutation:{reason}"))
+        })
+        && event.locator
+            == format!(
+                "rule:{RULE_ID}@{RULE_VERSION};reason={}",
+                reason_names.join(",")
+            )
+}
+
 fn add_proposal(
     proposals: &mut BTreeMap<String, CandidateAccumulator>,
     label: &str,

@@ -134,6 +134,11 @@ pub fn adapt_bbot_to_chef(graph: &BbotEventGraph) -> ChefResult<ChefReconGraph> 
             "DNS_NAME" | "DNS_NAME_UNRESOLVED" => {
                 add_named_asset(&mut assets, ReconAssetKind::Domain, event, &evidence_id)
             }
+            "DNS_NAME_HINT"
+                if crate::dns_mutation_candidates::is_generated_dns_mutation_hint(event) =>
+            {
+                add_named_asset(&mut assets, ReconAssetKind::Domain, event, &evidence_id)
+            }
             "IP_ADDRESS" => {
                 add_named_asset(&mut assets, ReconAssetKind::IpAddress, event, &evidence_id)
             }
@@ -166,6 +171,29 @@ pub fn adapt_bbot_to_chef(graph: &BbotEventGraph) -> ChefResult<ChefReconGraph> 
             *unmapped_event_types
                 .entry(event.event_type.clone())
                 .or_default() += 1;
+        }
+
+        if mapped
+            && crate::dns_mutation_candidates::is_generated_dns_mutation_hint(event)
+            && let Some(name) =
+                event_value(event).and_then(|value| crate::host::canonical_domain(&value))
+            && let Some(source_ids) = event
+                .metadata
+                .get("sourceEventIds")
+                .and_then(Value::as_array)
+        {
+            let id = asset_id(ReconAssetKind::Domain, &name);
+            if let Some(asset) = assets.get_mut(&id) {
+                for source_id in source_ids.iter().filter_map(Value::as_str) {
+                    if events_by_id.contains_key(source_id) {
+                        let source_evidence_id = identity::id("chef-evidence", &[source_id]);
+                        if !asset.evidence_ids.contains(&source_evidence_id) {
+                            asset.evidence_ids.push(source_evidence_id);
+                        }
+                    }
+                }
+                asset.evidence_ids.sort();
+            }
         }
 
         if event
@@ -421,6 +449,11 @@ fn add_named_asset(
 
 fn named_asset_qualification(kind: ReconAssetKind, event: &BbotEvent) -> Option<String> {
     let qualification = match kind {
+        ReconAssetKind::Domain
+            if crate::dns_mutation_candidates::is_generated_dns_mutation_hint(event) =>
+        {
+            Some("hint")
+        }
         ReconAssetKind::Domain if event.event_type == "DNS_NAME_UNRESOLVED" => Some(
             if event.module.as_deref() == Some("chef_dns_parent_hints")
                 && event

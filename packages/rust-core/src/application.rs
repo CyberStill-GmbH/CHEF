@@ -15,6 +15,7 @@ use crate::{
 
 const INPUT_LIMIT: usize = 2 * 1024 * 1024;
 const OBSERVATION_LIMIT: usize = 10_000;
+const EVENT_GRAPH_BYTE_LIMIT: usize = 8 * 1024 * 1024;
 
 pub trait Clock {
     fn now(&self) -> String;
@@ -261,6 +262,8 @@ impl ImportBbotEvidence {
             event_graph =
                 engine.run_offline(event_graph.events.clone(), config, clock, cancelled)?;
         }
+        append_dns_mutation_hints(&mut event_graph, config, clock, cancelled)?;
+        validate_bbot_event_graph(&event_graph)?;
         let recon_graph = crate::adapt_bbot_to_chef(&event_graph)?;
         let snapshot = ImportServices::execute(
             bytes,
@@ -277,6 +280,139 @@ impl ImportBbotEvidence {
             recon_graph,
         })
     }
+}
+
+fn append_dns_mutation_hints(
+    graph: &mut crate::BbotEventGraph,
+    config: &ChefConfig,
+    clock: &impl Clock,
+    cancelled: Option<&AtomicBool>,
+) -> ChefResult<()> {
+    if !config
+        .modules
+        .get("chef_dns_mutation_hints")
+        .copied()
+        .unwrap_or(false)
+    {
+        return Ok(());
+    }
+
+    let remaining = config.runtime.max_events.saturating_sub(graph.events.len());
+    if remaining == 0 {
+        return Ok(());
+    }
+    let batch = crate::generate_dns_mutation_candidates(
+        &graph.events,
+        crate::DnsMutationCandidateOptions {
+            max_candidates: remaining,
+            max_candidates_per_root: 100,
+        },
+    )?;
+    let events_by_id = graph
+        .events
+        .iter()
+        .map(|event| (event.id.clone(), event.clone()))
+        .collect::<std::collections::BTreeMap<_, _>>();
+    let mut existing_event_ids = graph
+        .events
+        .iter()
+        .map(|event| event.id.clone())
+        .collect::<std::collections::BTreeSet<_>>();
+    let mut graph_bytes = serde_json::to_vec(graph)
+        .map_err(|_| ChefError::new(ErrorCode::InvalidInput, "Grafo de eventos inválido"))?
+        .len();
+
+    graph.modules_run = graph.modules_run.saturating_add(1);
+    graph.duplicates_suppressed = graph
+        .duplicates_suppressed
+        .saturating_add(batch.duplicates_suppressed);
+    for candidate in batch.candidates {
+        check_cancelled(cancelled)?;
+        let parent = candidate
+            .source_event_ids
+            .iter()
+            .filter_map(|source_id| events_by_id.get(source_id).cloned())
+            .min_by(|left, right| {
+                left.depth
+                    .cmp(&right.depth)
+                    .then_with(|| left.id.cmp(&right.id))
+            });
+        let Some(parent) = parent else {
+            continue;
+        };
+        let Some(depth) = parent.depth.checked_add(1) else {
+            continue;
+        };
+        if depth > config.runtime.max_depth || parent.scope_distance >= 32 {
+            continue;
+        }
+
+        let reasons = candidate
+            .reasons
+            .iter()
+            .map(|reason| match reason {
+                crate::DnsMutationReason::CrossRootLabel => "cross_root_label",
+                crate::DnsMutationReason::ExtractedWord => "extracted_word",
+                crate::DnsMutationReason::NumericSuffix => "numeric_suffix",
+            })
+            .collect::<Vec<_>>();
+        let mut tags = vec!["chef:derived-dns-mutation-hint".to_owned()];
+        tags.extend(
+            reasons
+                .iter()
+                .map(|reason| format!("chef:dns-mutation:{reason}")),
+        );
+        let candidate_event_id = crate::identity::id("chef-dns-mutation-event", &[&candidate.id]);
+        if !existing_event_ids.insert(candidate_event_id.clone()) {
+            continue;
+        }
+        let mut event = crate::BbotEvent {
+            id: candidate_event_id,
+            source_id: None,
+            source_uuid: None,
+            event_type: "DNS_NAME_HINT".to_owned(),
+            data: serde_json::Value::String(candidate.name.clone()),
+            data_redacted: false,
+            metadata: serde_json::json!({
+                "candidateId": candidate.id,
+                "root": candidate.root,
+                "ruleId": candidate.rule_id,
+                "ruleVersion": candidate.rule_version,
+                "reasons": reasons,
+                "sourceEventIds": candidate.source_event_ids,
+            }),
+            metadata_redacted: false,
+            host: Some(candidate.name),
+            port: None,
+            parent_id: Some(parent.id.clone()),
+            parent_source_id: None,
+            parent_source_uuid: None,
+            timestamp: clock.now(),
+            tags,
+            module: Some("chef_dns_mutation_hints".to_owned()),
+            locator: format!(
+                "rule:{}@{};reason={}",
+                candidate.rule_id,
+                candidate.rule_version,
+                reasons.join(",")
+            ),
+            depth,
+            scope_distance: parent.scope_distance.saturating_add(1),
+        };
+        let (data, redacted) =
+            crate::event_engine::sanitize_event_data(&event.event_type, event.data);
+        event.data = data;
+        event.data_redacted = redacted;
+        let event_bytes = serde_json::to_vec(&event)
+            .map_err(|_| ChefError::new(ErrorCode::InvalidInput, "Pista DNS inválida"))?
+            .len();
+        if graph_bytes.saturating_add(event_bytes).saturating_add(1) > EVENT_GRAPH_BYTE_LIMIT {
+            break;
+        }
+        graph_bytes += event_bytes + 1;
+        graph.events.push(event);
+    }
+    Ok(())
 }
 
 fn check_cancelled(cancelled: Option<&AtomicBool>) -> ChefResult<()> {

@@ -56,6 +56,19 @@
       "evidenceIds": ["evidence-idna-domain-example"]
     },
     {
+      "id": "asset-dns-mutation-example",
+      "kind": "domain",
+      "key": "api.example.net",
+      "qualification": "hint",
+      "firstSeen": "2026-10-18T00:00:00.000Z",
+      "lastSeen": "2026-10-18T00:00:00.000Z",
+      "evidenceIds": [
+        "evidence-dns-mutation-example",
+        "evidence-dns-target-example",
+        "evidence-child-example"
+      ]
+    },
+    {
       "id": "asset-organization-example",
       "kind": "organization",
       "key": "bücher",
@@ -153,6 +166,26 @@
       "observedAt": "2026-10-18T00:00:00.000Z",
       "locator": "/events/idna-root-domain",
       "module": "fixture",
+      "redacted": false
+    },
+    {
+      "id": "evidence-dns-target-example",
+      "sourceEventId": "event-dns-target-example",
+      "parentEvidenceId": null,
+      "eventType": "DNS_NAME",
+      "observedAt": "2026-10-18T00:00:00.000Z",
+      "locator": "/events/dns-target-example",
+      "module": "fixture",
+      "redacted": false
+    },
+    {
+      "id": "evidence-dns-mutation-example",
+      "sourceEventId": "event-dns-mutation-example",
+      "parentEvidenceId": "evidence-dns-target-example",
+      "eventType": "DNS_NAME_HINT",
+      "observedAt": "2026-10-18T00:00:00.000Z",
+      "locator": "rule:dns.cross_root_mutation@1;reason=cross_root_label",
+      "module": "chef_dns_mutation_hints",
       "redacted": false
     }
   ],
