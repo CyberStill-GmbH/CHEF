@@ -771,6 +771,15 @@
     "version": "2.0.1 (crates.io; documentación oficial consultada)",
     "claim": "BlastDNS ofrece una biblioteca Rust con concurrencia limitada, tasa, reintentos, caché TTL y consultas DNS simples/completas; la versión actual declara AGPL-3.0.",
     "kind": "primary",
-    "limitation": "El lock de BBOT local fija BlastDNS 1.9.1/GPL-3.0; la versión 2.0.1 cambia la API y la licencia. CHEF no integra ni invoca el crate hasta resolver esa compatibilidad y el contrato de scope DNS."
+    "limitation": "La copia de origen fija BlastDNS 1.9.1/GPL-3.0; la versión 2.0.1 cambia API y licencia. CHEF selecciona Hickory para el adaptador inicial, sin afirmar paridad con BlastDNS ni mantener su configuración implícita."
+  },
+  {
+    "id": "HICKORY-RUST-RESOLVER",
+    "url": "https://docs.rs/crate/hickory-resolver/0.26.3",
+    "consultedAt": "2026-10-28",
+    "version": "0.26.3",
+    "claim": "La crate implementa resolución DNS asíncrona con Tokio y permite construir un resolver desde ResolverConfig explícita; la versión declara licencia MIT OR Apache-2.0 y Rust 1.88 mínimo.",
+    "kind": "primary",
+    "limitation": "CHEF desactiva las features predeterminadas de configuración del sistema y fija upstreams como IP literales. La documentación de Hickory no acredita la paridad funcional del adaptador CHEF ni autoriza consultas a objetivos."
   }
 ]
