@@ -696,7 +696,6 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2",
- "tokio",
  "toml 1.1.8+spec-1.1.0",
  "url",
 ]
@@ -705,6 +704,7 @@ dependencies = [
 name = "chef-desktop"
 version = "0.1.0"
 dependencies = [
+ "chef-application",
  "chef-core",
  "chef-storage",
  "serde",

@@ -24,8 +24,6 @@ mod event_import;
 mod evidence_csv;
 mod host;
 mod identity;
-mod jobs;
-mod keyed_lock;
 mod nmap;
 mod nmap_export;
 mod port_spec;
@@ -78,11 +76,7 @@ pub use event_engine::{
 };
 pub use evidence_csv::{ChefEvidenceCsvExport, export_evidence_csv};
 pub use host::dns_parent_zones;
-pub use jobs::{
-    ImportCancellation, ImportFormat, ImportJobEvent, ImportOutput, ImportTask,
-    spawn_bbot_import_job, spawn_bbot_import_job_with_config, spawn_import_job,
-};
-pub use keyed_lock::{KeyedLock, KeyedLockGuard};
+pub use identity::{digest as digest_bytes, id as deterministic_id};
 pub use nmap_export::{ChefNmapEvidenceExport, export_nmap_evidence_xml};
 pub use port_spec::parse_port_string;
 pub use presets::{ChefPreset, PresetCatalog, ResolvedPreset};

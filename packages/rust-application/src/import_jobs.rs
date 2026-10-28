@@ -13,9 +13,10 @@ use tokio::{
     task::{JoinError, JoinHandle},
 };
 
-use crate::{
-    BbotEventGraph, BbotImportResult, ChefConfig, ChefError, ChefReconGraph, ChefResult, ErrorCode,
-    FixedClock, ImportBbotEvidence, ImportEvidence, ScopePolicy, Snapshot, identity,
+use chef_core::{
+    BbotEvent, BbotEventGraph, BbotImportResult, ChefConfig, ChefError, ChefReconGraph, ChefResult,
+    ErrorCode, FixedClock, ImportBbotEvidence, ImportEvidence, ScopePolicy, Snapshot,
+    deterministic_id, digest_bytes,
 };
 
 const DEFAULT_EVENT_CAPACITY: usize = 16;
@@ -89,7 +90,7 @@ pub enum ImportJobEvent {
     /// Evento BBOT fuente saneado; solo se emite al usar el flujo con eventos.
     BbotEvent {
         job_id: String,
-        event: Box<crate::BbotEvent>,
+        event: Box<BbotEvent>,
     },
     Completed {
         job_id: String,
@@ -251,10 +252,7 @@ async fn spawn_import_job_inner(
     let sequence = NEXT_JOB_SEQUENCE
         .fetch_add(1, Ordering::Relaxed)
         .to_string();
-    let job_id = identity::id(
-        "job",
-        &[format.as_str(), &identity::digest(&bytes), &sequence],
-    );
+    let job_id = deterministic_id("job", &[format.as_str(), &digest_bytes(&bytes), &sequence]);
     let cancel = Arc::new(AtomicBool::new(false));
     let task_counter = TaskCounter::default();
     let task_permit = task_counter.enter(1)?;
@@ -279,7 +277,7 @@ async fn spawn_import_job_inner(
                         .map(ImportOutput::from)
                 }
                 ImportFormat::BbotJsonl => {
-                    let mut observer = |event: &crate::BbotEvent| {
+                    let mut observer = |event: &BbotEvent| {
                         if blocking_cancel.load(Ordering::SeqCst) {
                             return Err(ChefError::new(
                                 ErrorCode::Cancelled,

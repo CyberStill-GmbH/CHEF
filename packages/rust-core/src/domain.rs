@@ -18,7 +18,7 @@ pub struct ChefError {
 }
 
 impl ChefError {
-    pub(crate) const fn new(code: ErrorCode, message: &'static str) -> Self {
+    pub const fn new(code: ErrorCode, message: &'static str) -> Self {
         Self { code, message }
     }
 }

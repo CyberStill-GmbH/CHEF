@@ -8,6 +8,8 @@ mod dns_service_plan;
 mod dns_service_plan_runner;
 mod dns_wildcard;
 mod import_history;
+mod import_jobs;
+mod keyed_lock;
 
 pub use bbot_event_rate::{BbotEventRateCounter, BbotEventRateError, BbotEventRateSnapshot};
 pub use dns::{
@@ -34,3 +36,11 @@ pub use import_history::{
     IMPORT_HISTORY_MAX_PAGE_SIZE, ImportHistoryError, ImportHistoryPort, ImportRunSummary,
     ListImportRuns,
 };
+pub use import_jobs::{
+    ImportCancellation, ImportFormat, ImportJobEvent, ImportOutput, ImportTask,
+    spawn_bbot_import_job, spawn_bbot_import_job_with_config, spawn_import_job,
+};
+pub use keyed_lock::{KeyedLock, KeyedLockGuard};
+
+#[cfg(test)]
+mod tests;

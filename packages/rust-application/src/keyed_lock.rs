@@ -11,7 +11,7 @@ use std::{
 
 use tokio::sync::{Mutex as AsyncMutex, OwnedMutexGuard};
 
-use crate::{ChefError, ChefResult, ErrorCode};
+use chef_core::{ChefError, ChefResult, ErrorCode};
 
 const DEFAULT_MAX_ENTRIES: usize = 10_000;
 const MAX_ALLOWED_ENTRIES: usize = 100_000;
