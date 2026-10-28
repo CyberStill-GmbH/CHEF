@@ -200,7 +200,7 @@ chef-engine/modules/report/affiliates.py,44,Módulo de reconocimiento,"Adaptador
 chef-engine/modules/report/asn.py,81,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
 chef-engine/modules/report/base.py,5,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
 chef-engine/modules/retirejs.py,230,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
-chef-engine/modules/robots.py,52,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/robots.py,52,Módulo de reconocimiento,"packages/rust-application/src/robots_plan.rs deriva hasta 100 GET /robots.txt desde orígenes URL no redactados de distancia cero, conserva esquema/puerto/IDs fuente y descarta ruta/query/fragmento; no descarga, interpreta reglas ni sustituye comodines, ejecución HTTP autorizada pendiente",Parcial
 chef-engine/modules/securitytrails.py,36,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
 chef-engine/modules/securitytxt.py,122,Módulo de reconocimiento,"packages/rust-application/src/securitytxt_plan.rs deriva hasta 100 URLs HTTPS a /.well-known/security.txt desde eventos DNS_NAME no redactados de distancia cero, conserva IDs fuente y no ejecuta red; parsing de respuestas, minimización de contactos y ejecución HTTP autorizada pendientes",Parcial
 chef-engine/modules/shodan_dns.py,23,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente

@@ -12,6 +12,7 @@ mod http_plan;
 mod import_history;
 mod import_jobs;
 mod keyed_lock;
+mod robots_plan;
 mod securitytxt_plan;
 
 pub use dns::{
@@ -52,6 +53,7 @@ pub use import_jobs::{
     spawn_bbot_import_job, spawn_bbot_import_job_with_config, spawn_import_job,
 };
 pub use keyed_lock::{KeyedLock, KeyedLockGuard};
+pub use robots_plan::{PlannedRobotsTxtRequest, RobotsPlanError, RobotsTxtRequestPlan};
 pub use securitytxt_plan::{
     PlannedSecurityTxtRequest, SecurityTxtPlanError, SecurityTxtRequestPlan,
 };
