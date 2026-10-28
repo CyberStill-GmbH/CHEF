@@ -156,3 +156,7 @@ Se revisaron las salidas de origen frente a la aplicación local Tauri, la persi
 ## 28-10-2026 — Padres de dominio offline
 
 Se centralizó en `host.rs` la derivación acotada de padres de dominio, adaptada de `misc.py::domain_parents`, y `speculate.rs` reutiliza esa regla. CHEF devuelve candidatos solo cuando la PSL local identifica una raíz registrable ICANN; no expande sufijos privados/desconocidos, no consulta DNS y no declara propiedad. Inventario de `misc.py` actualizado; los criterios funcionales quedan pendientes de la fase de pruebas indicada por el propietario.
+
+## 28-10-2026 — Candidatos DNS desde prefijos
+
+Se añadió `generate_dns_name_candidates` en `dns_candidates.rs`, adaptación local de la composición de nombres del helper DNS: canonicaliza una raíz, filtra prefijos inválidos, deduplica manteniendo orden y limita la lista a 10 000 resultados. No hace consultas, no genera observaciones y no descarga wordlists. Canarios aleatorios, resolvers y ejecución `massdns` permanecen pendientes y apagados hasta contar con scope autorizado. Con las clasificaciones de salidas y el generador DNS, el inventario queda en 25 parciales, 420 pendientes y 21 exclusiones de 466 archivos. Pasaron formato, compilación/Clippy del core, `npm run check:docs` y `git diff --check`; pruebas funcionales aplazadas.

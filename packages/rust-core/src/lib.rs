@@ -9,6 +9,7 @@ mod config;
 mod config_merge;
 mod contracts;
 mod dns_cache;
+mod dns_candidates;
 mod dns_format;
 mod dns_policy;
 mod dns_records;
@@ -45,6 +46,7 @@ pub use config_merge::{
 };
 pub use contracts::{ScopePolicy, Snapshot};
 pub use dns_cache::DnsCache;
+pub use dns_candidates::{DnsCandidateBatch, generate_dns_name_candidates};
 pub use dns_format::format_dns_rdata;
 pub use dns_policy::{DnsQueryPolicy, DnsZoneDecision};
 pub use dns_records::{DNS_RECORD_TYPES, DnsTarget, extract_dns_targets, is_dns_service_record};
