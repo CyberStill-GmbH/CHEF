@@ -8,6 +8,8 @@ Actualizado 18-10-2026. **Dirección aceptada: escritorio Tauri/Rust con Surreal
 
 La importación de fixture y JSONL local, el scope explícito y la terminal local están conectados. Proveedores pasivos, descubrimiento activo y DefectDojo siguen propuestos y no están disponibles.
 
+El crate `packages/rust-application` inicia la capa de aplicación con el caso de uso `ResolveDns` y los puertos tipados de autorización y resolución. Rechaza objetivos no DNS/IP, requiere un recibo de autorización vigente antes de invocar el puerto de resolución, contempla cancelación y vencimiento, limita respuestas y distingue resultados que pueden alimentar seguimiento autorizado de evidencia que solo debe conservarse. Está implementado como contrato de aplicación; no hay adaptador de red ni composición Tauri, y no se expone un comando de escaneo. Por tanto, este incremento no realiza consultas DNS ni convierte el scope de una importación en autorización activa.
+
 ## Contexto y límites de confianza
 
 ```mermaid
