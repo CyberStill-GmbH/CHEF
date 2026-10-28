@@ -247,7 +247,7 @@ fn parse_port_netloc(value: &str) -> ChefResult<(String, u16)> {
         || url.password().is_some()
         || url.query().is_some()
         || url.fragment().is_some()
-        || url.path() != "/"
+        || !url.path().is_empty()
     {
         return Err(invalid_port_netloc());
     }
