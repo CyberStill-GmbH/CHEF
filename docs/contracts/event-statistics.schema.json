@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://chef.invalid/contracts/event-statistics.schema.json",
+  "title": "Resumen de estadísticas de eventos CHEF",
+  "description": "Resumen determinista derivado del grafo local de eventos; no representa velocidad ni consumo durante la ejecución.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "statistics"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "statistics": { "$ref": "#/$defs/statistics" }
+  },
+  "$defs": {
+    "eventTypeCount": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["eventType", "count"],
+      "properties": {
+        "eventType": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "count": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "moduleProducedCount": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["module", "producedTotal", "byType"],
+      "properties": {
+        "module": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "producedTotal": { "type": "integer", "minimum": 0 },
+        "byType": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/eventTypeCount" }
+        }
+      }
+    },
+    "statistics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "totalEvents",
+        "uniqueEventTypes",
+        "modulesRun",
+        "duplicatesSuppressed",
+        "byType",
+        "byModule"
+      ],
+      "properties": {
+        "totalEvents": { "type": "integer", "minimum": 0 },
+        "uniqueEventTypes": { "type": "integer", "minimum": 0 },
+        "modulesRun": { "type": "integer", "minimum": 0 },
+        "duplicatesSuppressed": { "type": "integer", "minimum": 0 },
+        "byType": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/eventTypeCount" }
+        },
+        "byModule": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/moduleProducedCount" }
+        }
+      }
+    }
+  }
+}

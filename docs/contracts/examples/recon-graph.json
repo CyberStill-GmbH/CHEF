@@ -1,0 +1,186 @@
+{
+  "schemaVersion": "1.4.0",
+  "assets": [
+    {
+      "id": "asset-child-example",
+      "kind": "domain",
+      "key": "api.example.com",
+      "qualification": null,
+      "firstSeen": "2026-10-18T00:00:00.000Z",
+      "lastSeen": "2026-10-18T00:00:00.000Z",
+      "evidenceIds": ["evidence-child-example"]
+    },
+    {
+      "id": "asset-parent-example",
+      "kind": "domain",
+      "key": "example.com",
+      "qualification": "hint",
+      "firstSeen": "2026-10-18T00:00:00.000Z",
+      "lastSeen": "2026-10-18T00:00:00.000Z",
+      "evidenceIds": ["evidence-parent-example"]
+    },
+    {
+      "id": "asset-unresolved-example",
+      "kind": "domain",
+      "key": "legacy.example.com",
+      "qualification": "unresolved",
+      "firstSeen": "2026-10-18T00:00:00.000Z",
+      "lastSeen": "2026-10-18T00:00:00.000Z",
+      "evidenceIds": ["evidence-unresolved-example"]
+    },
+    {
+      "id": "asset-service-hint-example",
+      "kind": "service",
+      "key": "api.example.com|tcp|443",
+      "qualification": "hint",
+      "firstSeen": "2026-10-18T00:00:00.000Z",
+      "lastSeen": "2026-10-18T00:00:00.000Z",
+      "evidenceIds": ["evidence-service-hint-example"]
+    },
+    {
+      "id": "asset-endpoint-example",
+      "kind": "web_endpoint",
+      "key": "https://api.example.com/v1/status",
+      "qualification": "observed",
+      "firstSeen": "2026-10-18T00:00:00.000Z",
+      "lastSeen": "2026-10-18T00:00:00.000Z",
+      "evidenceIds": ["evidence-http-response-example"]
+    },
+    {
+      "id": "asset-idna-domain-example",
+      "kind": "domain",
+      "key": "xn--bcher-kva.de",
+      "qualification": null,
+      "firstSeen": "2026-10-18T00:00:00.000Z",
+      "lastSeen": "2026-10-18T00:00:00.000Z",
+      "evidenceIds": ["evidence-idna-domain-example"]
+    },
+    {
+      "id": "asset-organization-example",
+      "kind": "organization",
+      "key": "bücher",
+      "qualification": "hint",
+      "firstSeen": "2026-10-18T00:00:00.000Z",
+      "lastSeen": "2026-10-18T00:00:00.000Z",
+      "evidenceIds": ["evidence-organization-example"]
+    },
+    {
+      "id": "asset-organization-ascii-example",
+      "kind": "organization",
+      "key": "bucher",
+      "qualification": "hint",
+      "firstSeen": "2026-10-18T00:00:00.000Z",
+      "lastSeen": "2026-10-18T00:00:00.000Z",
+      "evidenceIds": ["evidence-organization-ascii-example"]
+    }
+  ],
+  "evidence": [
+    {
+      "id": "evidence-child-example",
+      "sourceEventId": "event-child-example",
+      "parentEvidenceId": null,
+      "eventType": "DNS_NAME",
+      "observedAt": "2026-10-18T00:00:00.000Z",
+      "locator": "/events/1",
+      "module": "fixture",
+      "redacted": false
+    },
+    {
+      "id": "evidence-parent-example",
+      "sourceEventId": "event-parent-example",
+      "parentEvidenceId": "evidence-child-example",
+      "eventType": "DNS_NAME_UNRESOLVED",
+      "observedAt": "2026-10-18T00:00:00.000Z",
+      "locator": "/derived/parent-domain",
+      "module": "chef_dns_parent_hints",
+      "redacted": false
+    },
+    {
+      "id": "evidence-unresolved-example",
+      "sourceEventId": "event-unresolved-example",
+      "parentEvidenceId": null,
+      "eventType": "DNS_NAME_UNRESOLVED",
+      "observedAt": "2026-10-18T00:00:00.000Z",
+      "locator": "/events/5",
+      "module": "fixture",
+      "redacted": false
+    },
+    {
+      "id": "evidence-service-hint-example",
+      "sourceEventId": "event-service-hint-example",
+      "parentEvidenceId": "evidence-child-example",
+      "eventType": "TCP_PORT_HINT",
+      "observedAt": "2026-10-18T00:00:00.000Z",
+      "locator": "/derived/common-port-hint",
+      "module": "chef_common_port_hints",
+      "redacted": false
+    },
+    {
+      "id": "evidence-http-response-example",
+      "sourceEventId": "event-http-response-example",
+      "parentEvidenceId": null,
+      "eventType": "HTTP_RESPONSE",
+      "observedAt": "2026-10-18T00:00:00.000Z",
+      "locator": "/events/4",
+      "module": "fixture",
+      "redacted": true
+    },
+    {
+      "id": "evidence-organization-example",
+      "sourceEventId": "event-organization-example",
+      "parentEvidenceId": "evidence-idna-domain-example",
+      "eventType": "ORG_STUB",
+      "observedAt": "2026-10-18T00:00:00.000Z",
+      "locator": "/derived/organization-stub",
+      "module": "chef_org_stub_hints",
+      "redacted": false
+    },
+    {
+      "id": "evidence-organization-ascii-example",
+      "sourceEventId": "event-organization-ascii-example",
+      "parentEvidenceId": "evidence-idna-domain-example",
+      "eventType": "ORG_STUB",
+      "observedAt": "2026-10-18T00:00:00.000Z",
+      "locator": "/derived/organization-stub-ascii",
+      "module": "chef_org_stub_hints",
+      "redacted": false
+    },
+    {
+      "id": "evidence-idna-domain-example",
+      "sourceEventId": "event-idna-domain-example",
+      "parentEvidenceId": null,
+      "eventType": "DNS_NAME",
+      "observedAt": "2026-10-18T00:00:00.000Z",
+      "locator": "/events/idna-root-domain",
+      "module": "fixture",
+      "redacted": false
+    }
+  ],
+  "relationships": [
+    {
+      "id": "relationship-parent-domain-example",
+      "fromAssetId": "asset-child-example",
+      "toAssetId": "asset-parent-example",
+      "kind": "parent_domain_of",
+      "assertion": "hint",
+      "evidenceIds": ["evidence-parent-example"]
+    },
+    {
+      "id": "relationship-service-hint-example",
+      "fromAssetId": "asset-child-example",
+      "toAssetId": "asset-service-hint-example",
+      "kind": "exposes_service",
+      "assertion": "hint",
+      "evidenceIds": ["evidence-service-hint-example"]
+    },
+    {
+      "id": "relationship-endpoint-example",
+      "fromAssetId": "asset-child-example",
+      "toAssetId": "asset-endpoint-example",
+      "kind": "serves_endpoint",
+      "assertion": "observed",
+      "evidenceIds": ["evidence-http-response-example"]
+    }
+  ],
+  "unmappedEventTypes": {}
+}

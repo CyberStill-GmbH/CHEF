@@ -1,0 +1,7 @@
+{
+  "schemaVersion": "1.0.0",
+  "kind": "url",
+  "data": "https://portal.example.invalid/admin",
+  "host": "portal.example.invalid",
+  "port": 443
+}

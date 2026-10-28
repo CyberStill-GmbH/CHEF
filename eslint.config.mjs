@@ -8,6 +8,7 @@ export default tseslint.config(
       'node_modules/**',
       '.tools/**',
       'artifacts/**',
+      '**/target/**',
     ],
   },
   js.configs.recommended,

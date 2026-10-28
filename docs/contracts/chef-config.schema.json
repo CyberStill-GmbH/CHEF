@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://chef.invalid/contracts/chef-config.schema.json",
+  "title": "Configuración local de CHEF",
+  "description": "DTO IPC versionado de preferencias validadas; no incluye tokens ni claves de proveedor.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "config"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "config": { "$ref": "#/$defs/config" }
+  },
+  "$defs": {
+    "config": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "runtime",
+        "scope",
+        "modules",
+        "sources",
+        "defectdojo"
+      ],
+      "properties": {
+        "schema_version": { "const": 1 },
+        "runtime": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "active_discovery",
+            "max_workers",
+            "max_events",
+            "max_depth"
+          ],
+          "properties": {
+            "active_discovery": { "const": false },
+            "max_workers": { "type": "integer", "minimum": 1, "maximum": 64 },
+            "max_events": { "type": "integer", "minimum": 1, "maximum": 10000 },
+            "max_depth": { "type": "integer", "minimum": 1, "maximum": 32 }
+          }
+        },
+        "scope": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "allowed_hosts",
+            "excluded_hosts",
+            "allowed_ports",
+            "allowed_protocols",
+            "max_scope_distance"
+          ],
+          "properties": {
+            "allowed_hosts": {
+              "type": "array",
+              "maxItems": 1000,
+              "items": { "type": "string", "maxLength": 253 }
+            },
+            "excluded_hosts": {
+              "type": "array",
+              "maxItems": 1000,
+              "items": { "type": "string", "maxLength": 253 }
+            },
+            "allowed_ports": {
+              "type": "array",
+              "maxItems": 256,
+              "uniqueItems": true,
+              "items": { "type": "integer", "minimum": 1, "maximum": 65535 }
+            },
+            "allowed_protocols": {
+              "type": "array",
+              "maxItems": 2,
+              "uniqueItems": true,
+              "items": { "enum": ["tcp", "udp"] }
+            },
+            "max_scope_distance": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 32
+            }
+          }
+        },
+        "modules": {
+          "type": "object",
+          "maxProperties": 256,
+          "propertyNames": { "pattern": "^[a-z0-9_-]{1,64}$" },
+          "additionalProperties": { "type": "boolean" }
+        },
+        "sources": {
+          "type": "object",
+          "maxProperties": 128,
+          "propertyNames": { "pattern": "^[a-z0-9_-]{1,64}$" },
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["enabled"],
+            "properties": { "enabled": { "type": "boolean" } }
+          }
+        },
+        "defectdojo": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["enabled", "base_url", "engagement_id"],
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "base_url": { "type": ["string", "null"], "maxLength": 2048 },
+            "engagement_id": { "type": ["integer", "null"], "minimum": 1 }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "scope-importacion-cidr-v1",
+  "allowedAddresses": ["192.0.2.0/24", "2001:db8::/48"],
+  "excludedAddresses": ["192.0.2.128/25"],
+  "allowedPorts": [80, 443],
+  "allowedProtocols": ["tcp"],
+  "maxInputBytes": 2097152,
+  "maxObservations": 10000
+}

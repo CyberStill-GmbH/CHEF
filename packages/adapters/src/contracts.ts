@@ -10,12 +10,12 @@ addFormatsModule.default(ajv);
 // URL relative to source AND compiled output; the CLI provides the repository schema path explicitly.
 export function loadContracts(schemaFile: string) {
   const schema: object = JSON.parse(readFileSync(schemaFile, 'utf8'));
-  ajv.removeSchema('https://chef.local/schema/1.0.0');
+  ajv.removeSchema('https://chef.local/schema/1.1.0');
   ajv.addSchema(schema);
   const scope = ajv.compile({
-    $ref: 'https://chef.local/schema/1.0.0#/$defs/ScopePolicy',
+    $ref: 'https://chef.local/schema/1.1.0#/$defs/ScopePolicy',
   });
-  const snapshot = ajv.getSchema('https://chef.local/schema/1.0.0');
+  const snapshot = ajv.getSchema('https://chef.local/schema/1.1.0');
   if (!snapshot) throw new Error('Snapshot schema missing');
   return {
     scope(value: unknown): ScopePolicy {
@@ -41,7 +41,18 @@ export function loadContracts(schemaFile: string) {
           'INVALID_INPUT',
           'Snapshot fails schema validation',
         );
-      return value as Snapshot;
+      const candidate = value as Snapshot;
+      const expectedSource =
+        candidate.schemaVersion === '1.0.0' ? 'nmap-xml' : 'bbot-ndjson';
+      if (
+        candidate.evidence.some((item) => item.source !== expectedSource) ||
+        candidate.observations.some((item) => item.source !== expectedSource)
+      )
+        throw new ChefError(
+          'INVALID_INPUT',
+          'Snapshot source does not match its schema version',
+        );
+      return candidate;
     },
   };
 }

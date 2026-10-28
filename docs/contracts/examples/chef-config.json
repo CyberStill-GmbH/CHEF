@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "1.0.0",
+  "config": {
+    "schema_version": 1,
+    "runtime": {
+      "active_discovery": false,
+      "max_workers": 4,
+      "max_events": 10000,
+      "max_depth": 32
+    },
+    "scope": {
+      "allowed_hosts": [],
+      "excluded_hosts": [],
+      "allowed_ports": [],
+      "allowed_protocols": [],
+      "max_scope_distance": 0
+    },
+    "modules": {},
+    "sources": {},
+    "defectdojo": {
+      "enabled": false,
+      "base_url": null,
+      "engagement_id": null
+    }
+  }
+}

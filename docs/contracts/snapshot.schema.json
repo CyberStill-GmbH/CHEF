@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://chef.local/schema/1.0.0",
-  "title": "CHEF offline snapshot v1",
+  "$id": "https://chef.local/schema/1.1.0",
+  "title": "CHEF offline snapshot v1.1",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -16,7 +16,7 @@
   ],
   "properties": {
     "schemaVersion": {
-      "const": "1.0.0"
+      "enum": ["1.0.0", "1.1.0"]
     },
     "scopePolicy": {
       "$ref": "#/$defs/ScopePolicy"
@@ -84,6 +84,7 @@
           "maxLength": 2048
         },
         "allowedAddresses": {
+          "description": "Direcciones IP literales o redes CIDR canónicas, por ejemplo 192.0.2.7 o 192.0.2.0/24.",
           "type": "array",
           "items": {
             "type": "string",
@@ -94,6 +95,7 @@
           "uniqueItems": true
         },
         "excludedAddresses": {
+          "description": "Direcciones IP literales o redes CIDR; cualquier coincidencia excluye el destino aunque también coincida con una entrada permitida.",
           "type": "array",
           "items": {
             "type": "string",
@@ -200,7 +202,7 @@
           "pattern": "^[a-f0-9]{64}$"
         },
         "source": {
-          "const": "nmap-xml"
+          "enum": ["nmap-xml", "bbot-ndjson"]
         },
         "parserVersion": {
           "const": "1.0.0"
@@ -271,7 +273,7 @@
           "pattern": "^[a-z]+:[a-f0-9]{64}$"
         },
         "source": {
-          "const": "nmap-xml"
+          "enum": ["nmap-xml", "bbot-ndjson"]
         },
         "fact": {
           "const": "open-port"
