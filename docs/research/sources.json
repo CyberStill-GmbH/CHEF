@@ -781,5 +781,14 @@
     "claim": "La crate implementa resolución DNS asíncrona con Tokio y permite construir un resolver desde ResolverConfig explícita; la versión declara licencia MIT OR Apache-2.0 y Rust 1.88 mínimo.",
     "kind": "primary",
     "limitation": "CHEF desactiva las features predeterminadas de configuración del sistema y fija upstreams como IP literales. La documentación de Hickory no acredita la paridad funcional del adaptador CHEF ni autoriza consultas a objetivos."
+  },
+  {
+    "id": "VT-DOMAIN-SUBDOMAINS",
+    "url": "https://docs.virustotal.com/reference/domain-object-subdomains",
+    "consultedAt": "2026-10-28",
+    "version": "API v3 consultada",
+    "claim": "La relación de subdominios de un dominio devuelve objetos de dominio y documenta una URL next/cursor para paginar.",
+    "kind": "primary",
+    "limitation": "La documentación no autoriza enviar datos de proyecto ni acredita vigencia o propiedad de cada hostname; CHEF debe conservarlos como candidatos y aplicar consentimiento, credenciales y cuotas antes de consultar."
   }
 ]

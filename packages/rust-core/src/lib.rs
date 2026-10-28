@@ -37,6 +37,7 @@ mod text_policy;
 mod url_fingerprint;
 mod url_policy;
 mod url_tools;
+mod virustotal;
 mod web_report_export;
 mod wordcloud;
 
@@ -93,6 +94,7 @@ pub use target_seed::{ChefTargetKind, ChefTargetSeed, parse_chef_target_seed};
 pub use text_policy::{escape_terminal_controls, is_printable_text, truncate_text};
 pub use url_fingerprint::url_shape_fingerprint;
 pub use url_policy::{canonical_fqdn_or_ip, url_path_depth};
+pub use virustotal::{VirusTotalSubdomainPage, parse_virustotal_subdomain_page};
 pub use web_report_export::{ChefWebEvidenceReportExport, export_web_evidence_report};
 
 #[cfg(test)]
