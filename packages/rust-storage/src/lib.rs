@@ -4,9 +4,10 @@
 use std::path::Path;
 
 use chef_application::{
-    IMPORT_HISTORY_MAX_PAGE_SIZE, ImportHistoryError, ImportHistoryPort, ImportRunSummary,
+    IMPORT_HISTORY_MAX_PAGE_SIZE, ImportHistoryError, ImportHistoryPort, ImportOutput,
+    ImportRunSummary,
 };
-use chef_core::{BbotEventGraph, BbotImportResult, ChefReconGraph, ImportOutput, Snapshot};
+use chef_core::{BbotEventGraph, BbotImportResult, ChefReconGraph, Snapshot};
 use serde_json::{Value, json};
 use surrealdb::{
     Surreal,
