@@ -1,0 +1,12 @@
+{
+  "queryDomain": "example.com",
+  "response": [
+    { "id": 100, "dns_names": ["*.api.example.com", "www.example.com."] },
+    { "id": 200, "dns_names": ["api.example.com", "outside.example.net"] },
+    { "id": 300 }
+  ],
+  "expectedCandidates": [
+    "api.example.com",
+    "www.example.com"
+  ]
+}
