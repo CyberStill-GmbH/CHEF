@@ -124,6 +124,7 @@ impl PresetCatalog {
                     ("chef_dns_rdata_hints".to_owned(), true),
                     ("chef_bimi_url_hints".to_owned(), true),
                     ("chef_tlsrpt_target_hints".to_owned(), true),
+                    ("chef_caa_record_hints".to_owned(), true),
                     ("chef_dns_mutation_hints".to_owned(), true),
                     ("chef_common_port_hints".to_owned(), true),
                     ("chef_cloud_storage_hints".to_owned(), true),
