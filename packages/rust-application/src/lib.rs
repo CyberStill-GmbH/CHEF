@@ -35,10 +35,11 @@ pub use dns_wildcard::{
     DnsWildcardProbeSet, DnsWildcardRecordAssessment, ExecuteDnsWildcardPlan,
 };
 pub use http_execution::{
-    ExecuteHttpPlan, HttpAuthorizationFailure, HttpAuthorizationPort, HttpAuthorizationReceipt,
-    HttpAuthorizationUse, HttpCancellation, HttpExecutionError, HttpExecutionGate,
-    HttpExecutionTermination, HttpPlanExecution, HttpRequestOutcome, HttpRequestResult,
-    HttpTransportFailure, HttpTransportPort, HttpTransportRequest, HttpTransportResponse,
+    ExecuteHttpPlan, HttpAuthorizationControl, HttpAuthorizationFailure, HttpAuthorizationPort,
+    HttpAuthorizationReceipt, HttpAuthorizationUse, HttpCancellation, HttpExecutionError,
+    HttpExecutionGate, HttpExecutionTermination, HttpPlanExecution, HttpRequestOutcome,
+    HttpRequestResult, HttpTransportFailure, HttpTransportPort, HttpTransportRequest,
+    HttpTransportResponse,
 };
 pub use http_plan::{HttpPlanError, HttpPlanSettings, HttpRequestPlan, PlannedHttpRequest};
 pub use import_history::{

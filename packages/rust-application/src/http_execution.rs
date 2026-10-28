@@ -29,6 +29,46 @@ pub enum HttpAuthorizationFailure {
     InvalidReceipt,
 }
 
+#[derive(Debug)]
+struct HttpAuthorizationState {
+    revoked: tokio::sync::watch::Sender<bool>,
+}
+
+/// Control local de una concesión explícita. Revocarlo bloquea nuevas
+/// autorizaciones y cancela la ejecución que ya use su recibo.
+#[derive(Debug, Clone)]
+pub struct HttpAuthorizationControl(Arc<HttpAuthorizationState>);
+
+impl Default for HttpAuthorizationControl {
+    fn default() -> Self {
+        let (revoked, _) = tokio::sync::watch::channel(false);
+        Self(Arc::new(HttpAuthorizationState { revoked }))
+    }
+}
+
+impl HttpAuthorizationControl {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn revoke(&self) {
+        self.0.revoked.send_replace(true);
+    }
+
+    pub fn is_revoked(&self) -> bool {
+        *self.0.revoked.borrow()
+    }
+
+    async fn revoked(&self) {
+        let mut receiver = self.0.revoked.subscribe();
+        while !*receiver.borrow() {
+            if receiver.changed().await.is_err() {
+                return;
+            }
+        }
+    }
+}
+
 /// Autorización vinculada a un origen concreto y a las IP que el adaptador
 /// validó contra el scope vigente. Solo el adaptador de autorización debe
 /// construirla tras confirmar permiso explícito.
@@ -39,6 +79,7 @@ pub struct HttpAuthorizationReceipt {
     scope_digest: String,
     allowed_ips: Vec<IpAddr>,
     expires_at: Instant,
+    control: HttpAuthorizationControl,
 }
 
 impl HttpAuthorizationReceipt {
@@ -46,8 +87,26 @@ impl HttpAuthorizationReceipt {
         origin: String,
         authorization_id: String,
         scope_digest: String,
+        allowed_ips: Vec<IpAddr>,
+        expires_at: Instant,
+    ) -> Result<Self, HttpAuthorizationFailure> {
+        Self::new_with_control(
+            origin,
+            authorization_id,
+            scope_digest,
+            allowed_ips,
+            expires_at,
+            HttpAuthorizationControl::new(),
+        )
+    }
+
+    pub fn new_with_control(
+        origin: String,
+        authorization_id: String,
+        scope_digest: String,
         mut allowed_ips: Vec<IpAddr>,
         expires_at: Instant,
+        control: HttpAuthorizationControl,
     ) -> Result<Self, HttpAuthorizationFailure> {
         let Some(canonical_origin) = canonical_http_origin(&origin) else {
             return Err(HttpAuthorizationFailure::InvalidReceipt);
@@ -61,6 +120,7 @@ impl HttpAuthorizationReceipt {
             || allowed_ips.is_empty()
             || allowed_ips.len() > MAX_AUTHORIZED_IPS
             || expires_at <= Instant::now()
+            || control.is_revoked()
         {
             return Err(HttpAuthorizationFailure::InvalidReceipt);
         }
@@ -72,6 +132,7 @@ impl HttpAuthorizationReceipt {
             scope_digest: scope_digest.to_ascii_lowercase(),
             allowed_ips,
             expires_at,
+            control,
         })
     }
 
@@ -92,7 +153,7 @@ impl HttpAuthorizationReceipt {
     }
 
     pub fn is_valid_at(&self, now: Instant) -> bool {
-        now < self.expires_at
+        now < self.expires_at && !self.control.is_revoked()
     }
 
     fn expires_at(&self) -> Instant {
@@ -174,6 +235,7 @@ pub trait HttpTransportPort: Send + Sync {
 pub enum HttpExecutionError {
     NotAuthorized,
     InvalidAuthorization,
+    AuthorizationRevoked,
     AuthorizationExpired,
     AuthorizationTimeout,
     Cancelled,
@@ -190,6 +252,7 @@ impl std::fmt::Display for HttpExecutionError {
         formatter.write_str(match self {
             Self::NotAuthorized => "El origen HTTP no está autorizado para este scope",
             Self::InvalidAuthorization => "La autorización HTTP no es válida",
+            Self::AuthorizationRevoked => "La autorización HTTP fue revocada",
             Self::AuthorizationExpired => "La autorización HTTP expiró",
             Self::AuthorizationTimeout => "La autorización HTTP superó su tiempo máximo",
             Self::Cancelled => "La ejecución HTTP fue cancelada",
@@ -325,10 +388,12 @@ impl HttpExecutionGate {
     async fn wait_for_turn(
         &self,
         cancellation: &HttpCancellation,
+        authorization: &HttpAuthorizationControl,
         job_deadline: tokio::time::Instant,
     ) -> Result<(), HttpExecutionError> {
         let mut last_dispatch = tokio::select! {
             _ = cancellation.cancelled() => return Err(HttpExecutionError::Cancelled),
+            _ = authorization.revoked() => return Err(HttpExecutionError::AuthorizationRevoked),
             _ = tokio::time::sleep_until(job_deadline) => return Err(HttpExecutionError::JobTimeout),
             guard = self.last_dispatch.lock() => guard,
         };
@@ -337,6 +402,7 @@ impl HttpExecutionGate {
             if tokio::time::Instant::now() < ready_at {
                 tokio::select! {
                     _ = cancellation.cancelled() => return Err(HttpExecutionError::Cancelled),
+                    _ = authorization.revoked() => return Err(HttpExecutionError::AuthorizationRevoked),
                     _ = tokio::time::sleep_until(job_deadline) => return Err(HttpExecutionError::JobTimeout),
                     _ = tokio::time::sleep_until(ready_at) => {},
                 }
@@ -444,11 +510,18 @@ where
                 result = self.authorization.authorize_origin(&origin) => result,
             };
             let receipt = authorization.map_err(|_| HttpExecutionError::NotAuthorized)?;
+            if receipt.control.is_revoked() {
+                return Err(HttpExecutionError::AuthorizationRevoked);
+            }
             if receipt.origin() != origin || receipt.allowed_ips().is_empty() {
                 return Err(HttpExecutionError::InvalidAuthorization);
             }
             if !receipt.is_valid_at(Instant::now()) {
-                return Err(HttpExecutionError::InvalidAuthorization);
+                return Err(if receipt.control.is_revoked() {
+                    HttpExecutionError::AuthorizationRevoked
+                } else {
+                    HttpExecutionError::InvalidAuthorization
+                });
             }
             let authorization_use_index = state.authorization_uses.len();
             state.authorization_uses.push(HttpAuthorizationUse {
@@ -463,7 +536,7 @@ where
             });
 
             self.gate
-                .wait_for_turn(cancellation, state.job_deadline)
+                .wait_for_turn(cancellation, &receipt.control, state.job_deadline)
                 .await?;
             if cancellation.is_cancelled() {
                 return Err(HttpExecutionError::Cancelled);
@@ -472,7 +545,11 @@ where
                 return Err(HttpExecutionError::JobTimeout);
             }
             if !receipt.is_valid_at(Instant::now()) {
-                return Err(HttpExecutionError::AuthorizationExpired);
+                return Err(if receipt.control.is_revoked() {
+                    HttpExecutionError::AuthorizationRevoked
+                } else {
+                    HttpExecutionError::AuthorizationExpired
+                });
             }
             state.authorization_uses[authorization_use_index].dispatched = true;
 
@@ -486,6 +563,7 @@ where
             let auth_deadline = tokio::time::Instant::from_std(receipt.expires_at());
             let response = tokio::select! {
                 _ = cancellation.cancelled() => return Err(HttpExecutionError::Cancelled),
+                _ = receipt.control.revoked() => return Err(HttpExecutionError::AuthorizationRevoked),
                 _ = tokio::time::sleep_until(state.job_deadline) => return Err(HttpExecutionError::JobTimeout),
                 _ = tokio::time::sleep_until(auth_deadline) => return Err(HttpExecutionError::AuthorizationExpired),
                 _ = tokio::time::sleep_until(request_deadline) => Err(HttpTransportFailure::Timeout),
@@ -507,7 +585,11 @@ where
                 return Err(HttpExecutionError::Cancelled);
             }
             if !receipt.is_valid_at(Instant::now()) {
-                return Err(HttpExecutionError::AuthorizationExpired);
+                return Err(if receipt.control.is_revoked() {
+                    HttpExecutionError::AuthorizationRevoked
+                } else {
+                    HttpExecutionError::AuthorizationExpired
+                });
             }
             state.authorization_uses[authorization_use_index].response_status =
                 Some(response.status);
