@@ -48,6 +48,7 @@ impl DnsRecordType {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DnsQueryRequest {
     host: String,
+    scope_host: String,
     record_type: DnsRecordType,
     resolution_hops: u8,
 }
@@ -70,14 +71,53 @@ impl DnsQueryRequest {
         }
         let host = seed.host.ok_or(DnsResolutionError::InvalidQuery)?;
         Ok(Self {
+            scope_host: host.clone(),
             host,
             record_type: DnsRecordType::parse(record_type)?,
             resolution_hops,
         })
     }
 
+    /// Construye una consulta SRV para un propietario del catálogo CHEF.
+    ///
+    /// `scope_host` conserva el dominio raíz que debe autorizar la aplicación;
+    /// el propietario con etiquetas `_servicio._protocolo` no se usa como scope.
+    pub fn for_srv_owner(
+        owner_name: &str,
+        scope_host: &str,
+        resolution_hops: u8,
+    ) -> Result<Self, DnsResolutionError> {
+        if resolution_hops > 32 {
+            return Err(DnsResolutionError::LimitExceeded);
+        }
+        let seed =
+            parse_chef_target_seed(scope_host).map_err(|_| DnsResolutionError::InvalidQuery)?;
+        if seed.kind != ChefTargetKind::DnsName {
+            return Err(DnsResolutionError::InvalidQuery);
+        }
+        let scope_host = seed.host.ok_or(DnsResolutionError::InvalidQuery)?;
+        if !chef_core::common_dns_service_candidates(&scope_host)
+            .map_err(|_| DnsResolutionError::InvalidQuery)?
+            .iter()
+            .any(|candidate| candidate == owner_name)
+        {
+            return Err(DnsResolutionError::InvalidQuery);
+        }
+        Ok(Self {
+            host: owner_name.to_owned(),
+            scope_host,
+            record_type: DnsRecordType::parse("SRV")?,
+            resolution_hops,
+        })
+    }
+
     pub fn host(&self) -> &str {
         &self.host
+    }
+
+    /// Dominio de alcance al que pertenece la solicitud DNS.
+    pub fn scope_host(&self) -> &str {
+        &self.scope_host
     }
 
     pub fn record_type(&self) -> &DnsRecordType {
@@ -205,6 +245,10 @@ pub enum DnsAnswerDisposition {
 }
 
 pub trait DnsAuthorizationPort: Send + Sync {
+    /// Autoriza el dominio de `request.scope_host()` en la política vigente.
+    ///
+    /// Para propietarios SRV CHEF, `request.host()` es un nombre de consulta
+    /// con etiquetas de servicio; no debe reemplazar al dominio de scope.
     fn authorize_query(
         &self,
         request: &DnsQueryRequest,
@@ -234,6 +278,7 @@ pub enum DnsLookupOutcome {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DnsResolutionResult {
     pub host: String,
+    pub scope_host: String,
     pub record_type: String,
     pub resolution_hops: u8,
     pub authorization_id: String,
@@ -317,7 +362,8 @@ where
     }
 
     /// Verifica autorización antes del puerto de red y conserva respuestas fuera
-    /// de alcance como evidencia sin habilitar seguimiento recursivo.
+    /// de alcance como evidencia sin habilitar seguimiento recursivo. El adaptador
+    /// debe autorizar `request.scope_host()` y validar allí cualquier subconsulta.
     pub async fn execute(
         &self,
         request: DnsQueryRequest,
@@ -390,6 +436,7 @@ where
 
         Ok(DnsResolutionResult {
             host: request.host,
+            scope_host: request.scope_host,
             record_type: request.record_type.0,
             resolution_hops: request.resolution_hops,
             authorization_id: receipt.authorization_id,
