@@ -1,0 +1,5 @@
+{
+  "type": "TXT",
+  "host": "_smtp._tls.example.com",
+  "answer": "v=TLSRPTv2; rua=mailto:tls-reports@example.com"
+}
