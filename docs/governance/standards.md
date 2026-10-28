@@ -14,7 +14,7 @@ Modularidad por responsabilidades, SOLID demostrado en imports/pruebas, ADRs peq
 
 ## GitHub y CI
 
-Ramas cortas/PR pequeños, issue templates con éxito/fallo, review cruzado del equipo. Checks Quality, Burp spike y [CodeQL](ci-security.md) antes de merge cuando estén configurados como requeridos; main protegida con checks, resolución de conversaciones y force-push/deletion bloqueados. El número de approvals debe ajustarse al acceso real del equipo; nunca inventar reviewers ni afirmar revisión independiente inexistente. [Commits y PRs](commits-and-prs.md) describen el proceso.
+Ramas cortas/PR pequeños, issue templates con éxito/fallo, review cruzado del equipo. La protección actual de `main` exige `Quality`, `Burp spike`, una aprobación independiente posterior al último push, rama actualizada y resolución de conversaciones; bloquea force-push y borrado. La configuración permite solo squash merge. CodeQL corre pero no es un check requerido actualmente. El número de approvals debe ajustarse al acceso real del equipo; nunca inventar reviewers ni afirmar revisión independiente inexistente. [Commits y PRs](commits-and-prs.md) describen el proceso y deben actualizarse si cambia la protección en GitHub.
 
 CI no usa pull_request_target ni secrets para ejecutar código del fork. Actions fijadas por SHA oficial, permisos contents:read y credenciales no persistidas. Renovar pines con Dependabot y revisar diffs. Auditar paquetes sin aplicar upgrades incompatibles a ciegas.
 
