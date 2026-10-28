@@ -35,7 +35,7 @@ impl BbotModule for ChefCloudStorageHints {
     fn descriptor(&self) -> ModuleDescriptor {
         ModuleDescriptor {
             name: "chef_cloud_storage_hints",
-            watches: &["DNS_NAME", "URL"],
+            watches: &["DNS_NAME", "URL", "STORAGE_BUCKET"],
             produces: &["URL_HINT"],
         }
     }
@@ -76,22 +76,28 @@ impl BbotModule for ChefCloudStorageHints {
 fn observed_cloud_host(event: &BbotEvent) -> Option<String> {
     match event.event_type.as_str() {
         "DNS_NAME" => event.data.as_str().and_then(crate::host::canonical_domain),
-        "URL" => {
-            let value = event.data.as_str()?;
-            if value.len() > 8_192 || value.chars().any(char::is_control) {
-                return None;
-            }
-            let url = Url::parse(value).ok()?;
-            if !matches!(url.scheme(), "http" | "https")
-                || !url.username().is_empty()
-                || url.password().is_some()
-            {
-                return None;
-            }
-            url.host_str().and_then(crate::host::canonical_domain)
-        }
+        "URL" => event.data.as_str().and_then(observed_http_host),
+        "STORAGE_BUCKET" => event
+            .data
+            .get("url")
+            .and_then(Value::as_str)
+            .and_then(observed_http_host),
         _ => None,
     }
+}
+
+fn observed_http_host(value: &str) -> Option<String> {
+    if value.len() > 8_192 || value.chars().any(char::is_control) {
+        return None;
+    }
+    let url = Url::parse(value).ok()?;
+    if !matches!(url.scheme(), "http" | "https")
+        || !url.username().is_empty()
+        || url.password().is_some()
+    {
+        return None;
+    }
+    url.host_str().and_then(crate::host::canonical_domain)
 }
 
 fn cloud_storage_provider(host: &str) -> Option<&'static str> {
