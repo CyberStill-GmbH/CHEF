@@ -1,0 +1,11 @@
+{
+  "queryDomain": "example.com",
+  "response": {
+    "passive_dns": [
+      { "hostname": "example.com.evil.test" },
+      { "hostname": "notexample.com" },
+      { "hostname": "outside.example.net" }
+    ]
+  },
+  "expectedCandidates": []
+}
