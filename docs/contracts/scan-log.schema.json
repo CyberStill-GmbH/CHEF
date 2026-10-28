@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://chef.invalid/contracts/scan-log.schema.json",
+  "title": "Evento de actividad CHEF",
+  "description": "Evento IPC interno para la importación de evidencia offline. No autoriza ni ejecuta reconocimiento de red.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "jobId", "sequence", "phase", "message"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "jobId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[a-z0-9:-]+$"
+    },
+    "sequence": { "type": "integer", "minimum": 1 },
+    "phase": {
+      "enum": ["started", "event", "validated", "stored", "completed", "failed"]
+    },
+    "message": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160,
+      "pattern": "^[^\\u0000-\\u001f\\u007f]*$"
+    },
+    "eventType": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[A-Z0-9_]+$"
+    },
+    "observedAt": { "type": "string", "format": "date-time", "maxLength": 40 }
+  }
+}

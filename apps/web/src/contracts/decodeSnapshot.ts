@@ -24,7 +24,7 @@ function referencesOnly(
 
 function hasReferentialIntegrity(snapshot: SnapshotDto): boolean {
   if (
-    snapshot.schemaVersion !== '1.0.0' ||
+    !['1.0.0', '1.1.0'].includes(snapshot.schemaVersion) ||
     snapshot.scopePolicy.schemaVersion !== '1.0.0' ||
     snapshot.run.scopePolicyId !== snapshot.scopePolicy.id ||
     !hasUniqueIds(snapshot.evidence) ||

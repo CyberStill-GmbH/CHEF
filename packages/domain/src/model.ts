@@ -1,4 +1,7 @@
 export const SCHEMA_VERSION = '1.0.0' as const;
+export const SNAPSHOT_VERSION_BBOT = '1.1.0' as const;
+export type SnapshotVersion =
+  typeof SCHEMA_VERSION | typeof SNAPSHOT_VERSION_BBOT;
 export type Protocol = 'tcp' | 'udp';
 
 export interface ScopePolicy {
@@ -32,7 +35,7 @@ export interface Asset {
 export interface Evidence {
   id: string;
   sha256: string;
-  source: 'nmap-xml';
+  source: 'nmap-xml' | 'bbot-ndjson';
   parserVersion: string;
   runId: string;
   locator: string;
@@ -43,7 +46,7 @@ export interface Observation extends ServiceInput {
   id: string;
   evidenceId: string;
   runId: string;
-  source: 'nmap-xml';
+  source: 'nmap-xml' | 'bbot-ndjson';
   fact: 'open-port';
   confidence: number;
 }
@@ -79,7 +82,7 @@ export interface ScanRun {
 }
 
 export interface Snapshot {
-  schemaVersion: typeof SCHEMA_VERSION;
+  schemaVersion: SnapshotVersion;
   scopePolicy: ScopePolicy;
   run: ScanRun;
   evidence: Evidence[];

@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "1.0.0",
+  "jobId": "job:demo-001",
+  "sequence": 2,
+  "phase": "event",
+  "message": "Evento de evidencia procesado desde archivo local.",
+  "eventType": "OPEN_TCP_PORT",
+  "observedAt": "2026-10-18T12:00:00Z"
+}

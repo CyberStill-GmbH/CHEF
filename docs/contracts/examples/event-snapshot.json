@@ -1,0 +1,186 @@
+{
+  "schemaVersion": "1.1.0",
+  "scopePolicy": {
+    "schemaVersion": "1.0.0",
+    "id": "lab-offline-v1",
+    "allowedAddresses": [
+      "127.0.0.1",
+      "127.0.0.2",
+      "::1"
+    ],
+    "excludedAddresses": [],
+    "allowedPorts": [
+      22,
+      80,
+      443,
+      8080
+    ],
+    "allowedProtocols": [
+      "tcp",
+      "udp"
+    ],
+    "maxInputBytes": 2097152,
+    "maxObservations": 10000
+  },
+  "run": {
+    "id": "run:05d3deac1b0af343ebca37eb58f848b3e860928a06b410c9fb16b35476326a9d",
+    "scopePolicyId": "lab-offline-v1",
+    "scopeDigest": "bfe5a6a0e0070b41c45b41cd788748ce32502147da62f8928093fa1e33ef9c85",
+    "state": "completed",
+    "startedAt": "2026-09-29T00:00:00Z",
+    "finishedAt": "2026-09-29T00:00:00Z"
+  },
+  "evidence": [
+    {
+      "id": "evidence:62ba5308e1956266de159435ca132f73e214d4959f8b7ff06bdcb829e86e4f62",
+      "sha256": "2a5544e6f3e02a35ee57e204812ddf2ccdeeb511378669ff2886546ba989d983",
+      "source": "bbot-ndjson",
+      "parserVersion": "1.1.0",
+      "runId": "run:05d3deac1b0af343ebca37eb58f848b3e860928a06b410c9fb16b35476326a9d",
+      "locator": "/nmaprun",
+      "importedAt": "2026-09-29T00:00:00Z"
+    }
+  ],
+  "observations": [
+    {
+      "address": "127.0.0.1",
+      "port": 8080,
+      "protocol": "tcp",
+      "observedAt": "2026-09-29T00:00:00Z",
+      "locator": "/nmaprun/host[0]/ports/port[1]",
+      "id": "observation:e02811fe6ff4d8f97edba36621fee0bcaf1f0bdcf19787769b23907f84c4c1b0",
+      "evidenceId": "evidence:62ba5308e1956266de159435ca132f73e214d4959f8b7ff06bdcb829e86e4f62",
+      "runId": "run:05d3deac1b0af343ebca37eb58f848b3e860928a06b410c9fb16b35476326a9d",
+      "source": "bbot-ndjson",
+      "fact": "open-port",
+      "confidence": 1
+    },
+    {
+      "address": "127.0.0.1",
+      "port": 8080,
+      "protocol": "tcp",
+      "observedAt": "2026-09-29T00:00:00Z",
+      "locator": "/nmaprun/host[0]/ports/port[0]",
+      "id": "observation:93d6c3e1c1f9e36412d01dd5e09f051b12fa8094c727071cdf162216720d0c57",
+      "evidenceId": "evidence:62ba5308e1956266de159435ca132f73e214d4959f8b7ff06bdcb829e86e4f62",
+      "runId": "run:05d3deac1b0af343ebca37eb58f848b3e860928a06b410c9fb16b35476326a9d",
+      "source": "bbot-ndjson",
+      "fact": "open-port",
+      "confidence": 1
+    },
+    {
+      "address": "127.0.0.2",
+      "port": 8080,
+      "protocol": "tcp",
+      "observedAt": "2026-09-29T00:00:00Z",
+      "locator": "/nmaprun/host[1]/ports/port[0]",
+      "id": "observation:a35996cdcd010daa5334891cb26eabfbc1d6d85368fd243c859262f2ebd36efa",
+      "evidenceId": "evidence:62ba5308e1956266de159435ca132f73e214d4959f8b7ff06bdcb829e86e4f62",
+      "runId": "run:05d3deac1b0af343ebca37eb58f848b3e860928a06b410c9fb16b35476326a9d",
+      "source": "bbot-ndjson",
+      "fact": "open-port",
+      "confidence": 1
+    }
+  ],
+  "assets": [
+    {
+      "id": "asset:3c41485077b4b9c3b5cf073a9612c69c0465ade5ec939f00885733c088455daf",
+      "kind": "service",
+      "key": "127.0.0.2|tcp|8080",
+      "firstSeen": "2026-09-29T00:00:00Z",
+      "lastSeen": "2026-09-29T00:00:00Z",
+      "observationIds": [
+        "observation:a35996cdcd010daa5334891cb26eabfbc1d6d85368fd243c859262f2ebd36efa"
+      ]
+    },
+    {
+      "id": "asset:585d047e936bf8e2ce95fbeada3c65782029231c9cfd97f2c1f4ada12090c0ba",
+      "kind": "service",
+      "key": "127.0.0.1|tcp|8080",
+      "firstSeen": "2026-09-29T00:00:00Z",
+      "lastSeen": "2026-09-29T00:00:00Z",
+      "observationIds": [
+        "observation:e02811fe6ff4d8f97edba36621fee0bcaf1f0bdcf19787769b23907f84c4c1b0",
+        "observation:93d6c3e1c1f9e36412d01dd5e09f051b12fa8094c727071cdf162216720d0c57"
+      ]
+    },
+    {
+      "id": "asset:b5a3dd9dc948bc986bc3a40013a1d6d34f043ff82dbb2cd2be57fe5f5e926cb2",
+      "kind": "address",
+      "key": "127.0.0.1",
+      "firstSeen": "2026-09-29T00:00:00Z",
+      "lastSeen": "2026-09-29T00:00:00Z",
+      "observationIds": [
+        "observation:e02811fe6ff4d8f97edba36621fee0bcaf1f0bdcf19787769b23907f84c4c1b0",
+        "observation:93d6c3e1c1f9e36412d01dd5e09f051b12fa8094c727071cdf162216720d0c57"
+      ]
+    },
+    {
+      "id": "asset:cc222bae38d64a9cb13fbadf187653668b04568419d76b27de70bd37718cf0da",
+      "kind": "address",
+      "key": "127.0.0.2",
+      "firstSeen": "2026-09-29T00:00:00Z",
+      "lastSeen": "2026-09-29T00:00:00Z",
+      "observationIds": [
+        "observation:a35996cdcd010daa5334891cb26eabfbc1d6d85368fd243c859262f2ebd36efa"
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "relationship:5f62147f50dc4abe5261d9ad87580d02cebb31744effb7df0a920948ff834fbb",
+      "from": "asset:b5a3dd9dc948bc986bc3a40013a1d6d34f043ff82dbb2cd2be57fe5f5e926cb2",
+      "to": "asset:585d047e936bf8e2ce95fbeada3c65782029231c9cfd97f2c1f4ada12090c0ba",
+      "kind": "exposes",
+      "assertion": "observed",
+      "observationIds": [
+        "observation:e02811fe6ff4d8f97edba36621fee0bcaf1f0bdcf19787769b23907f84c4c1b0",
+        "observation:93d6c3e1c1f9e36412d01dd5e09f051b12fa8094c727071cdf162216720d0c57"
+      ],
+      "confidence": 1
+    },
+    {
+      "id": "relationship:98bf0c9e52192bb2d8e774c34c307bf9b3ae09fc4a3d14325db317d0a09cb759",
+      "from": "asset:cc222bae38d64a9cb13fbadf187653668b04568419d76b27de70bd37718cf0da",
+      "to": "asset:3c41485077b4b9c3b5cf073a9612c69c0465ade5ec939f00885733c088455daf",
+      "kind": "exposes",
+      "assertion": "observed",
+      "observationIds": [
+        "observation:a35996cdcd010daa5334891cb26eabfbc1d6d85368fd243c859262f2ebd36efa"
+      ],
+      "confidence": 1
+    }
+  ],
+  "paths": [
+    {
+      "id": "path:4760c9dd67ff0aaa7b4423fbf709077fe8ed958519060b151d267e3e02952d6c",
+      "assetIds": [
+        "asset:b5a3dd9dc948bc986bc3a40013a1d6d34f043ff82dbb2cd2be57fe5f5e926cb2",
+        "asset:585d047e936bf8e2ce95fbeada3c65782029231c9cfd97f2c1f4ada12090c0ba"
+      ],
+      "relationshipIds": [
+        "relationship:5f62147f50dc4abe5261d9ad87580d02cebb31744effb7df0a920948ff834fbb"
+      ],
+      "assertion": "inferred",
+      "ruleId": "open-service/v1",
+      "explanation": "An imported observation reports an open service. Reachability now and exploitability have not been confirmed.",
+      "confidence": 1,
+      "isConfirmedVulnerability": false
+    },
+    {
+      "id": "path:9b12d524581a29f22c6f9293656345eca768a6eb31a49e507e913e0e454e9568",
+      "assetIds": [
+        "asset:cc222bae38d64a9cb13fbadf187653668b04568419d76b27de70bd37718cf0da",
+        "asset:3c41485077b4b9c3b5cf073a9612c69c0465ade5ec939f00885733c088455daf"
+      ],
+      "relationshipIds": [
+        "relationship:98bf0c9e52192bb2d8e774c34c307bf9b3ae09fc4a3d14325db317d0a09cb759"
+      ],
+      "assertion": "inferred",
+      "ruleId": "open-service/v1",
+      "explanation": "An imported observation reports an open service. Reachability now and exploitability have not been confirmed.",
+      "confidence": 1,
+      "isConfirmedVulnerability": false
+    }
+  ]
+}

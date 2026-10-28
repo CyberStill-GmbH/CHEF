@@ -76,6 +76,73 @@ assert.ok(
   ),
   JSON.stringify(validate.errors),
 );
+const reconGraphSchema = JSON.parse(
+  readFileSync('docs/contracts/recon-graph.schema.json', 'utf8'),
+);
+const validateReconGraph = ajv.compile(reconGraphSchema);
+const reconGraphExample = JSON.parse(
+  readFileSync('docs/contracts/examples/recon-graph.json', 'utf8'),
+);
+assert.ok(
+  validateReconGraph(reconGraphExample),
+  JSON.stringify(validateReconGraph.errors),
+);
+assert.ok(
+  reconGraphExample.relationships.some(
+    ({ kind, assertion }) =>
+      kind === 'parent_domain_of' && assertion === 'hint',
+  ),
+  'The recon graph example must show parent-domain hints as unverified suggestions.',
+);
+assert.ok(
+  reconGraphExample.assets.some(
+    ({ kind, qualification }) => kind === 'domain' && qualification === 'hint',
+  ) &&
+    reconGraphExample.assets.some(
+      ({ kind, qualification }) =>
+        kind === 'domain' && qualification === 'unresolved',
+    ),
+  'Domain hints and unresolved names must retain their distinct qualifications.',
+);
+assert.ok(
+  reconGraphExample.assets.some(
+    ({ kind, qualification }) => kind === 'service' && qualification === 'hint',
+  ) &&
+    reconGraphExample.relationships.some(
+      ({ kind, assertion }) =>
+        kind === 'exposes_service' && assertion === 'hint',
+    ),
+  'Common TCP ports must remain service and relationship hints in the recon graph example.',
+);
+assert.ok(
+  reconGraphExample.schemaVersion === '1.4.0' &&
+    reconGraphExample.assets.some(
+      ({ kind, key, qualification }) =>
+        kind === 'organization' && qualification === 'hint' && key === 'bücher',
+    ) &&
+    reconGraphExample.assets.some(
+      ({ kind, key, qualification }) =>
+        kind === 'organization' && qualification === 'hint' && key === 'bucher',
+    ) &&
+    reconGraphExample.evidence.some(
+      ({ eventType, module, parentEvidenceId }) =>
+        eventType === 'ORG_STUB' &&
+        module === 'chef_org_stub_hints' &&
+        parentEvidenceId !== null,
+    ),
+  'Organization names must remain candidate hints with source lineage in recon graph 1.4.0.',
+);
+const validateScopePolicy = ajv.compile({
+  $schema: schema.$schema,
+  $defs: schema.$defs,
+  $ref: '#/$defs/ScopePolicy',
+});
+assert.ok(
+  validateScopePolicy(
+    JSON.parse(readFileSync('docs/contracts/examples/scope-cidr.json', 'utf8')),
+  ),
+  JSON.stringify(validateScopePolicy.errors),
+);
 const httpSchema = JSON.parse(
   readFileSync('docs/contracts/http-observation.schema.json', 'utf8'),
 );
@@ -87,6 +154,61 @@ assert.ok(
     ),
   ),
   JSON.stringify(validateHttp.errors),
+);
+const scanLogSchema = JSON.parse(
+  readFileSync('docs/contracts/scan-log.schema.json', 'utf8'),
+);
+const validateScanLog = ajv.compile(scanLogSchema);
+assert.ok(
+  validateScanLog(
+    JSON.parse(readFileSync('docs/contracts/examples/scan-log.json', 'utf8')),
+  ),
+  JSON.stringify(validateScanLog.errors),
+);
+const chefConfigSchema = JSON.parse(
+  readFileSync('docs/contracts/chef-config.schema.json', 'utf8'),
+);
+const validateChefConfig = ajv.compile(chefConfigSchema);
+assert.ok(
+  validateChefConfig(
+    JSON.parse(
+      readFileSync('docs/contracts/examples/chef-config.json', 'utf8'),
+    ),
+  ),
+  JSON.stringify(validateChefConfig.errors),
+);
+const targetSeedSchema = JSON.parse(
+  readFileSync('docs/contracts/target-seed.schema.json', 'utf8'),
+);
+const validateTargetSeed = ajv.compile(targetSeedSchema);
+assert.ok(
+  validateTargetSeed(
+    JSON.parse(
+      readFileSync('docs/contracts/examples/target-seed.json', 'utf8'),
+    ),
+  ),
+  JSON.stringify(validateTargetSeed.errors),
+);
+const asnSeedExample = JSON.parse(
+  readFileSync('docs/contracts/examples/target-seed-asn.json', 'utf8'),
+);
+assert.ok(
+  validateTargetSeed(asnSeedExample),
+  JSON.stringify(validateTargetSeed.errors),
+);
+assert.equal(asnSeedExample.kind, 'asn');
+assert.equal(asnSeedExample.host, null);
+const eventStatisticsSchema = JSON.parse(
+  readFileSync('docs/contracts/event-statistics.schema.json', 'utf8'),
+);
+const validateEventStatistics = ajv.compile(eventStatisticsSchema);
+assert.ok(
+  validateEventStatistics(
+    JSON.parse(
+      readFileSync('docs/contracts/examples/event-statistics.json', 'utf8'),
+    ),
+  ),
+  JSON.stringify(validateEventStatistics.errors),
 );
 const sources = JSON.parse(readFileSync('docs/research/sources.json', 'utf8'));
 assert.equal(new Set(sources.map((item) => item.id)).size, sources.length);

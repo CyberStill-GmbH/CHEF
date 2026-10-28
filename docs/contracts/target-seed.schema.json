@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://chef.invalid/contracts/target-seed/1.1.0",
+  "title": "Clasificación local de objetivo CHEF 1.1.0",
+  "description": "Resultado del parser Rust de objetivos literales. ASN se clasifica sin expandir sus redes ni consultar fuentes; el contrato no autoriza ni ejecuta reconocimiento.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "kind", "data", "host", "port"],
+  "properties": {
+    "schemaVersion": { "enum": ["1.0.0", "1.1.0"] },
+    "kind": {
+      "enum": ["asn", "ipAddress", "ipRange", "dnsName", "url", "tcpEndpoint"]
+    },
+    "data": { "type": "string", "minLength": 1, "maxLength": 8192 },
+    "host": { "type": ["string", "null"], "minLength": 1, "maxLength": 253 },
+    "port": { "type": ["integer", "null"], "minimum": 1, "maximum": 65535 }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "schemaVersion": { "const": "1.0.0" } } },
+      "then": {
+        "properties": {
+          "kind": { "not": { "const": "asn" } },
+          "host": { "type": "string", "minLength": 1, "maxLength": 253 }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "schemaVersion": { "const": "1.1.0" } } },
+      "then": {
+        "if": { "properties": { "kind": { "const": "asn" } } },
+        "then": { "properties": { "host": { "const": null } } },
+        "else": {
+          "properties": {
+            "host": { "type": "string", "minLength": 1, "maxLength": 253 }
+          }
+        }
+      }
+    }
+  ]
+}

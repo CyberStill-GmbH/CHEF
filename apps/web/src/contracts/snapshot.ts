@@ -1,8 +1,10 @@
-export type SnapshotSchemaVersion = '1.0.0';
+export type SnapshotSchemaVersion = '1.0.0' | '1.1.0';
+export type ScopePolicySchemaVersion = '1.0.0';
+export type ParserSchemaVersion = '1.0.0';
 export type NetworkProtocol = 'tcp' | 'udp';
 
 export interface ScopePolicyDto {
-  schemaVersion: SnapshotSchemaVersion;
+  schemaVersion: ScopePolicySchemaVersion;
   id: string;
   allowedAddresses: string[];
   excludedAddresses: string[];
@@ -24,8 +26,8 @@ export interface ScanRunDto {
 export interface EvidenceDto {
   id: string;
   sha256: string;
-  source: 'nmap-xml';
-  parserVersion: SnapshotSchemaVersion;
+  source: 'nmap-xml' | 'bbot-ndjson';
+  parserVersion: ParserSchemaVersion;
   runId: string;
   locator: string;
   importedAt: string;
@@ -40,7 +42,7 @@ export interface ObservationDto {
   locator: string;
   evidenceId: string;
   runId: string;
-  source: 'nmap-xml';
+  source: 'nmap-xml' | 'bbot-ndjson';
   fact: 'open-port';
   confidence: number;
 }

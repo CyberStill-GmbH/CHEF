@@ -1,6 +1,6 @@
 # API histórica propuesta para loopback
 
-**Estado:** diseño exploratorio anterior, nunca implementado ni publicado como contrato estable. El propietario priorizó ahora una [aplicación web multiusuario](web-api-proposal.md) con PostgreSQL/Prisma y GitHub OAuth. Conservar este documento como razón de las primeras opciones; **no** implementar sus rutas `/v1/graphs`, token local, SSE o cancelación solo porque aquí figuran. Antes de aceptar cualquier API web, aprobar OpenAPI/schema, ejemplos, tests y nota de compatibilidad en un PR de contrato.
+**Estado:** diseño exploratorio anterior, nunca implementado ni publicado como contrato estable. El propietario priorizó una aplicación local; véase la [arquitectura actual](../architecture/overview.md). Conservar este documento como antecedente; **no** implementar sus rutas `/v1/graphs`, token local, SSE o cancelación solo porque aquí figuran. El IPC interno de escritorio tendrá tipos, validación, pruebas y compatibilidad documentados antes de implementarse; no modifica por sí mismo el contrato público `Snapshot 1.0.0`.
 
 No hay servidor implementado. Contrato para historia W03; usar HTTP JSON sobre loopback, sin habilitar LAN por defecto. Token de sesión aleatorio, validación Origin y CORS restrictivo; sin cookies ambient ni endpoints que acepten URLs arbitrarias.
 

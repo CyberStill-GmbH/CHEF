@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "1.0.0",
+  "statistics": {
+    "totalEvents": 3,
+    "uniqueEventTypes": 3,
+    "modulesRun": 1,
+    "duplicatesSuppressed": 0,
+    "byType": [
+      { "eventType": "DNS_NAME", "count": 1 },
+      { "eventType": "OPEN_TCP_PORT", "count": 1 },
+      { "eventType": "OPEN_UDP_PORT", "count": 1 }
+    ],
+    "byModule": [
+      {
+        "module": "fixture",
+        "producedTotal": 3,
+        "byType": [
+          { "eventType": "DNS_NAME", "count": 1 },
+          { "eventType": "OPEN_TCP_PORT", "count": 1 },
+          { "eventType": "OPEN_UDP_PORT", "count": 1 }
+        ]
+      }
+    ]
+  }
+}
