@@ -14,6 +14,7 @@ use crate::{
 
 const MAX_EXPORT_BYTES: usize = 2 * 1024 * 1024;
 const MAX_REPORT_ASSETS: usize = 20_000;
+const MAX_EVIDENCE_ANCESTORS: usize = 64;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
@@ -29,8 +30,9 @@ pub struct ChefWebEvidenceReportExport {
 }
 
 /// Construye un informe web CHEF local con relaciones y evidencia explícitas.
-/// Las tecnologías y los hallazgos solo se asocian al host del grafo, no a una
-/// URL individual, porque CHEF no conserva la cadena de ancestros del origen.
+/// Atribuye tecnologías y candidatos a un endpoint observado solo cuando la
+/// evidencia conserva un ancestro URL inequívoco. El informe omite rutas y
+/// valores de localizador para no exponer datos importados sensibles.
 pub fn export_web_evidence_report(
     run_id: &str,
     graph: &ChefReconGraph,
@@ -56,7 +58,25 @@ pub fn export_web_evidence_report(
         .iter()
         .filter(|asset| asset.kind == ReconAssetKind::WebEndpoint)
         .collect::<Vec<_>>();
+    let mut endpoints_by_evidence = BTreeMap::<&str, Vec<&ReconAsset>>::new();
+    for endpoint in endpoints
+        .iter()
+        .filter(|endpoint| endpoint.qualification.as_deref() == Some("observed"))
+    {
+        for evidence_id in &endpoint.evidence_ids {
+            if evidence
+                .get(evidence_id.as_str())
+                .is_some_and(|item| matches!(item.event_type.as_str(), "URL" | "HTTP_RESPONSE"))
+            {
+                endpoints_by_evidence
+                    .entry(evidence_id)
+                    .or_default()
+                    .push(*endpoint);
+            }
+        }
+    }
     let mut hosts_by_endpoint = BTreeMap::<&str, Vec<&ReconAsset>>::new();
+    let mut observed_hosts_by_endpoint = BTreeMap::<&str, BTreeSet<&str>>::new();
     for relation in graph
         .relationships
         .iter()
@@ -67,6 +87,12 @@ pub fn export_web_evidence_report(
                 .entry(relation.to_asset_id.as_str())
                 .or_default()
                 .push(*host);
+            if relation.assertion == "observed" {
+                observed_hosts_by_endpoint
+                    .entry(relation.to_asset_id.as_str())
+                    .or_default()
+                    .insert(relation.from_asset_id.as_str());
+            }
         }
     }
     let web_hosts = hosts_by_endpoint
@@ -121,7 +147,10 @@ pub fn export_web_evidence_report(
             );
         }
         html.push_str("</td><td><code>");
-        html.push_str(&escape_html(&endpoint.key));
+        html.push_str(&escape_html(
+            &crate::url_tools::canonical_http_origin(&endpoint.key)
+                .unwrap_or_else(|| "Origen HTTP no disponible".to_owned()),
+        ));
         html.push_str("</code></td><td>");
         html.push_str(&escape_html(
             endpoint
@@ -130,7 +159,7 @@ pub fn export_web_evidence_report(
                 .unwrap_or("sin calificación"),
         ));
         html.push_str("</td><td>");
-        render_evidence(&mut html, &endpoint.evidence_ids, &evidence);
+        render_evidence(&mut html, &endpoint.evidence_ids, &evidence)?;
         html.push_str("</td></tr>");
         if html.len() > MAX_EXPORT_BYTES {
             return Err(limit_error());
@@ -141,7 +170,7 @@ pub fn export_web_evidence_report(
     }
     html.push_str("</tbody></table>");
 
-    html.push_str("<h2>Tecnologías relacionadas con hosts web</h2><table><thead><tr><th>Host</th><th>Tecnología</th><th>Evidencia</th></tr></thead><tbody>");
+    html.push_str("<h2>Tecnologías relacionadas con hosts web</h2><table><thead><tr><th>Host</th><th>Endpoint observado por linaje</th><th>Tecnología</th><th>Evidencia</th></tr></thead><tbody>");
     let technology_rows = graph
         .relationships
         .iter()
@@ -151,16 +180,23 @@ pub fn export_web_evidence_report(
         })
         .collect::<Vec<_>>();
     for relation in &technology_rows {
-        render_related_asset_row(&mut html, relation, &assets, &evidence);
+        render_related_asset_row(
+            &mut html,
+            relation,
+            &assets,
+            &evidence,
+            &endpoints_by_evidence,
+            &observed_hosts_by_endpoint,
+        )?;
     }
     if technology_rows.is_empty() {
         html.push_str(
-            "<tr><td colspan=\"3\">No hay tecnologías relacionadas conservadas.</td></tr>",
+            "<tr><td colspan=\"4\">No hay tecnologías relacionadas conservadas.</td></tr>",
         );
     }
     html.push_str("</tbody></table>");
 
-    html.push_str("<h2>Hallazgos candidatos relacionados con hosts web</h2><table><thead><tr><th>Host</th><th>ID de candidato</th><th>Estado</th><th>Evidencia</th></tr></thead><tbody>");
+    html.push_str("<h2>Hallazgos candidatos relacionados con hosts web</h2><table><thead><tr><th>Host</th><th>Endpoint observado por linaje</th><th>ID de candidato</th><th>Estado</th><th>Evidencia</th></tr></thead><tbody>");
     let finding_rows = graph
         .relationships
         .iter()
@@ -178,15 +214,23 @@ pub fn export_web_evidence_report(
         };
         html.push_str("<tr><td><code>");
         html.push_str(&escape_html(&host.key));
-        html.push_str("</code></td><td><code>");
+        html.push_str("</code></td><td>");
+        render_endpoint_attribution(
+            &mut html,
+            relation,
+            &evidence,
+            &endpoints_by_evidence,
+            &observed_hosts_by_endpoint,
+        );
+        html.push_str("</td><td><code>");
         html.push_str(&escape_html(&candidate.id));
         html.push_str("</code></td><td>candidato; no confirmado</td><td>");
-        render_evidence(&mut html, &relation.evidence_ids, &evidence);
+        render_evidence(&mut html, &relation.evidence_ids, &evidence)?;
         html.push_str("</td></tr>");
     }
     if finding_rows.is_empty() {
         html.push_str(
-            "<tr><td colspan=\"4\">No hay hallazgos candidatos relacionados conservados.</td></tr>",
+            "<tr><td colspan=\"5\">No hay hallazgos candidatos relacionados conservados.</td></tr>",
         );
     }
     html.push_str("</tbody></table><footer class=\"muted\">Generado localmente por CHEF. scopeStatus: not_asserted.</footer></body></html>");
@@ -211,51 +255,160 @@ fn render_related_asset_row(
     relation: &crate::ReconRelationship,
     assets: &BTreeMap<&str, &ReconAsset>,
     evidence: &BTreeMap<&str, &crate::ReconEvidence>,
-) {
+    endpoints_by_evidence: &BTreeMap<&str, Vec<&ReconAsset>>,
+    observed_hosts_by_endpoint: &BTreeMap<&str, BTreeSet<&str>>,
+) -> ChefResult<()> {
     let (Some(host), Some(asset)) = (
         assets.get(relation.from_asset_id.as_str()),
         assets.get(relation.to_asset_id.as_str()),
     ) else {
-        return;
+        return Ok(());
     };
     html.push_str("<tr><td><code>");
     html.push_str(&escape_html(&host.key));
-    html.push_str("</code></td><td><code>");
+    html.push_str("</code></td><td>");
+    render_endpoint_attribution(
+        html,
+        relation,
+        evidence,
+        endpoints_by_evidence,
+        observed_hosts_by_endpoint,
+    );
+    html.push_str("</td><td><code>");
     html.push_str(&escape_html(&asset.key));
     html.push_str("</code></td><td>");
-    render_evidence(html, &relation.evidence_ids, evidence);
+    render_evidence(html, &relation.evidence_ids, evidence)?;
     html.push_str("</td></tr>");
+    Ok(())
+}
+
+fn render_endpoint_attribution(
+    html: &mut String,
+    relation: &crate::ReconRelationship,
+    evidence: &BTreeMap<&str, &crate::ReconEvidence>,
+    endpoints_by_evidence: &BTreeMap<&str, Vec<&ReconAsset>>,
+    observed_hosts_by_endpoint: &BTreeMap<&str, BTreeSet<&str>>,
+) {
+    if let Some(endpoint) = attributed_endpoint(
+        &relation.evidence_ids,
+        &relation.from_asset_id,
+        evidence,
+        endpoints_by_evidence,
+        observed_hosts_by_endpoint,
+    ) {
+        let origin = crate::url_tools::canonical_http_origin(&endpoint.key)
+            .unwrap_or_else(|| "Origen HTTP no disponible".to_owned());
+        html.push_str("<code>");
+        html.push_str(&escape_html(&origin));
+        html.push_str("</code>");
+    } else {
+        html.push_str("Sin atribución a endpoint observado");
+    }
+}
+
+fn attributed_endpoint<'a>(
+    evidence_ids: &[String],
+    host_asset_id: &str,
+    evidence: &BTreeMap<&str, &'a crate::ReconEvidence>,
+    endpoints_by_evidence: &BTreeMap<&str, Vec<&'a ReconAsset>>,
+    observed_hosts_by_endpoint: &BTreeMap<&str, BTreeSet<&str>>,
+) -> Option<&'a ReconAsset> {
+    let mut attributed: Option<&ReconAsset> = None;
+    for evidence_id in evidence_ids {
+        let mut current = *evidence.get(evidence_id.as_str())?;
+        let mut visited = BTreeSet::new();
+        let mut found_endpoint = None;
+        for _ in 0..MAX_EVIDENCE_ANCESTORS {
+            if !visited.insert(current.id.as_str()) {
+                return None;
+            }
+            if matches!(
+                current.event_type.as_str(),
+                "URL" | "HTTP_RESPONSE" | "URL_UNVERIFIED" | "URL_HINT"
+            ) {
+                if matches!(current.event_type.as_str(), "URL" | "HTTP_RESPONSE") {
+                    let candidates = endpoints_by_evidence.get(current.id.as_str())?;
+                    if candidates.len() != 1 {
+                        return None;
+                    }
+                    found_endpoint = candidates.first().copied();
+                    if !observed_hosts_by_endpoint
+                        .get(found_endpoint?.id.as_str())
+                        .is_some_and(|hosts| hosts.contains(host_asset_id))
+                    {
+                        return None;
+                    }
+                }
+                break;
+            }
+            current = *evidence.get(current.parent_evidence_id.as_deref()?)?;
+        }
+        let endpoint = found_endpoint?;
+        if attributed.is_some_and(|previous| previous.id != endpoint.id) {
+            return None;
+        }
+        attributed = Some(endpoint);
+    }
+    attributed
 }
 
 fn render_evidence(
     html: &mut String,
     evidence_ids: &[String],
     evidence: &BTreeMap<&str, &crate::ReconEvidence>,
-) {
+) -> ChefResult<()> {
     if evidence_ids.is_empty() {
         html.push_str("Sin evidencia vinculada");
-        return;
+        return Ok(());
     }
     html.push_str("<ul>");
     for id in evidence_ids {
         html.push_str("<li><code>");
         html.push_str(&escape_html(id));
-        if let Some(item) = evidence.get(id.as_str()) {
-            html.push_str("</code> — ");
+        html.push_str("</code>");
+        let mut current_id = Some(id.as_str());
+        let mut visited = BTreeSet::new();
+        let mut depth = 0;
+        while let Some(current) = current_id {
+            let Some(item) = evidence.get(current) else {
+                html.push_str(" — ancestro no disponible");
+                break;
+            };
+            if !visited.insert(item.id.as_str()) {
+                html.push_str(" — ciclo de linaje detectado");
+                break;
+            }
+            html.push_str(if depth == 0 { " — " } else { " → <code>" });
+            if depth > 0 {
+                html.push_str(&escape_html(&item.id));
+                html.push_str("</code> — ");
+            }
             html.push_str(&escape_html(&item.event_type));
             html.push_str(" — ");
             html.push_str(&escape_html(&item.observed_at));
-            if let Some(parent) = item.parent_evidence_id.as_deref() {
-                html.push_str(" — linaje: <code>");
-                html.push_str(&escape_html(parent));
-                html.push_str("</code>");
+            if let Some(module) = item.module.as_deref() {
+                html.push_str(" — módulo: ");
+                html.push_str(&escape_html(module));
             }
-        } else {
-            html.push_str("</code>");
+            depth += 1;
+            if depth == MAX_EVIDENCE_ANCESTORS {
+                if item.parent_evidence_id.is_some() {
+                    html.push_str(" → linaje truncado por límite");
+                }
+                break;
+            }
+            current_id = item.parent_evidence_id.as_deref();
+            if html.len() > MAX_EXPORT_BYTES {
+                return Err(limit_error());
+            }
         }
         html.push_str("</li>");
+        if html.len() > MAX_EXPORT_BYTES {
+            return Err(limit_error());
+        }
     }
     html.push_str("</ul>");
+    Ok(())
 }
 
 fn escape_html(value: &str) -> String {
