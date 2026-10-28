@@ -790,5 +790,14 @@
     "claim": "La relación de subdominios de un dominio devuelve objetos de dominio y documenta una URL next/cursor para paginar.",
     "kind": "primary",
     "limitation": "La documentación no autoriza enviar datos de proyecto ni acredita vigencia o propiedad de cada hostname; CHEF debe conservarlos como candidatos y aplicar consentimiento, credenciales y cuotas antes de consultar."
+  },
+  {
+    "id": "VT-PUBLIC-API-TERMS",
+    "url": "https://docs.virustotal.com/reference/public-vs-premium-api",
+    "consultedAt": "2026-10-28",
+    "version": "Condiciones de API consultadas",
+    "claim": "La documentación de VirusTotal restringe la API pública para productos o servicios comerciales y diferencia ese uso de las ofertas premium.",
+    "kind": "primary",
+    "limitation": "Verificar las condiciones contractuales, cuenta y autorización aplicables antes de diseñar o habilitar cualquier conector remoto de CHEF; esta referencia no sustituye la revisión del acuerdo vigente."
   }
 ]
