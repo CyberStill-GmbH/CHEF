@@ -19,6 +19,73 @@ pub struct ProviderSubdomainPage {
 
 pub type DnsDumpsterSubdomainPage = ProviderSubdomainPage;
 pub type RapidDnsSubdomainPage = ProviderSubdomainPage;
+pub type HackerTargetSubdomainPage = ProviderSubdomainPage;
+
+/// Adapta offline las filas `host,ip` del módulo HackerTarget de BBOT.
+///
+/// La columna IP se ignora: su presencia en una respuesta histórica no
+/// demuestra que el DNS siga resolviendo ni crea una observación CHEF.
+pub fn parse_hackertarget_subdomains(
+    query_domain: &str,
+    response: &[u8],
+) -> ChefResult<HackerTargetSubdomainPage> {
+    if response.len() > MAX_RESPONSE_BYTES {
+        return Err(ChefError::new(
+            ErrorCode::LimitExceeded,
+            "La respuesta HackerTarget supera el límite de bytes CHEF",
+        ));
+    }
+    let query_domain = crate::host::canonical_domain(query_domain)
+        .filter(|domain| crate::host::is_registrable_domain(domain))
+        .ok_or(ChefError::new(
+            ErrorCode::InvalidInput,
+            "La consulta debe ser una raíz registrable ICANN",
+        ))?;
+    let text = std::str::from_utf8(response).map_err(|_| {
+        ChefError::new(
+            ErrorCode::InvalidInput,
+            "La respuesta HackerTarget no contiene texto UTF-8 válido",
+        )
+    })?;
+
+    let suffix = format!(".{query_domain}");
+    let mut candidates = BTreeSet::new();
+    for (line_index, line) in text.lines().enumerate() {
+        if line_index >= MAX_HOST_TOKENS {
+            return Err(ChefError::new(
+                ErrorCode::LimitExceeded,
+                "La respuesta HackerTarget supera el límite CHEF de filas",
+            ));
+        }
+
+        // BBOT toma el primer campo de cada fila CSV y valida el hostname.
+        // CHEF conserva únicamente descendientes de la raíz consultada.
+        let host = line.split(',').next().unwrap_or_default().trim();
+        if host.is_empty() || host.contains('*') || host.len() > 253 {
+            continue;
+        }
+        if !valid_ascii_hostname(host) {
+            continue;
+        }
+        let Some(host) = crate::host::canonical_domain(host) else {
+            continue;
+        };
+        if host != query_domain && host.ends_with(&suffix) {
+            candidates.insert(host);
+            if candidates.len() > MAX_CANDIDATES {
+                return Err(ChefError::new(
+                    ErrorCode::LimitExceeded,
+                    "La respuesta HackerTarget supera el límite CHEF de subdominios",
+                ));
+            }
+        }
+    }
+
+    Ok(ProviderSubdomainPage {
+        query_domain,
+        candidates: candidates.into_iter().collect(),
+    })
+}
 
 /// Adapta la extracción in-scope del módulo DNSDumpster de BBOT.
 pub fn parse_dnsdumpster_subdomains(

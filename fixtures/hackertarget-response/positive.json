@@ -1,0 +1,8 @@
+{
+  "queryDomain": "example.com",
+  "response": "api.example.com,192.0.2.10\nwww.example.com.,192.0.2.11\napi.example.com,192.0.2.10\nexample.com,192.0.2.1\n",
+  "expectedCandidates": [
+    "api.example.com",
+    "www.example.com"
+  ]
+}

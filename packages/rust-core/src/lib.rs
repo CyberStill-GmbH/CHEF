@@ -88,8 +88,9 @@ pub use nmap_export::{ChefNmapEvidenceExport, export_nmap_evidence_xml};
 pub use port_spec::parse_port_string;
 pub use presets::{ChefPreset, PresetCatalog, ResolvedPreset};
 pub use provider_subdomains::{
-    DnsDumpsterSubdomainPage, ProviderSubdomainPage, RapidDnsSubdomainPage,
-    parse_dnsdumpster_subdomains, parse_provider_subdomains, parse_rapiddns_subdomains,
+    DnsDumpsterSubdomainPage, HackerTargetSubdomainPage, ProviderSubdomainPage,
+    RapidDnsSubdomainPage, parse_dnsdumpster_subdomains, parse_hackertarget_subdomains,
+    parse_provider_subdomains, parse_rapiddns_subdomains,
 };
 pub use rate_limit::RateLimiter;
 pub use recon::{
