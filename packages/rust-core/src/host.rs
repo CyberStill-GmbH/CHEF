@@ -43,6 +43,27 @@ pub(crate) fn canonical_domain(value: &str) -> Option<String> {
     host.parse::<IpAddr>().is_err().then_some(host)
 }
 
+/// Canonicaliza un nombre DNS y exige etiquetas válidas después de IDNA.
+/// `canonical_domain` normaliza el host, pero no aplica por sí sola la gramática
+/// de etiquetas DNS (por ejemplo, puede aceptar guiones bajos).
+pub(crate) fn canonical_dns_name(value: &str) -> Option<String> {
+    let name = canonical_domain(value)?;
+    if name.len() > 253
+        || !name.split('.').all(|label| {
+            !label.is_empty()
+                && label.len() <= 63
+                && label.as_bytes()[0].is_ascii_alphanumeric()
+                && label.as_bytes()[label.len() - 1].is_ascii_alphanumeric()
+                && label
+                    .bytes()
+                    .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-')
+        })
+    {
+        return None;
+    }
+    Some(name)
+}
+
 /// Adapta `misc.split_host_port` para entradas de host/netloc. Acepta IP,
 /// host con puerto y esquemas comunes; rechaza credenciales, rutas y controles.
 /// Nunca resuelve el host ni abre conexiones.

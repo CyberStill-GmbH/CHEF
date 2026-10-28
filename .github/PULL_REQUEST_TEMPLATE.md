@@ -24,7 +24,7 @@ Estado de lo descrito: <!-- implementado / propuesto / validado manualmente -->
 - `npm run check`:
 - Tests/benchmark/end-to-end relevantes y resultados:
 - Montoya: build y pruebas manuales realizadas **por separado** (si aplica):
-- CI Quality/Burp spike/CodeQL: <!-- enlazar checks; explicar pendiente -->
+- Checks requeridos (Quality y Burp spike) / CodeQL informativo: <!-- enlazar resultados; explicar pendientes -->
 - Revisor distinto del autor:
 
 ## Riesgos y presentación

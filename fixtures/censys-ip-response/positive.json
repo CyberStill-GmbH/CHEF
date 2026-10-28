@@ -1,0 +1,80 @@
+{
+  "queryIp": "1.2.3.4",
+  "response": {
+    "code": 200,
+    "status": "OK",
+    "result": {
+      "ip": "1.2.3.4",
+      "services": [
+        { "port": 53, "service_name": "DNS", "transport_protocol": "UDP" },
+        { "port": 22, "service_name": "SSH", "transport_protocol": "TCP" },
+        {
+          "port": 80,
+          "service_name": "HTTP",
+          "transport_protocol": "TCP",
+          "http": { "request": { "uri": "http://1.2.3.4/private/path?token=synthetic" } }
+        },
+        {
+          "port": 443,
+          "service_name": "UNKNOWN",
+          "extended_service_name": "HTTPS",
+          "transport_protocol": "TCP",
+          "http": { "request": { "uri": "https://1.2.3.4/" } },
+          "tls": {
+            "certificates": {
+              "leaf_data": {
+                "names": ["*.wildcard.evilcorp.com", "certname.evilcorp.com"],
+                "subject": { "common_name": ["certsubject.evilcorp.com"] }
+              }
+            }
+          },
+          "software": [
+            { "uniform_resource_identifier": "cpe:2.3:a:apache:tomcat:9.0.50:*:*:*:*:*:*:*", "product": "Apache Tomcat" },
+            { "product": "Java" }
+          ]
+        },
+        {
+          "port": 8443,
+          "service_name": "HTTP",
+          "extended_service_name": "HTTPS",
+          "transport_protocol": "TCP",
+          "http": { "request": { "uri": "https://1.2.3.4:8443/admin" } }
+        },
+        {
+          "port": 443,
+          "service_name": "UNKNOWN",
+          "extended_service_name": "UNKNOWN",
+          "transport_protocol": "QUIC"
+        }
+      ],
+      "dns": { "names": ["reversedns.evilcorp.com", "ptr.evilcorp.com"] }
+    }
+  },
+  "expected": {
+    "portHints": [
+      { "port": 22, "transport": "Tcp" },
+      { "port": 53, "transport": "Udp" },
+      { "port": 80, "transport": "Tcp" },
+      { "port": 443, "transport": "Tcp" },
+      { "port": 443, "transport": "Udp" },
+      { "port": 8443, "transport": "Tcp" }
+    ],
+    "dnsNameHints": [
+      { "hostname": "certname.evilcorp.com", "source": "CertificateSan" },
+      { "hostname": "certsubject.evilcorp.com", "source": "CertificateCommonName" },
+      { "hostname": "ptr.evilcorp.com", "source": "ReverseDns" },
+      { "hostname": "reversedns.evilcorp.com", "source": "ReverseDns" },
+      { "hostname": "wildcard.evilcorp.com", "source": "CertificateSan" }
+    ],
+    "urlHints": ["http://1.2.3.4/", "https://1.2.3.4/", "https://1.2.3.4:8443/"],
+    "technologyHints": [
+      "cpe:2.3:a:apache:tomcat:9.0.50:*:*:*:*:*:*:*",
+      "java"
+    ],
+    "protocolHints": [
+      { "protocol": "DNS", "port": 53 },
+      { "protocol": "QUIC", "port": 443 },
+      { "protocol": "SSH", "port": 22 }
+    ]
+  }
+}

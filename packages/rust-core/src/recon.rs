@@ -136,7 +136,8 @@ pub fn adapt_bbot_to_chef(graph: &BbotEventGraph) -> ChefResult<ChefReconGraph> 
             }
             "DNS_NAME_HINT"
                 if crate::dns_mutation_candidates::is_generated_dns_mutation_hint(event)
-                    || crate::speculate::is_generated_dns_rdata_hint(event) =>
+                    || crate::speculate::is_generated_dns_rdata_hint(event)
+                    || crate::censys_ip_import::is_censys_snapshot_hint(event) =>
             {
                 add_named_asset(&mut assets, ReconAssetKind::Domain, event, &evidence_id)
             }
@@ -146,6 +147,7 @@ pub fn adapt_bbot_to_chef(graph: &BbotEventGraph) -> ChefResult<ChefReconGraph> 
             "OPEN_TCP_PORT" => add_service(&mut assets, event, &evidence_id, "tcp", false),
             "TCP_PORT_HINT" => add_service(&mut assets, event, &evidence_id, "tcp", true),
             "OPEN_UDP_PORT" => add_service(&mut assets, event, &evidence_id, "udp", false),
+            "UDP_PORT_HINT" => add_service(&mut assets, event, &evidence_id, "udp", true),
             "URL" => add_url(&mut assets, event, &evidence_id, "observed"),
             "HTTP_RESPONSE" => add_url(&mut assets, event, &evidence_id, "observed"),
             "URL_UNVERIFIED" => add_url(&mut assets, event, &evidence_id, "unverified"),
@@ -254,14 +256,14 @@ pub fn adapt_bbot_to_chef(graph: &BbotEventGraph) -> ChefResult<ChefReconGraph> 
             );
         }
         match event.event_type.as_str() {
-            "OPEN_TCP_PORT" | "OPEN_UDP_PORT" | "TCP_PORT_HINT" => {
+            "OPEN_TCP_PORT" | "OPEN_UDP_PORT" | "TCP_PORT_HINT" | "UDP_PORT_HINT" => {
                 if let Some(service_id) = find_asset_for_event(&assets, event, &evidence_id) {
                     add_relationship(
                         &mut relationships,
                         host_id,
                         service_id,
                         ReconRelationshipKind::ExposesService,
-                        if event.event_type == "TCP_PORT_HINT" {
+                        if matches!(event.event_type.as_str(), "TCP_PORT_HINT" | "UDP_PORT_HINT") {
                             "hint"
                         } else {
                             "observed"
@@ -480,8 +482,12 @@ fn named_asset_qualification(kind: ReconAssetKind, event: &BbotEvent) -> Option<
     let qualification = match kind {
         ReconAssetKind::Domain
             if crate::dns_mutation_candidates::is_generated_dns_mutation_hint(event)
-                || crate::speculate::is_generated_dns_rdata_hint(event) =>
+                || crate::speculate::is_generated_dns_rdata_hint(event)
+                || crate::censys_ip_import::is_censys_snapshot_hint(event) =>
         {
+            Some("hint")
+        }
+        ReconAssetKind::IpAddress if crate::censys_ip_import::is_censys_snapshot_hint(event) => {
             Some("hint")
         }
         ReconAssetKind::Domain if event.event_type == "DNS_NAME_UNRESOLVED" => Some(
@@ -743,7 +749,7 @@ fn find_asset_for_event(
             .contains(&evidence_id.to_owned())
             .then(|| asset.id.clone())
             .filter(|_| match event.event_type.as_str() {
-                "OPEN_TCP_PORT" | "OPEN_UDP_PORT" | "TCP_PORT_HINT" => {
+                "OPEN_TCP_PORT" | "OPEN_UDP_PORT" | "TCP_PORT_HINT" | "UDP_PORT_HINT" => {
                     asset.kind == ReconAssetKind::Service
                 }
                 "URL" | "URL_UNVERIFIED" | "URL_HINT" => asset.kind == ReconAssetKind::WebEndpoint,

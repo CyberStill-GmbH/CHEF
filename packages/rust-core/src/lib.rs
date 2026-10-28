@@ -9,6 +9,8 @@ mod asset_inventory_export;
 mod bimi;
 mod caa;
 mod censys_dns;
+mod censys_ip;
+mod censys_ip_import;
 mod certspotter;
 mod chaos;
 mod config;
@@ -61,6 +63,11 @@ pub use asn::{
 };
 pub use asset_inventory_export::{ChefAssetInventoryExport, export_asset_inventory_csv};
 pub use censys_dns::{CensysDnsCertificatePage, parse_censys_dns_certificate_page};
+pub use censys_ip::{
+    CensysDnsNameSource, CensysIpDnsNameHint, CensysIpHostResponse, CensysIpPortHint,
+    CensysIpProtocolHint, CensysIpTransport, parse_censys_ip_host_response,
+};
+pub use censys_ip_import::{CensysIpImportResult, import_censys_ip_snapshot};
 pub use certspotter::{CertSpotterSubdomainPage, parse_certspotter_subdomains};
 pub use chaos::{ChaosParentCollapse, ChaosSubdomainPage, parse_chaos_subdomain_response};
 pub use config::{ChefConfig, DefectDojoSettings, RuntimeSettings, ScopeSettings, SourceSettings};
