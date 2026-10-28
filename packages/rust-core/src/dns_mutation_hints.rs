@@ -15,6 +15,7 @@ pub struct DnsMutationHintBatch {
     pub candidates: Vec<DnsMutationCandidate>,
     pub roots_processed: usize,
     pub events_skipped: usize,
+    pub digit_pattern_seeds_skipped: usize,
     pub candidates_skipped_invalid: usize,
     pub duplicates_suppressed: usize,
     pub observed_candidates_suppressed: usize,
@@ -32,6 +33,7 @@ pub fn generate_dns_mutation_hints(
     let mut groups: BTreeMap<String, BTreeMap<String, BTreeSet<String>>> = BTreeMap::new();
     let mut observed = BTreeSet::new();
     let mut events_skipped = 0;
+    let mut digit_pattern_seeds_skipped = 0;
 
     for event in &graph.events {
         if event.event_type != "DNS_NAME" {
@@ -55,6 +57,10 @@ pub fn generate_dns_mutation_hints(
         };
         let label = label.to_owned();
         let root = root.to_owned();
+        if crate::has_excessive_digits(&label) {
+            digit_pattern_seeds_skipped += 1;
+            continue;
+        }
         if !crate::host::domain_parent_candidates(&host, false)
             .iter()
             .any(|parent| parent == &root)
@@ -148,6 +154,7 @@ pub fn generate_dns_mutation_hints(
         candidates,
         roots_processed,
         events_skipped,
+        digit_pattern_seeds_skipped,
         candidates_skipped_invalid,
         duplicates_suppressed,
         observed_candidates_suppressed,
