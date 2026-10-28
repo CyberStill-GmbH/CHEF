@@ -160,6 +160,9 @@ pub fn adapt_bbot_to_chef(graph: &BbotEventGraph) -> ChefResult<ChefReconGraph> 
                 &evidence_id,
             ),
             "FINDING" => add_candidate(&mut assets, event, &evidence_id),
+            "RAW_DNS_RECORD" => {
+                add_raw_dns_record_targets(&mut assets, &mut relationships, event, &evidence_id)?
+            }
             "ORG_STUB" => add_named_asset(
                 &mut assets,
                 ReconAssetKind::Organization,
@@ -238,6 +241,18 @@ pub fn adapt_bbot_to_chef(graph: &BbotEventGraph) -> ChefResult<ChefReconGraph> 
         let Some(host_id) = add_observed_host(&mut assets, event, &evidence_id) else {
             continue;
         };
+        if matches!(
+            event.event_type.as_str(),
+            "DNS_NAME" | "DNS_NAME_UNRESOLVED" | "URL" | "URL_UNVERIFIED" | "HTTP_RESPONSE"
+        ) {
+            add_explicit_dns_resolutions(
+                &mut assets,
+                &mut relationships,
+                event,
+                &host_id,
+                &evidence_id,
+            );
+        }
         match event.event_type.as_str() {
             "OPEN_TCP_PORT" | "OPEN_UDP_PORT" | "TCP_PORT_HINT" => {
                 if let Some(service_id) = find_asset_for_event(&assets, event, &evidence_id) {
@@ -304,10 +319,6 @@ pub fn adapt_bbot_to_chef(graph: &BbotEventGraph) -> ChefResult<ChefReconGraph> 
                 }
             }
             _ => {}
-        }
-
-        if event.event_type == "DNS_NAME" || event.event_type == "DNS_NAME_UNRESOLVED" {
-            add_explicit_dns_resolutions(&mut assets, &mut relationships, event, &evidence_id);
         }
     }
 
@@ -605,12 +616,12 @@ fn add_explicit_dns_resolutions(
     assets: &mut BTreeMap<String, ReconAsset>,
     relationships: &mut BTreeMap<String, ReconRelationship>,
     event: &BbotEvent,
+    owner_id: &str,
     evidence_id: &str,
 ) {
-    let Some(domain) = event_value(event).and_then(|value| crate::host::canonical_domain(&value))
-    else {
+    if event.metadata_redacted {
         return;
-    };
+    }
     let Some(hosts) = event
         .metadata
         .get("resolved_hosts")
@@ -618,41 +629,107 @@ fn add_explicit_dns_resolutions(
     else {
         return;
     };
-    let domain_id = asset_id(ReconAssetKind::Domain, &domain);
-    upsert_asset(
-        assets,
-        ReconAssetKind::Domain,
-        domain,
-        None,
-        event,
-        evidence_id,
-    );
     for value in hosts.iter().filter_map(Value::as_str) {
-        let Some(address) = value
-            .parse::<std::net::IpAddr>()
-            .ok()
-            .map(|address| address.to_string())
-        else {
+        let Some((target_kind, target)) = dns_asset_key(value) else {
             continue;
         };
-        let address_id = asset_id(ReconAssetKind::IpAddress, &address);
-        upsert_asset(
-            assets,
-            ReconAssetKind::IpAddress,
-            address,
-            None,
-            event,
-            evidence_id,
-        );
+        let address_id = asset_id(target_kind, &target);
+        if owner_id == address_id {
+            continue;
+        }
+        upsert_asset(assets, target_kind, target, None, event, evidence_id);
         add_relationship(
             relationships,
-            domain_id.clone(),
+            owner_id.to_owned(),
             address_id,
             ReconRelationshipKind::ResolvesTo,
             "observed",
             evidence_id,
         );
     }
+}
+
+/// Proyecta en el grafo respuestas DNS que ya vienen en el archivo importado.
+/// Conserva la fecha y evidencia de origen; nunca consulta el DNS ni convierte
+/// la observación histórica en una comprobación actual.
+fn add_raw_dns_record_targets(
+    assets: &mut BTreeMap<String, ReconAsset>,
+    relationships: &mut BTreeMap<String, ReconRelationship>,
+    event: &BbotEvent,
+    evidence_id: &str,
+) -> ChefResult<bool> {
+    if event.data_redacted {
+        return Ok(false);
+    }
+    let Some(data) = event.data.as_object() else {
+        return Ok(false);
+    };
+    let Some(record_type) = data.get("type").and_then(Value::as_str) else {
+        return Ok(false);
+    };
+    let record_type = record_type.trim().to_ascii_uppercase();
+    if !matches!(
+        record_type.as_str(),
+        "A" | "AAAA" | "ANAME" | "CNAME" | "MX" | "NAPTR" | "NS" | "PTR" | "SOA" | "SRV"
+    ) {
+        return Ok(false);
+    }
+    let Some(answer) = data.get("answer").and_then(Value::as_str) else {
+        return Ok(false);
+    };
+    let Some(owner) = event
+        .host
+        .as_deref()
+        .or_else(|| data.get("host").and_then(Value::as_str))
+        .and_then(crate::host::canonical_host)
+    else {
+        return Ok(false);
+    };
+    let Some((owner_kind, owner)) = dns_asset_key(&owner) else {
+        return Ok(false);
+    };
+    let targets = crate::extract_dns_targets(&record_type, answer)?;
+    let mut added = false;
+    for target in targets {
+        let Some((target_kind, target)) = dns_asset_key(&target.value) else {
+            continue;
+        };
+        if record_type == "A"
+            && target
+                .parse::<std::net::IpAddr>()
+                .is_ok_and(|ip| !ip.is_ipv4())
+            || record_type == "AAAA"
+                && target
+                    .parse::<std::net::IpAddr>()
+                    .is_ok_and(|ip| !ip.is_ipv6())
+        {
+            continue;
+        }
+        let from = asset_id(owner_kind, &owner);
+        let to = asset_id(target_kind, &target);
+        if from == to {
+            continue;
+        }
+        upsert_asset(assets, owner_kind, owner.clone(), None, event, evidence_id);
+        upsert_asset(assets, target_kind, target, None, event, evidence_id);
+        add_relationship(
+            relationships,
+            from,
+            to,
+            ReconRelationshipKind::ResolvesTo,
+            "observed",
+            evidence_id,
+        );
+        added = true;
+    }
+    Ok(added)
+}
+
+fn dns_asset_key(value: &str) -> Option<(ReconAssetKind, String)> {
+    if let Ok(address) = value.parse::<std::net::IpAddr>() {
+        return Some((ReconAssetKind::IpAddress, address.to_string()));
+    }
+    crate::host::canonical_domain(value).map(|domain| (ReconAssetKind::Domain, domain))
 }
 
 fn find_asset_for_event(

@@ -8,7 +8,7 @@
       "qualification": null,
       "firstSeen": "2026-10-18T00:00:00.000Z",
       "lastSeen": "2026-10-18T00:00:00.000Z",
-      "evidenceIds": ["evidence-child-example"]
+      "evidenceIds": ["evidence-child-example", "evidence-dns-a-record-example"]
     },
     {
       "id": "asset-parent-example",
@@ -97,6 +97,15 @@
       "firstSeen": "2026-10-18T00:00:00.000Z",
       "lastSeen": "2026-10-18T00:00:00.000Z",
       "evidenceIds": ["evidence-organization-ascii-example"]
+    },
+    {
+      "id": "asset-dns-ip-example",
+      "kind": "ip_address",
+      "key": "203.0.113.10",
+      "qualification": null,
+      "firstSeen": "2026-10-18T00:00:00.000Z",
+      "lastSeen": "2026-10-18T00:00:00.000Z",
+      "evidenceIds": ["evidence-dns-a-record-example"]
     }
   ],
   "evidence": [
@@ -219,6 +228,16 @@
       "locator": "chef:dns-rdata:mx",
       "module": "chef_dns_rdata_hints",
       "redacted": false
+    },
+    {
+      "id": "evidence-dns-a-record-example",
+      "sourceEventId": "event-dns-a-record-example",
+      "parentEvidenceId": "evidence-child-example",
+      "eventType": "RAW_DNS_RECORD",
+      "observedAt": "2026-10-18T00:00:00.000Z",
+      "locator": "/events/dns-a-record",
+      "module": "dnsresolve",
+      "redacted": false
     }
   ],
   "relationships": [
@@ -245,6 +264,14 @@
       "kind": "serves_endpoint",
       "assertion": "observed",
       "evidenceIds": ["evidence-http-response-example"]
+    },
+    {
+      "id": "relationship-dns-a-record-example",
+      "fromAssetId": "asset-child-example",
+      "toAssetId": "asset-dns-ip-example",
+      "kind": "resolves_to",
+      "assertion": "observed",
+      "evidenceIds": ["evidence-dns-a-record-example"]
     }
   ],
   "unmappedEventTypes": {}
