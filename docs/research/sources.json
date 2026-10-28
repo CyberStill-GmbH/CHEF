@@ -817,5 +817,23 @@
     "claim": "TLS-RPT usa registros TXT bajo _smtp._tls; la versión definida es TLSRPTv1 y rua admite URI mailto y https en una lista separada por comas.",
     "kind": "primary",
     "limitation": "CHEF interpreta solo registros importados, deriva direcciones y URL_HINT con linaje y no consulta DNS, envía reportes ni visita URI. Un endpoint o correo no implica que esté disponible o sea válido."
+  },
+  {
+    "id": "RFC8659-CAA",
+    "url": "https://www.rfc-editor.org/rfc/rfc8659.html",
+    "consultedAt": "2026-10-28",
+    "version": "RFC 8659, noviembre de 2019",
+    "claim": "CAA define propiedades issue, issuewild e iodef; los valores pueden contener emisores autorizados y destinos de reporte.",
+    "kind": "primary",
+    "limitation": "CHEF interpreta respuestas CAA importadas como evidencia histórica, no determina política efectiva o vigente ni confirma qué emisores aplicarán una autorización. Las URL/email resultantes son candidatos del evento fuente."
+  },
+  {
+    "id": "CABF-CAA-CONTACTEMAIL",
+    "url": "https://cabforum.org/working-groups/server/baseline-requirements/requirements/",
+    "consultedAt": "2026-10-28",
+    "version": "Baseline Requirements consultados",
+    "claim": "Las Baseline Requirements del CA/Browser Forum describen la propiedad CAA contactemail como una dirección de contacto publicada en DNS.",
+    "kind": "primary",
+    "limitation": "La dirección importada es información potencialmente personal; CHEF la mantiene local, no verifica el buzón y exige confirmación en la exportación de correo."
   }
 ]
