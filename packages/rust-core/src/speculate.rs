@@ -59,7 +59,7 @@ impl BbotModule for ChefDnsRdataHints {
         let record_type = record_type.trim().to_ascii_uppercase();
         if !matches!(
             record_type.as_str(),
-            "ANAME" | "CNAME" | "MX" | "NAPTR" | "NS" | "PTR" | "SOA" | "SRV" | "TXT"
+            "ANAME" | "CAA" | "CNAME" | "MX" | "NAPTR" | "NS" | "PTR" | "SOA" | "SRV" | "TXT"
         ) {
             return Ok(Vec::new());
         }
@@ -67,11 +67,21 @@ impl BbotModule for ChefDnsRdataHints {
             return Ok(Vec::new());
         };
 
-        let targets = crate::extract_dns_targets(&record_type, answer)?;
-        let names = targets
-            .into_iter()
-            .filter_map(|target| crate::host::canonical_domain(&target.value))
-            .collect::<BTreeSet<_>>();
+        let mut names = BTreeSet::new();
+        let mut caa_roles = BTreeSet::new();
+        if record_type == "CAA" {
+            for hint in crate::dns_policy_records::extract_caa_dns_name_hints(answer) {
+                names.insert(hint.name);
+                caa_roles.insert(hint.role);
+            }
+        } else {
+            let targets = crate::extract_dns_targets(&record_type, answer)?;
+            names.extend(
+                targets
+                    .into_iter()
+                    .filter_map(|target| crate::host::canonical_domain(&target.value)),
+            );
+        }
         let record_tag = format!("chef:dns-rdata:{}", record_type.to_ascii_lowercase());
         Ok(names
             .into_iter()
@@ -81,7 +91,10 @@ impl BbotModule for ChefDnsRdataHints {
                 data: Value::String(name.clone()),
                 host: Some(name),
                 port: None,
-                tags: vec!["chef:derived-dns-rdata-hint".to_owned(), record_tag.clone()],
+                tags: std::iter::once("chef:derived-dns-rdata-hint".to_owned())
+                    .chain(std::iter::once(record_tag.clone()))
+                    .chain(caa_roles.iter().map(|role| format!("chef:caa:{role}-hint")))
+                    .collect(),
             })
             .collect())
     }
