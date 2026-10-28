@@ -9,6 +9,7 @@ mod asset_inventory_export;
 mod config;
 mod config_merge;
 mod contracts;
+mod dns_bimi;
 mod dns_cache;
 mod dns_format;
 mod dns_mutation_candidates;
