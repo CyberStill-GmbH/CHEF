@@ -49,7 +49,7 @@ struct ScanLogPayload {
     request_id: String,
     sequence: u64,
     phase: &'static str,
-    message: &'static str,
+    message: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     event_type: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -140,6 +140,7 @@ async fn import_bbot_payload(
     let mut task = task;
     let cancellation = task.cancellation();
     let mut sequence = 0_u64;
+    let mut processed_event_count = 0_u64;
     let mut job_id: Option<String> = None;
     let mut log_delivery_failed = false;
     let mut cancelled = false;
@@ -174,20 +175,41 @@ async fn import_bbot_payload(
                 request_id: request_id.clone(),
                 sequence,
                 phase: "started",
-                message: "Importación offline CHEF iniciada.",
+                message: "Importación offline CHEF iniciada.".to_owned(),
                 event_type: None,
                 observed_at: None,
             }),
-            ImportJobEvent::BbotEvent { job_id: id, event } => Some(ScanLogPayload {
-                schema_version: "1.2.0",
+            ImportJobEvent::BbotEvent {
                 job_id: id,
-                request_id: request_id.clone(),
-                sequence,
-                phase: "event",
-                message: "Evento de evidencia fuente o derivada procesado.",
-                event_type: Some(event.event_type),
-                observed_at: Some(event.timestamp),
-            }),
+                event,
+                rate,
+            } => {
+                processed_event_count = processed_event_count.saturating_add(1);
+                let message = if processed_event_count.is_multiple_of(100) {
+                    let lower_bound = if rate.is_lower_bound() {
+                        " o más (límite inferior)"
+                    } else {
+                        ""
+                    };
+                    format!(
+                        "Importación offline: {processed_event_count} eventos publicados; {} en los últimos {} s{lower_bound}.",
+                        rate.events_in_window(),
+                        rate.window_millis() / 1_000,
+                    )
+                } else {
+                    "Evento de evidencia fuente o derivada procesado.".to_owned()
+                };
+                Some(ScanLogPayload {
+                    schema_version: "1.2.0",
+                    job_id: id,
+                    request_id: request_id.clone(),
+                    sequence,
+                    phase: "event",
+                    message,
+                    event_type: Some(event.event_type),
+                    observed_at: Some(event.timestamp),
+                })
+            }
             ImportJobEvent::Completed { job_id: id, .. } => Some(ScanLogPayload {
                 schema_version: "1.2.0",
                 job_id: id,
@@ -198,7 +220,8 @@ async fn import_bbot_payload(
                     "La importación offline fue cancelada."
                 } else {
                     "JSONL validado; guardando resultado local."
-                },
+                }
+                .to_owned(),
                 event_type: None,
                 observed_at: None,
             }),
@@ -216,7 +239,8 @@ async fn import_bbot_payload(
                     "La importación offline fue cancelada."
                 } else {
                     "La importación offline no pudo completarse."
-                },
+                }
+                .to_owned(),
                 event_type: None,
                 observed_at: None,
             }),
@@ -261,7 +285,7 @@ async fn import_bbot_payload(
             request_id: request_id.clone(),
             sequence,
             phase: "stored",
-            message: "Snapshot y grafo guardados localmente.",
+            message: "Snapshot y grafo guardados localmente.".to_owned(),
             event_type: None,
             observed_at: None,
         },
@@ -276,7 +300,7 @@ async fn import_bbot_payload(
             request_id,
             sequence,
             phase: "completed",
-            message: "Importación CHEF finalizada.",
+            message: "Importación CHEF finalizada.".to_owned(),
             event_type: None,
             observed_at: None,
         },

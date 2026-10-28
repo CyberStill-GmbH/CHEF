@@ -682,6 +682,7 @@ version = "0.1.0"
 dependencies = [
  "chef-core",
  "tokio",
+ "url",
 ]
 
 [[package]]
