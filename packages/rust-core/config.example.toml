@@ -17,6 +17,7 @@ max_scope_distance = 0
 import_bbot_events = true
 chef_org_stub_hints = false
 chef_dns_mutation_hints = false
+chef_dns_rdata_hints = false
 
 [sources.shodan]
 enabled = false
