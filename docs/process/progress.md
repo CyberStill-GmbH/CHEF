@@ -292,3 +292,8 @@ Se recalculó el estado de las 466 filas del inventario y se corrigieron los tot
 ## 28-10-2026 — Pistas desde buckets ya importados
 
 `chef_cloud_storage_hints` también observa `STORAGE_BUCKET.url` de eventos ya importados y lo procesa con la misma normalización HTTP(S) saneada que `URL`; conserva el linaje del evento fuente y produce solo `URL_HINT`. Se actualizan alcance, auditoría de fuente, plan e inventario. No se hacen solicitudes, enumeración ni cambios de contrato; el inventario conserva 47 parciales, 389 pendientes y 30 exclusiones. Pasan `cargo fmt --check`, `cargo check --offline --locked`, Clippy `--lib -D warnings`, `npm run check:docs`, `npm run check:architecture` y `git diff --check`. No se ejecutaron pruebas por indicación del propietario; no se modificó la copia fuente.
+
+
+### 28-10-2026 — Convenciones de almacenamiento adicionales
+
+`chef_cloud_storage_hints` amplía la clasificación offline de hosts ya importados a DigitalOcean Spaces, Hetzner Object Storage y Firebase Realtime Database. Emite `URL_HINT` con linaje y etiqueta de proveedor; Firebase recibe únicamente la ruta sugerida `/.json`. No se enumeran nombres, no se consultan servicios ni se confirma existencia, acceso, permisos o propiedad. El inventario queda en 50 archivos parciales, 386 pendientes y 30 exclusiones justificadas (466 en total). Se actualizaron alcance, auditoría, plan e inventario. Pasan `cargo fmt --manifest-path packages/rust-core/Cargo.toml --all -- --check`, `cargo check --manifest-path packages/rust-core/Cargo.toml --offline --locked`, Clippy `--lib -D warnings`, `npm run check:docs`, `npm run check:architecture` y `git diff --check`. No se ejecutaron pruebas funcionales por indicación del propietario.
