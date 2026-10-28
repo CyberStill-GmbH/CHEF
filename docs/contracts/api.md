@@ -1,6 +1,6 @@
 # API histórica propuesta para loopback
 
-**Estado:** diseño exploratorio anterior, nunca implementado ni publicado como contrato estable. El propietario priorizó una [aplicación de escritorio Tauri/Rust](../architecture/desktop-tauri.md). Conservar este documento como antecedente; **no** implementar sus rutas `/v1/graphs`, token local, SSE o cancelación solo porque aquí figuran. El IPC interno de escritorio tendrá tipos, validación, pruebas y compatibilidad documentados antes de implementarse; no modifica por sí mismo el contrato público `Snapshot 1.0.0`.
+**Estado:** diseño exploratorio anterior, nunca implementado ni publicado como contrato estable. El propietario priorizó una aplicación local; véase la [arquitectura actual](../architecture/overview.md). Conservar este documento como antecedente; **no** implementar sus rutas `/v1/graphs`, token local, SSE o cancelación solo porque aquí figuran. El IPC interno de escritorio tendrá tipos, validación, pruebas y compatibilidad documentados antes de implementarse; no modifica por sí mismo el contrato público `Snapshot 1.0.0`.
 
 No hay servidor implementado. Contrato para historia W03; usar HTTP JSON sobre loopback, sin habilitar LAN por defecto. Token de sesión aleatorio, validación Origin y CORS restrictivo; sin cookies ambient ni endpoints que acepten URLs arbitrarias.
 
