@@ -28,8 +28,8 @@ pub(crate) struct ChefCloudStorageHints;
 
 const MAX_DNS_RDATA_HINTS_PER_EVENT: usize = 32;
 
-/// Reconoce únicamente nombres DNS ya observados que siguen las convenciones
-/// de endpoints de almacenamiento de AWS S3 o Google Cloud Storage. No busca
+/// Reconoce únicamente nombres DNS ya observados que siguen convenciones de
+/// endpoints de almacenamiento AWS S3, Google Cloud Storage o Azure. No busca
 /// permutaciones, consulta al proveedor ni confirma existencia/permisos.
 impl BbotModule for ChefCloudStorageHints {
     fn descriptor(&self) -> ModuleDescriptor {
@@ -96,6 +96,16 @@ fn observed_cloud_host(event: &BbotEvent) -> Option<String> {
 
 fn cloud_storage_provider(host: &str) -> Option<&'static str> {
     let labels = host.split('.').collect::<Vec<_>>();
+    if labels.len() == 5 && labels[2..] == ["core", "windows", "net"] {
+        let provider = match labels[1] {
+            "blob" => "azure-blob-storage",
+            "web" => "azure-static-website",
+            "dfs" => "azure-data-lake-storage",
+            _ => return None,
+        };
+        return valid_azure_storage_account_name(labels[0]).then_some(provider);
+    }
+
     if labels.len() > 3 && labels[labels.len() - 3..] == ["storage", "googleapis", "com"] {
         let bucket = labels[..labels.len() - 3].join(".");
         if valid_bucket_name(&bucket) {
@@ -138,6 +148,13 @@ fn cloud_storage_provider(host: &str) -> Option<&'static str> {
     }
     let bucket = labels[..service_marker].join(".");
     valid_bucket_name(&bucket).then_some("amazon-s3")
+}
+
+fn valid_azure_storage_account_name(name: &str) -> bool {
+    (3..=24).contains(&name.len())
+        && name
+            .bytes()
+            .all(|byte| byte.is_ascii_lowercase() || byte.is_ascii_digit())
 }
 
 fn valid_aws_region(region: &str) -> bool {
