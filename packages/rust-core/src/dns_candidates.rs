@@ -148,7 +148,13 @@ pub fn generate_dns_mutation_candidates(
     observed_labels: &[String],
     max_candidates: usize,
 ) -> ChefResult<DnsMutationBatch> {
-    generate_dns_mutation_candidates_with_modifiers(root, observed_labels, &[], max_candidates)
+    generate_dns_mutation_candidates_with_modifiers(
+        root,
+        observed_labels,
+        &[],
+        None,
+        max_candidates,
+    )
 }
 
 /// Genera las variantes anteriores y añade prefijos/sufijos de las palabras
@@ -165,6 +171,7 @@ pub fn generate_dns_mutation_candidates_with_wordcloud(
         root,
         observed_labels,
         &modifiers,
+        Some(word_cloud),
         max_candidates,
     )
 }
@@ -173,6 +180,7 @@ fn generate_dns_mutation_candidates_with_modifiers(
     root: &str,
     observed_labels: &[String],
     modifiers: &[crate::DnsWordFrequency],
+    word_cloud: Option<&crate::DnsWordCloud>,
     max_candidates: usize,
 ) -> ChefResult<DnsMutationBatch> {
     if observed_labels.len() > MAX_INPUT_PREFIXES {
@@ -231,6 +239,19 @@ fn generate_dns_mutation_candidates_with_modifiers(
                 modifier_value: None,
                 separator: None,
             });
+        }
+        if let Some(word_cloud) = word_cloud
+            && let Some(parts) = word_cloud.split_known_compound(&seed)
+        {
+            for part in parts {
+                mutations.push(MutationSpec {
+                    label: part.clone(),
+                    rule_id: "wordcloud-segment",
+                    modifier: word_cloud.frequency(&part),
+                    modifier_value: Some(part),
+                    separator: None,
+                });
+            }
         }
         mutations.extend(
             numeric_mutations(&seed)

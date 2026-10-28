@@ -7,6 +7,13 @@ use std::collections::{BTreeMap, BTreeSet};
 
 const MAX_WORDS: usize = 100_000;
 const MAX_WORD_LENGTH: usize = 100;
+const MAX_SEGMENT_LENGTH: usize = 32;
+
+#[derive(Clone)]
+struct Segmentation {
+    score: u64,
+    words: Vec<String>,
+}
 
 /// Frecuencia determinista de un token dentro de un único trabajo.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -79,6 +86,65 @@ impl DnsWordCloud {
         });
         words.truncate(limit.min(MAX_WORDS));
         words
+    }
+
+    /// Segmenta una palabra concatenada usando únicamente términos observados
+    /// en esta nube. Solo devuelve particiones completas de dos o más términos;
+    /// no usa ni descarga un corpus externo.
+    pub fn split_known_compound(&self, word: &str) -> Option<Vec<String>> {
+        let word = word.to_ascii_lowercase();
+        if word.len() < 2
+            || word.len() > MAX_WORD_LENGTH
+            || !word.bytes().all(|byte| byte.is_ascii_alphanumeric())
+        {
+            return None;
+        }
+
+        let mut best: Vec<Option<Segmentation>> = vec![None; word.len() + 1];
+        best[0] = Some(Segmentation {
+            score: 0,
+            words: Vec::new(),
+        });
+        for start in 0..word.len() {
+            let Some(prefix) = best[start].clone() else {
+                continue;
+            };
+            let max_end = (start + MAX_SEGMENT_LENGTH).min(word.len());
+            for end in (start + 1)..=max_end {
+                if start == 0 && end == word.len() {
+                    continue;
+                }
+                let segment = &word[start..end];
+                let Some(frequency) = self.words.get(segment).copied() else {
+                    continue;
+                };
+                let mut candidate = prefix.clone();
+                candidate.score = candidate.score.saturating_add(
+                    (segment.len() as u64).saturating_mul(100 + frequency.min(1_000)),
+                );
+                candidate.words.push(segment.to_owned());
+                let replace = best[end].as_ref().is_none_or(|current| {
+                    candidate.score > current.score
+                        || candidate.score == current.score
+                            && (candidate.words.len() < current.words.len()
+                                || candidate.words.len() == current.words.len()
+                                    && candidate.words.as_slice() < current.words.as_slice())
+                });
+                if replace {
+                    best[end] = Some(candidate);
+                }
+            }
+        }
+        best.pop()?
+            .filter(|segmentation| segmentation.words.len() > 1)
+            .map(|segmentation| segmentation.words)
+    }
+
+    pub(crate) fn frequency(&self, word: &str) -> Option<DnsWordFrequency> {
+        self.words.get(word).map(|count| DnsWordFrequency {
+            word: word.to_owned(),
+            count: *count,
+        })
     }
 
     /// Retiene solo las `limit` palabras de mayor frecuencia, igual que el
