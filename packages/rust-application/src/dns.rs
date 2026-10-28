@@ -432,10 +432,15 @@ where
         if cancellation.is_cancelled() {
             return Err(DnsResolutionError::Cancelled);
         }
-        let receipt = self
-            .authorization
-            .authorize_query(&request)
-            .map_err(|_| DnsResolutionError::NotAuthorized)?;
+        let receipt =
+            self.authorization
+                .authorize_query(&request)
+                .map_err(|failure| match failure {
+                    DnsAuthorizationFailure::NotAuthorized => DnsResolutionError::NotAuthorized,
+                    DnsAuthorizationFailure::InvalidReceipt => {
+                        DnsResolutionError::InvalidAuthorization
+                    }
+                })?;
         if receipt.control.is_revoked() {
             return Err(DnsResolutionError::AuthorizationRevoked);
         }

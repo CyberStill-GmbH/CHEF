@@ -1,9 +1,11 @@
 //! Registro efímero de autorizaciones DNS para consultas CHEF explícitas.
 //!
 //! La aplicación solo debe registrar una concesión después de verificar el
-//! consentimiento de la persona y la política vigente del proyecto. El registro
-//! limita objetivo, tipos de registro, duración y número de consultas; no concede
-//! autorización recursiva a las respuestas recibidas.
+//! consentimiento de la persona y la política vigente del proyecto. Este módulo
+//! no prueba consentimiento ni recalcula/verifica el digest de dicha política;
+//! no debe componerse en una ruta activa hasta añadir esa frontera confiable.
+//! El registro limita objetivo, tipos de registro, duración y número de intentos;
+//! no concede autorización recursiva a las respuestas recibidas.
 
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -19,7 +21,7 @@ use chef_application::{
 use chef_core::{ChefTargetKind, parse_chef_target_seed};
 
 const MAX_ACTIVE_GRANTS: usize = 256;
-const MAX_QUERY_BUDGET: usize = 512;
+const MAX_QUERY_ATTEMPTS: usize = 512;
 const MAX_GRANT_DURATION: Duration = Duration::from_secs(60 * 60);
 const SUPPORTED_RECORD_TYPES: [&str; 10] = [
     "A", "AAAA", "CNAME", "MX", "NS", "PTR", "SOA", "SRV", "TXT", "CAA",
@@ -38,18 +40,23 @@ pub struct DnsAuthorizationGrant {
     authorization_id: String,
     scope_digest: String,
     record_types: BTreeSet<String>,
-    max_queries: usize,
+    max_attempts: usize,
     expires_at: Instant,
     control: DnsAuthorizationControl,
 }
 
 impl DnsAuthorizationGrant {
+    /// Valida la forma de una concesión ya aprobada por la aplicación.
+    ///
+    /// No comprueba consentimiento, pertenencia al scope ni el digest de la
+    /// política. Solo debe llamarse desde una composición confiable que haya
+    /// validado esos datos y mantenga identidad de proyecto/ejecución.
     pub fn new(
         scope_host: String,
         authorization_id: String,
         scope_digest: String,
         record_types: Vec<String>,
-        max_queries: usize,
+        max_attempts: usize,
         expires_at: Instant,
     ) -> Result<Self, DnsAuthorizationRegistryError> {
         let (scope_host, is_ip) =
@@ -57,8 +64,8 @@ impl DnsAuthorizationGrant {
         if !valid_authorization_id(&authorization_id)
             || scope_digest.len() != 64
             || !scope_digest.bytes().all(|byte| byte.is_ascii_hexdigit())
-            || max_queries == 0
-            || max_queries > MAX_QUERY_BUDGET
+            || max_attempts == 0
+            || max_attempts > MAX_QUERY_ATTEMPTS
         {
             return Err(DnsAuthorizationRegistryError::InvalidGrant);
         }
@@ -92,7 +99,7 @@ impl DnsAuthorizationGrant {
             authorization_id,
             scope_digest: scope_digest.to_ascii_lowercase(),
             record_types: normalized_types,
-            max_queries,
+            max_attempts,
             expires_at,
             control: DnsAuthorizationControl::new(),
         })
@@ -110,10 +117,14 @@ impl DnsAuthorizationGrant {
 #[derive(Debug, Clone)]
 struct ActiveGrant {
     grant: DnsAuthorizationGrant,
-    queries_used: usize,
+    attempts_used: usize,
 }
 
 /// Registro vacío al inicio; no lee configuración ni comienza consultas DNS.
+///
+/// Almacenar una concesión no valida su procedencia. La aplicación que compone
+/// este adaptador debe verificar consentimiento, scope, digest e identidad de
+/// proyecto/ejecución antes de crearla.
 #[derive(Debug, Default)]
 pub struct DnsAuthorizationRegistry {
     grants: Mutex<BTreeMap<String, ActiveGrant>>,
@@ -149,7 +160,7 @@ impl DnsAuthorizationRegistry {
             grant.scope_host.clone(),
             ActiveGrant {
                 grant,
-                queries_used: 0,
+                attempts_used: 0,
             },
         ) {
             previous.grant.control.revoke();
@@ -206,11 +217,13 @@ impl DnsAuthorizationPort for DnsAuthorizationRegistry {
                 .grant
                 .record_types
                 .contains(request.record_type().as_str())
-            || active.queries_used >= active.grant.max_queries
+            || active.attempts_used >= active.grant.max_attempts
         {
             return Err(DnsAuthorizationFailure::NotAuthorized);
         }
-        active.queries_used += 1;
+        // Se cuenta el intento autorizado aunque la consulta falle o se cancele;
+        // así los errores no permiten eludir el presupuesto del grant.
+        active.attempts_used += 1;
         DnsAuthorizationReceipt::new_with_control(
             active.grant.authorization_id.clone(),
             active.grant.scope_digest.clone(),
