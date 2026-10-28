@@ -37,7 +37,7 @@ struct TaskPermit {
 impl TaskCounter {
     fn enter(&self, weight: usize) -> ChefResult<TaskPermit> {
         self.active
-            .fetch_update(Ordering::AcqRel, Ordering::Acquire, |active| {
+            .try_update(Ordering::AcqRel, Ordering::Acquire, |active| {
                 active.checked_add(weight)
             })
             .map_err(|_| {
