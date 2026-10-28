@@ -9,7 +9,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use crate::{BbotEvent, ChefResult, identity};
 
 const RULE_ID: &str = "dns.offline_mutation";
-const RULE_VERSION: &str = "2";
+const RULE_VERSION: &str = "3";
 const MAX_INPUT_EVENTS: usize = 10_000;
 const MAX_ROOTS: usize = 50;
 const MAX_CANDIDATES: usize = 10_000;
@@ -193,7 +193,7 @@ pub fn generate_dns_mutation_candidates(
                     MAX_PROPOSALS_PER_ROOT,
                     &mut truncated,
                 ));
-                for word in extract_words(label) {
+                for word in crate::dns_word_segmentation::extract_words(label) {
                     duplicates_suppressed += usize::from(add_proposal(
                         &mut proposals,
                         &word,
@@ -469,14 +469,6 @@ fn representative_source_ids(accumulator: &CandidateAccumulator) -> Vec<String> 
     source_ids.extend(accumulator.root_source_id.iter().cloned());
     source_ids.extend(accumulator.mutation_source_id.iter().cloned());
     source_ids.into_iter().collect()
-}
-
-fn extract_words(label: &str) -> BTreeSet<String> {
-    label
-        .split(|character: char| !character.is_ascii_alphanumeric())
-        .filter(|word| word.len() >= 2 && word.len() <= 63)
-        .map(str::to_ascii_lowercase)
-        .collect()
 }
 
 /// Replica acotada del patrón PTR de la fuente; no requiere regex ni red.

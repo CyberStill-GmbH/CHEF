@@ -1,8 +1,8 @@
 //! Variaciones locales acotadas de etiquetas para pistas DNS.
 //!
-//! Este módulo reproduce las mutaciones por números, letras y modificadores
-//! operativos que se pueden calcular sin un corpus de segmentación. No escribe
-//! archivos, no usa red y no resuelve nombres.
+//! Este módulo adapta mutaciones por números, letras y modificadores operativos.
+//! La segmentación probabilística se implementa en `dns_word_segmentation`.
+//! No escribe archivos, no usa red y no resuelve nombres.
 
 use std::collections::{BTreeMap, BTreeSet};
 

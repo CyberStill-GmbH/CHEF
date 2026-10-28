@@ -8,6 +8,8 @@ El código fuente upstream de BBOT está bajo GNU Affero General Public License,
 
 El texto íntegro de AGPL-3.0 está en [`LICENSE`](LICENSE). El resto de dependencias conserva los avisos y condiciones indicados por sus respectivos proveedores.
 
+El léxico DNS ordenado de 136 136 entradas en `packages/rust-core/data/dns-word-frequency.txt` se derivó del recurso local comprimido de la copia 3.0.2 indicada arriba. Se conserva su orden y contenido para el modelo de segmentación offline; la copia original permanece intacta. La adaptación del algoritmo `wordninja` 2.0.0 está bajo MIT; su aviso íntegro está en [`licenses/wordninja-MIT.txt`](licenses/wordninja-MIT.txt). CHEF no incorpora el paquete Python ni añade una dependencia Rust de ejecución. [Repositorio upstream](https://github.com/keredson/wordninja).
+
 ## `psl` (Rust)
 
 CHEF fija `psl` 2.1.239, con licencia MIT o Apache-2.0 y Public Suffix List integrada. La usa únicamente para derivar pistas locales de dominio padre; no realiza consultas DNS. Se conservan los avisos y textos de licencia distribuidos por el crate.

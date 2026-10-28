@@ -48,7 +48,7 @@ chef-engine/core/helpers/web/envelopes.py,382,Helper HTTP,Puerto/adaptador HTTP 
 chef-engine/core/helpers/web/response_event.py,96,Helper HTTP,Puerto/adaptador HTTP Rust; ejecución desactivada sin scope autorizado,Pendiente
 chef-engine/core/helpers/web/ssl_context.py,8,Helper HTTP,Puerto/adaptador HTTP Rust; ejecución desactivada sin scope autorizado,Pendiente
 chef-engine/core/helpers/web/web.py,797,Helper HTTP,Puerto/adaptador HTTP Rust; ejecución desactivada sin scope autorizado,Pendiente
-chef-engine/core/helpers/wordcloud.py,526,Motor/escáner,"wordcloud.rs porta variantes numéricas, letras, 108 modificadores operativos y separadores; dns_mutation_candidates.rs las usa para generar DNS_NAME_HINT persistidos con evidencia en offline_hints. Corpus/segmentador wordninja, frecuencias globales y mutaciones basadas en su modelo siguen pendientes",Parcial
+chef-engine/core/helpers/wordcloud.py,526,Motor/escáner,"wordcloud.rs porta variantes numéricas, letras, 108 modificadores operativos y separadores; dns_word_segmentation.rs integra el léxico DNS y segmentación probabilística en dns_mutation_candidates.rs para generar DNS_NAME_HINT con IDs de regla v3. Equivalencia pendiente de pruebas",Parcial
 chef-engine/core/helpers/yara_helper.py,50,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
 chef-engine/core/modules.py,1182,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
 chef-engine/core/multiprocess.py,58,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
@@ -92,7 +92,7 @@ chef-engine/modules/crt_db.py,84,Módulo de reconocimiento,"Adaptador Rust CHEF 
 chef-engine/modules/dehashed.py,122,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
 chef-engine/modules/dnsbimi.py,134,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
 chef-engine/modules/dnsbrute.py,71,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
-chef-engine/modules/dnsbrute_mutations.py,156,Módulo de reconocimiento,"dns_mutation_candidates.rs genera candidatos offline entre raíces y mutaciones WordCloud deterministas; application.rs los integra como DNS_NAME_HINT persistidos con hasta dos IDs fuente. No crea observaciones ni ejecuta massdns; el corpus wordninja y la resolución siguen pendientes",Parcial
+chef-engine/modules/dnsbrute_mutations.py,156,Módulo de reconocimiento,"dns_mutation_candidates.rs genera candidatos offline entre raíces y mutaciones WordCloud deterministas; application.rs los integra como DNS_NAME_HINT persistidos con hasta dos IDs fuente. La generación permanece offline; la consulta DNS/massdns y las pruebas de equivalencia siguen pendientes",Parcial
 chef-engine/modules/dnscaa.py,130,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
 chef-engine/modules/dnscommonsrv.py,43,Módulo de reconocimiento,"common_dns_service_candidates genera nombres de servicio como candidatos offline; brute force con massdns, validación de respuestas y recursión siguen pendientes y requieren adaptador DNS autorizado",Parcial
 chef-engine/modules/dnsdumpster.py,75,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
