@@ -119,6 +119,30 @@ export function SnapshotExportButton({
     }
   }
 
+  async function exportAssetInventory() {
+    if (client.exportAssetInventory === undefined || busy) return;
+    setBusy(true);
+    setStatus('Preparando inventario de activos CHEF…');
+    try {
+      const exported = await client.exportAssetInventory(snapshot.run.id);
+      const blob = new Blob([exported.csv], { type: exported.contentType });
+      const objectUrl = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = objectUrl;
+      anchor.download = exported.fileName;
+      anchor.hidden = true;
+      document.body.append(anchor);
+      anchor.click();
+      anchor.remove();
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
+      setStatus(`Inventario descargado (${exported.rowCount} hosts).`);
+    } catch {
+      setStatus('No se pudo exportar el inventario CHEF.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <section aria-labelledby="snapshot-export-title">
       <h2 id="snapshot-export-title">Exportación local</h2>
@@ -171,6 +195,20 @@ export function SnapshotExportButton({
         a una IP. No es un resultado de escaneo actual, no afirma alcance y no
         cumple el DTD oficial de Nmap ni garantiza interoperabilidad con sus
         herramientas.
+      </p>
+      <button
+        type="button"
+        disabled={
+          busy || client.exportAssetInventory === undefined || !hasReconGraph
+        }
+        onClick={() => void exportAssetInventory()}
+      >
+        {busy ? 'Preparando…' : 'Descargar inventario de activos CSV'}
+      </button>
+      <p>
+        Resume hosts e IP, puertos abiertos, endpoints, tecnologías e IDs de
+        hallazgos candidatos solo cuando el grafo conserva la relación y
+        evidencia. No exporta descripciones ni clasifica riesgo o alcance.
       </p>
       <p role="status" aria-live="polite">
         {status}

@@ -208,6 +208,25 @@ assert.ok(
   ),
   JSON.stringify(validateNmapEvidenceExport.errors),
 );
+const assetInventoryExportSchema = JSON.parse(
+  readFileSync('docs/contracts/asset-inventory-export.schema.json', 'utf8'),
+);
+const validateAssetInventoryExport = ajv.compile(assetInventoryExportSchema);
+const assetInventoryExportExample = JSON.parse(
+  readFileSync('docs/contracts/examples/asset-inventory-export.json', 'utf8'),
+);
+assert.ok(
+  validateAssetInventoryExport(assetInventoryExportExample),
+  JSON.stringify(validateAssetInventoryExport.errors),
+);
+const assetInventoryCsvLines = assetInventoryExportExample.csv
+  .split('\r\n')
+  .filter((line) => line.length > 0);
+assert.equal(
+  assetInventoryCsvLines.length,
+  assetInventoryExportExample.rowCount + 1,
+);
+assert.ok(assetInventoryCsvLines[0].includes('ids_hallazgos_candidatos_json'));
 const chefConfigSchema = JSON.parse(
   readFileSync('docs/contracts/chef-config.schema.json', 'utf8'),
 );
