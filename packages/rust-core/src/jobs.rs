@@ -4,7 +4,7 @@
 use std::collections::BTreeMap;
 use std::sync::{
     Arc,
-    atomic::{AtomicBool, AtomicU64, Ordering},
+    atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering},
 };
 
 use tokio::{
@@ -19,6 +19,51 @@ use crate::{
 
 const DEFAULT_EVENT_CAPACITY: usize = 16;
 static NEXT_JOB_SEQUENCE: AtomicU64 = AtomicU64::new(1);
+
+/// Cuenta unidades de trabajo activas sin conservar nombres, payloads ni handles
+/// de tareas. Cada permiso devuelve su peso al contador al salir, incluso si el
+/// worker termina por cancelación o pánico.
+#[derive(Debug, Clone, Default)]
+struct TaskCounter {
+    active: Arc<AtomicUsize>,
+}
+
+#[derive(Debug)]
+struct TaskPermit {
+    active: Arc<AtomicUsize>,
+    weight: usize,
+}
+
+impl TaskCounter {
+    fn enter(&self, weight: usize) -> ChefResult<TaskPermit> {
+        self.active
+            .fetch_update(Ordering::AcqRel, Ordering::Acquire, |active| {
+                active.checked_add(weight)
+            })
+            .map_err(|_| {
+                ChefError::new(
+                    ErrorCode::LimitExceeded,
+                    "El contador de trabajos CHEF superó su capacidad",
+                )
+            })?;
+        Ok(TaskPermit {
+            active: Arc::clone(&self.active),
+            weight,
+        })
+    }
+
+    fn value(&self) -> usize {
+        self.active.load(Ordering::Acquire)
+    }
+}
+
+impl Drop for TaskPermit {
+    fn drop(&mut self) {
+        if self.weight > 0 {
+            self.active.fetch_sub(self.weight, Ordering::AcqRel);
+        }
+    }
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ImportFormat {
@@ -89,6 +134,7 @@ impl From<BbotImportResult> for ImportOutput {
 pub struct ImportTask {
     cancel: Arc<AtomicBool>,
     cancel_notify: Arc<Notify>,
+    task_counter: TaskCounter,
     events: mpsc::Receiver<ImportJobEvent>,
     worker: JoinHandle<ChefResult<ImportOutput>>,
 }
@@ -103,6 +149,12 @@ impl ImportTask {
 
     pub async fn next_event(&mut self) -> Option<ImportJobEvent> {
         self.events.recv().await
+    }
+
+    /// Unidades de trabajo activas asociadas a esta importación.
+    /// El valor vuelve a cero al terminar o cancelarse el worker.
+    pub fn active_task_count(&self) -> usize {
+        self.task_counter.value()
     }
 
     pub async fn join(self) -> ChefResult<ImportOutput> {
@@ -181,6 +233,8 @@ async fn spawn_import_job_inner(
     );
     let cancel = Arc::new(AtomicBool::new(false));
     let cancel_notify = Arc::new(Notify::new());
+    let task_counter = TaskCounter::default();
+    let task_permit = task_counter.enter(1)?;
     let worker_cancel = Arc::clone(&cancel);
     let stream_cancel = Arc::clone(&cancel);
     let stream_cancel_notify = Arc::clone(&cancel_notify);
@@ -192,6 +246,7 @@ async fn spawn_import_job_inner(
     .map_err(|_| ChefError::new(ErrorCode::WorkerFailed, "Import event receiver unavailable"))?;
 
     let worker = tokio::spawn(async move {
+        let _task_permit = task_permit;
         let blocking_cancel = Arc::clone(&worker_cancel);
         let result = tokio::task::spawn_blocking(move || {
             let clock = FixedClock(imported_at);
@@ -281,6 +336,7 @@ async fn spawn_import_job_inner(
     Ok(ImportTask {
         cancel,
         cancel_notify,
+        task_counter,
         events,
         worker,
     })
