@@ -473,6 +473,10 @@ name = "chef-application"
 version = "0.1.0"
 dependencies = [
  "chef-core",
+ "chrono",
+ "serde",
+ "serde_json",
+ "sha2",
  "tokio",
 ]
 

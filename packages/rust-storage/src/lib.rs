@@ -4,7 +4,8 @@
 use std::path::Path;
 
 use chef_application::{
-    IMPORT_HISTORY_MAX_PAGE_SIZE, ImportHistoryError, ImportHistoryPort, ImportRunSummary,
+    DNS_OBSERVATION_SCHEMA_VERSION, DnsObservationBatch, IMPORT_HISTORY_MAX_PAGE_SIZE,
+    ImportHistoryError, ImportHistoryPort, ImportRunSummary,
 };
 use chef_core::{BbotEventGraph, BbotImportResult, ChefReconGraph, ImportOutput, Snapshot};
 use serde_json::{Value, json};
@@ -18,6 +19,7 @@ const SUPPORTED_SNAPSHOT_VERSIONS: &[&str] = &["1.0.0", "1.1.0"];
 const NAMESPACE: &str = "chef";
 const DATABASE: &str = "local";
 const TABLE: &str = "snapshots";
+const DNS_OBSERVATION_TABLE: &str = "dns_observation_batches";
 
 #[derive(Debug, Error)]
 pub enum StorageError {
@@ -31,6 +33,10 @@ pub enum StorageError {
     UnsupportedVersion,
     #[error("el snapshot y su clave de persistencia no coinciden")]
     InvalidRecord,
+    #[error("el lote DNS no es válido o no está vinculado a evidencia del snapshot")]
+    InvalidDnsObservation,
+    #[error("el identificador de lote DNS ya existe con contenido diferente")]
+    DnsObservationConflict,
 }
 
 /// Almacén local por perfil. Mantener una sola instancia abierta por directorio.
@@ -55,7 +61,12 @@ impl LocalSnapshotStore {
              DEFINE FIELD IF NOT EXISTS schema_version ON snapshots TYPE string;
              DEFINE FIELD IF NOT EXISTS snapshot ON snapshots TYPE object;
              DEFINE FIELD IF NOT EXISTS event_graph ON snapshots TYPE any;
-             DEFINE FIELD IF NOT EXISTS chef_recon_graph ON snapshots TYPE any;",
+             DEFINE FIELD IF NOT EXISTS chef_recon_graph ON snapshots TYPE any;
+             DEFINE TABLE IF NOT EXISTS dns_observation_batches SCHEMAFULL;
+             DEFINE FIELD IF NOT EXISTS run_id ON dns_observation_batches TYPE string;
+             DEFINE FIELD IF NOT EXISTS batch_id ON dns_observation_batches TYPE string;
+             DEFINE FIELD IF NOT EXISTS schema_version ON dns_observation_batches TYPE string;
+             DEFINE FIELD IF NOT EXISTS batch ON dns_observation_batches TYPE object;",
         )
         .await?
         .check()?;
@@ -216,6 +227,127 @@ impl LocalSnapshotStore {
         }
         Ok(Some(snapshot))
     }
+
+    /// Agrega un lote DNS al snapshot existente sin modificar ni reemplazarlo.
+    /// La evidencia de origen debe existir en el grafo CHEF del mismo run.
+    pub async fn save_dns_observation_batch(
+        &self,
+        run_id: &str,
+        batch: &DnsObservationBatch,
+    ) -> Result<(), StorageError> {
+        batch
+            .validate_for_storage()
+            .map_err(|_| StorageError::InvalidDnsObservation)?;
+        if batch.schema_version() != DNS_OBSERVATION_SCHEMA_VERSION {
+            return Err(StorageError::UnsupportedVersion);
+        }
+
+        let snapshot = self
+            .load(run_id)
+            .await?
+            .ok_or(StorageError::InvalidRecord)?;
+        if snapshot.schema_version != "1.1.0" {
+            return Err(StorageError::UnsupportedVersion);
+        }
+        let graph = self
+            .load_chef_recon_graph(run_id)
+            .await?
+            .ok_or(StorageError::InvalidRecord)?;
+        validate_dns_batch_lineage(batch, &graph)?;
+
+        let key = dns_observation_key(run_id, batch.batch_id());
+        let batch_value = batch.to_json_value()?;
+        let payload = json!({
+            "run_id": run_id,
+            "batch_id": batch.batch_id(),
+            "schema_version": DNS_OBSERVATION_SCHEMA_VERSION,
+            "batch": batch_value,
+        });
+        if let Some(existing) = self
+            .db
+            .select::<Option<Value>>((DNS_OBSERVATION_TABLE, key.as_str()))
+            .await?
+        {
+            if existing.get("run_id").and_then(Value::as_str) == Some(run_id)
+                && existing.get("batch_id").and_then(Value::as_str) == Some(batch.batch_id())
+                && existing.get("schema_version").and_then(Value::as_str)
+                    == Some(DNS_OBSERVATION_SCHEMA_VERSION)
+                && existing.get("batch") == Some(&batch_value)
+            {
+                return Ok(());
+            }
+            return Err(StorageError::DnsObservationConflict);
+        }
+
+        let _: Option<Value> = self
+            .db
+            .create((DNS_OBSERVATION_TABLE, key.as_str()))
+            .content(payload)
+            .await?;
+        Ok(())
+    }
+
+    /// Recupera un lote DNS y vuelve a validar esquema, clave y linaje local.
+    pub async fn load_dns_observation_batch(
+        &self,
+        run_id: &str,
+        batch_id: &str,
+    ) -> Result<Option<DnsObservationBatch>, StorageError> {
+        let key = dns_observation_key(run_id, batch_id);
+        let Some(record) = self
+            .db
+            .select::<Option<Value>>((DNS_OBSERVATION_TABLE, key.as_str()))
+            .await?
+        else {
+            return Ok(None);
+        };
+        if record.get("run_id").and_then(Value::as_str) != Some(run_id)
+            || record.get("batch_id").and_then(Value::as_str) != Some(batch_id)
+            || record.get("schema_version").and_then(Value::as_str)
+                != Some(DNS_OBSERVATION_SCHEMA_VERSION)
+        {
+            return Err(StorageError::InvalidDnsObservation);
+        }
+        let batch_value = record
+            .get("batch")
+            .cloned()
+            .ok_or(StorageError::InvalidDnsObservation)?;
+        let batch = DnsObservationBatch::from_json_value(batch_value)?;
+        if batch.batch_id() != batch_id {
+            return Err(StorageError::InvalidDnsObservation);
+        }
+        batch
+            .validate_for_storage()
+            .map_err(|_| StorageError::InvalidDnsObservation)?;
+        let graph = self
+            .load_chef_recon_graph(run_id)
+            .await?
+            .ok_or(StorageError::InvalidRecord)?;
+        validate_dns_batch_lineage(&batch, &graph)?;
+        Ok(Some(batch))
+    }
+}
+
+fn dns_observation_key(run_id: &str, batch_id: &str) -> String {
+    format!("{run_id}--{batch_id}")
+}
+
+fn validate_dns_batch_lineage(
+    batch: &DnsObservationBatch,
+    graph: &ChefReconGraph,
+) -> Result<(), StorageError> {
+    let evidence_ids = graph
+        .evidence
+        .iter()
+        .map(|evidence| evidence.id.as_str())
+        .collect::<std::collections::BTreeSet<_>>();
+    if batch
+        .source_evidence_ids()
+        .any(|evidence_id| !evidence_ids.contains(evidence_id))
+    {
+        return Err(StorageError::InvalidDnsObservation);
+    }
+    Ok(())
 }
 
 impl ImportHistoryPort for LocalSnapshotStore {
