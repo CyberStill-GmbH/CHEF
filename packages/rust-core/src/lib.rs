@@ -11,6 +11,7 @@ mod contracts;
 mod dns_cache;
 mod dns_candidates;
 mod dns_format;
+mod dns_mutation_hints;
 mod dns_policy;
 mod dns_records;
 mod dns_service_candidates;
@@ -54,6 +55,7 @@ pub use dns_candidates::{
     has_excessive_digits, parse_dns_wordlist,
 };
 pub use dns_format::format_dns_rdata;
+pub use dns_mutation_hints::{DnsMutationHintBatch, generate_dns_mutation_hints};
 pub use dns_policy::{DnsQueryPolicy, DnsZoneDecision};
 pub use dns_records::{DNS_RECORD_TYPES, DnsTarget, extract_dns_targets, is_dns_service_record};
 pub use dns_service_candidates::common_dns_service_candidates;

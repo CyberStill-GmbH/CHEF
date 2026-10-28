@@ -86,6 +86,9 @@ pub struct DnsMutationCandidate {
     pub seed_label: String,
     pub rule_id: &'static str,
     pub modifier: Option<crate::DnsWordFrequency>,
+    /// IDs deterministas de la evidencia usada como semilla, si la capa
+    /// aplicativa los adjuntó. La generación aislada deja esta lista vacía.
+    pub source_event_ids: Vec<String>,
 }
 
 /// Resultado acotado de generar mutaciones DNS sin filesystem ni red.
@@ -247,6 +250,7 @@ fn generate_dns_mutation_candidates_with_modifiers(
                 seed_label: seed.clone(),
                 rule_id,
                 modifier,
+                source_event_ids: Vec::new(),
             });
         }
     }
