@@ -198,6 +198,19 @@ assert.ok(
 );
 assert.equal(asnSeedExample.kind, 'asn');
 assert.equal(asnSeedExample.host, null);
+const organizationSeedExample = JSON.parse(
+  readFileSync(
+    'docs/contracts/examples/target-seed-organization.json',
+    'utf8',
+  ),
+);
+assert.ok(
+  validateTargetSeed(organizationSeedExample),
+  JSON.stringify(validateTargetSeed.errors),
+);
+assert.equal(organizationSeedExample.kind, 'organization');
+assert.equal(organizationSeedExample.host, null);
+assert.equal(organizationSeedExample.port, null);
 const eventStatisticsSchema = JSON.parse(
   readFileSync('docs/contracts/event-statistics.schema.json', 'utf8'),
 );

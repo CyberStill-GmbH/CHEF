@@ -14,6 +14,7 @@ const MAX_TARGET_BYTES: usize = 8 * 1024;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ChefTargetKind {
     Asn,
+    Organization,
     IpAddress,
     IpRange,
     DnsName,
@@ -47,6 +48,21 @@ pub fn parse_chef_target_seed(input: &str) -> ChefResult<ChefTargetSeed> {
         return Ok(ChefTargetSeed {
             kind: ChefTargetKind::Asn,
             data: format!("AS{asn}"),
+            host: None,
+            port: None,
+        });
+    }
+
+    if let Some((prefix, organization)) = value.split_once(':')
+        && (prefix.eq_ignore_ascii_case("ORG") || prefix.eq_ignore_ascii_case("ORG_STUB"))
+    {
+        let organization = organization.trim();
+        if organization.is_empty() || organization.len() > MAX_TARGET_BYTES {
+            return Err(invalid_target());
+        }
+        return Ok(ChefTargetSeed {
+            kind: ChefTargetKind::Organization,
+            data: organization.to_owned(),
             host: None,
             port: None,
         });
