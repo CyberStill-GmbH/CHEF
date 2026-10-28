@@ -169,6 +169,34 @@ export function SnapshotExportButton({
     }
   }
 
+  async function exportObservedEmails() {
+    if (client.exportObservedEmails === undefined || busy) return;
+    setBusy(true);
+    setStatus('Preparando exportación local de correos observados…');
+    try {
+      const exported = await client.exportObservedEmails(snapshot.run.id);
+      const blob = new Blob([`${JSON.stringify(exported, null, 2)}\n`], {
+        type: exported.contentType,
+      });
+      const objectUrl = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = objectUrl;
+      anchor.download = exported.fileName;
+      anchor.hidden = true;
+      document.body.append(anchor);
+      anchor.click();
+      anchor.remove();
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
+      setStatus(
+        `Correos observados exportados (${exported.emailCount} direcciones únicas).`,
+      );
+    } catch {
+      setStatus('No se pudieron exportar los correos observados.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <section aria-labelledby="snapshot-export-title">
       <h2 id="snapshot-export-title">Exportación local</h2>
@@ -251,6 +279,26 @@ export function SnapshotExportButton({
         tecnología y candidato se relacionan con el host, no con una URL
         individual.
       </p>
+      <details>
+        <summary>
+          Exportar correos observados (incluye datos personales)
+        </summary>
+        <p>
+          Al confirmar, descargarás direcciones de eventos EMAIL_ADDRESS ya
+          presentes en esta importación en un JSON local. La exportación no
+          envía datos, no deriva correos desde nombres de usuario y declara que
+          el scope no está acreditado.
+        </p>
+        <button
+          type="button"
+          disabled={
+            busy || client.exportObservedEmails === undefined || !hasReconGraph
+          }
+          onClick={() => void exportObservedEmails()}
+        >
+          {busy ? 'Preparando…' : 'Confirmar y descargar correos JSON'}
+        </button>
+      </details>
       <p role="status" aria-live="polite">
         {status}
       </p>

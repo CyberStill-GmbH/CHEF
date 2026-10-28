@@ -245,6 +245,21 @@ assert.ok(
 );
 assert.match(webEvidenceReportExportExample.html, /Content-Security-Policy/);
 assert.doesNotMatch(webEvidenceReportExportExample.html, /<script\b|<link\b/i);
+const observedEmailExportSchema = JSON.parse(
+  readFileSync('docs/contracts/observed-email-export.schema.json', 'utf8'),
+);
+const validateObservedEmailExport = ajv.compile(observedEmailExportSchema);
+const observedEmailExportExample = JSON.parse(
+  readFileSync('docs/contracts/examples/observed-email-export.json', 'utf8'),
+);
+assert.ok(
+  validateObservedEmailExport(observedEmailExportExample),
+  JSON.stringify(validateObservedEmailExport.errors),
+);
+assert.equal(
+  observedEmailExportExample.emailCount,
+  observedEmailExportExample.emails.length,
+);
 const chefConfigSchema = JSON.parse(
   readFileSync('docs/contracts/chef-config.schema.json', 'utf8'),
 );

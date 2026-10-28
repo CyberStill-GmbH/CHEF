@@ -18,6 +18,7 @@ mod dns_service_candidates;
 mod dns_word_segmentation;
 mod domain;
 mod domain_export;
+mod email_export;
 mod event_engine;
 mod event_import;
 mod evidence_csv;
@@ -67,6 +68,9 @@ pub use domain::{ChefError, ChefResult, ErrorCode, ServiceInput};
 pub use domain_export::{
     ChefObservedDomain, ChefObservedDomainEvidence, ChefObservedDomainExport,
     export_observed_domain_list,
+};
+pub use email_export::{
+    ChefEmailEvidence, ChefObservedEmail, ChefObservedEmailExport, export_observed_emails,
 };
 pub use event_engine::{
     BbotEvent, BbotEventDraft, BbotEventEngine, BbotEventGraph, BbotModule, EventScopeGate,

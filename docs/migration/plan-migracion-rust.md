@@ -59,3 +59,7 @@ El README principal conserva la referencia de uso y procedencia. El árbol fuent
 ### Salida HTML de evidencia web
 
 `modules/output/web_report.py` tiene una adaptación Rust CHEF parcial mediante `export_chef_web_evidence_report` y el contrato `web-evidence-report-export 1.0.0`. El HTML local resume endpoints con calificación, tecnologías/hallazgos relacionados al host y evidencias vinculadas. Como el grafo CHEF no conserva ancestros URL completos, no atribuye esas tecnologías o candidatos a una URL específica. Escapa contenido, no carga recursos externos, limita la salida a 2 MiB y declara alcance no afirmado. No exporta cuerpos/cabeceras HTTP. Faltan pruebas funcionales de seguridad de salida, límites y correspondencia de relaciones; `emails.py` sigue pendiente de decisión de privacidad.
+
+### Salida local de correos
+
+`modules/output/emails.py` tiene una adaptación Rust CHEF parcial mediante `export_observed_emails` y `observed-email-export 1.0.0`. Incluye solo eventos ya presentes de tipo `EMAIL_ADDRESS`, deduplica direcciones exactas y añade IDs de evidencia, fecha y linaje. React advierte que son datos personales y solicita confirmación explícita antes de descargar JSON local. Como CHEF no conserva `in_scope_only`, declara `scopeStatus: not_asserted`; no deriva datos desde `USERNAME` ni transmite el contenido. Las pruebas funcionales quedan pendientes por indicación del propietario.

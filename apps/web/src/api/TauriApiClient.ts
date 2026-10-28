@@ -12,6 +12,7 @@ import { decodeEvidenceCsvExport } from '../contracts/decodeEvidenceCsvExport';
 import { decodeNmapEvidenceExport } from '../contracts/decodeNmapEvidenceExport';
 import { decodeAssetInventoryExport } from '../contracts/decodeAssetInventoryExport';
 import { decodeWebEvidenceReportExport } from '../contracts/decodeWebEvidenceReportExport';
+import { decodeObservedEmailExport } from '../contracts/decodeObservedEmailExport';
 import type { ScanLogDto } from '../contracts/scan-log';
 import type { ScopePolicyDto } from '../contracts/snapshot';
 import type { ApiClient } from './ApiClient';
@@ -180,6 +181,18 @@ export class TauriApiClient implements ApiClient {
     });
     options?.signal?.throwIfAborted();
     return decodeWebEvidenceReportExport(exported);
+  }
+
+  async exportObservedEmails(
+    runId: string,
+    options?: { signal?: AbortSignal },
+  ) {
+    options?.signal?.throwIfAborted();
+    const exported = await invoke<unknown>('export_chef_observed_emails', {
+      runId,
+    });
+    options?.signal?.throwIfAborted();
+    return decodeObservedEmailExport(exported);
   }
 
   async loadReconGraph(runId: string, options?: { signal?: AbortSignal }) {

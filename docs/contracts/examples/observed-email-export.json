@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "1.0.0",
+  "runId": "run:fixture-email-001",
+  "fileName": "chef-correos-observados-run-fixture-email-001.json",
+  "contentType": "application/json; charset=utf-8",
+  "scopeStatus": "not_asserted",
+  "emailCount": 1,
+  "emails": [
+    {
+      "address": "security@example.invalid",
+      "evidence": [
+        {
+          "id": "chef-evidence:fixture-email-001",
+          "parentEvidenceId": "chef-evidence:fixture-dns-caa-001",
+          "observedAt": "2026-10-28T12:00:00Z"
+        }
+      ]
+    }
+  ]
+}
