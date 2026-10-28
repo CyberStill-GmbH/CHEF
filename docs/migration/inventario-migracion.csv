@@ -197,7 +197,7 @@ chef-engine/modules/postman_download.py,94,Módulo de reconocimiento,"Adaptador 
 chef-engine/modules/rapiddns.py,23,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
 chef-engine/modules/reflected_parameters.py,92,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
 chef-engine/modules/report/affiliates.py,44,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
-chef-engine/modules/report/asn.py,81,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/report/asn.py,81,Módulo de reconocimiento,"Parcial: `asn_report.rs` resume eventos ASN importados vinculados con su evento padre IP_ADDRESS; conserva IDs, locators, fechas y metadatos disponibles, omite padres `ipneighbor` y aplica filtro local conservador de IP global. IPC 1.0 read-only Tauri/React valida runId y ambas referencias del grafo. No consulta asndb ni expande CIDR; el filtro no replica exactamente IANA. Verificación funcional pendiente",Parcial
 chef-engine/modules/report/base.py,5,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
 chef-engine/modules/retirejs.py,230,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
 chef-engine/modules/robots.py,52,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
