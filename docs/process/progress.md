@@ -164,3 +164,7 @@ Se añadió `generate_dns_name_candidates` en `dns_candidates.rs`, adaptación l
 ## 28-10-2026 — Preflight DNS local
 
 Se portaron `has_excessive_digits` y `subdomain_depth` como señales locales para preparar una futura política de fuerza bruta DNS. La heurística numérica informa posibles nombres generados automáticamente, pero no invalida activos ni descarta evidencia; la profundidad usa la PSL local y un respaldo acotado para sufijos ausentes. Ninguna de estas señales autoriza tráfico. El adaptador activo, la carga de resolvers y la ejecución de consultas permanecen pendientes.
+
+## 28-10-2026 — Ingesta local de wordlists DNS
+
+Se añadió `parse_dns_wordlist`, que recibe bytes explícitos en vez de abrir rutas o descargar el recurso remoto del módulo. Acepta UTF-8 acotado a 5 MiB, omite líneas vacías/comentarios y controles, deduplica en orden de entrada y limita a 100 000 prefijos. El módulo DNS queda parcial por su preparación local; resolver, wildcard, canarios, descarga de listas y `massdns` no están portados. El inventario queda en 26 parciales, 419 pendientes y 21 exclusiones de 466 archivos. Pruebas funcionales permanecen aplazadas.
