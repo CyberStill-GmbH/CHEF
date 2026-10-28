@@ -31,6 +31,7 @@ mod host;
 mod identity;
 mod nmap;
 mod nmap_export;
+mod otx;
 mod port_spec;
 mod presets;
 mod provider_subdomains;
@@ -89,6 +90,7 @@ pub use fullhunt::{FullHuntSubdomainPage, parse_fullhunt_subdomains};
 pub use host::dns_parent_zones;
 pub use identity::{digest as digest_bytes, id as deterministic_id};
 pub use nmap_export::{ChefNmapEvidenceExport, export_nmap_evidence_xml};
+pub use otx::{OtxPassiveDnsPage, parse_otx_passive_dns};
 pub use port_spec::parse_port_string;
 pub use presets::{ChefPreset, PresetCatalog, ResolvedPreset};
 pub use provider_subdomains::{
