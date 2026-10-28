@@ -17,6 +17,8 @@ const MAX_DNS_NAME_BYTES: usize = 253;
 pub struct DnsWordlist {
     /// Entradas canónicas ordenadas y deduplicadas.
     pub entries: Vec<String>,
+    /// Huella del texto original; la lista no se conserva en el grafo.
+    pub content_sha256: String,
     pub duplicate_entries: usize,
     pub comment_lines: usize,
     pub blank_lines: usize,
@@ -36,6 +38,7 @@ pub fn parse_dns_wordlist(input: &str) -> ChefResult<DnsWordlist> {
 
     let mut result = DnsWordlist {
         entries: Vec::new(),
+        content_sha256: crate::identity::digest(input.as_bytes()),
         duplicate_entries: 0,
         comment_lines: 0,
         blank_lines: 0,

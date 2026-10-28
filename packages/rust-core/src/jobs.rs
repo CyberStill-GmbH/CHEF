@@ -18,6 +18,7 @@ use crate::{
 };
 
 const DEFAULT_EVENT_CAPACITY: usize = 16;
+const DNS_WORDLIST_LIMIT: usize = 2 * 1024 * 1024;
 static NEXT_JOB_SEQUENCE: AtomicU64 = AtomicU64::new(1);
 
 /// Cuenta unidades de trabajo activas sin conservar nombres, payloads ni handles
@@ -181,6 +182,7 @@ pub async fn spawn_import_job(
         policy,
         imported_at,
         ChefConfig::default(),
+        None,
         false,
     )
     .await
@@ -205,12 +207,34 @@ pub async fn spawn_bbot_import_job_with_config(
     imported_at: String,
     config: ChefConfig,
 ) -> ChefResult<ImportTask> {
+    spawn_bbot_import_job_with_config_and_wordlist(bytes, policy, imported_at, config, None).await
+}
+
+/// Variante que recibe el contenido de una lista DNS seleccionada localmente.
+/// La lista se analiza en el worker; no se abre ninguna ruta ni se hace red.
+pub async fn spawn_bbot_import_job_with_config_and_wordlist(
+    bytes: Vec<u8>,
+    policy: ScopePolicy,
+    imported_at: String,
+    config: ChefConfig,
+    dns_wordlist: Option<String>,
+) -> ChefResult<ImportTask> {
+    if dns_wordlist
+        .as_ref()
+        .is_some_and(|wordlist| wordlist.len() > DNS_WORDLIST_LIMIT)
+    {
+        return Err(ChefError::new(
+            ErrorCode::LimitExceeded,
+            "La lista DNS local supera el máximo CHEF de bytes",
+        ));
+    }
     spawn_import_job_inner(
         ImportFormat::BbotJsonl,
         bytes,
         policy,
         imported_at,
         config,
+        dns_wordlist,
         true,
     )
     .await
@@ -222,6 +246,7 @@ async fn spawn_import_job_inner(
     policy: ScopePolicy,
     imported_at: String,
     config: ChefConfig,
+    dns_wordlist: Option<String>,
     stream_bbot_events: bool,
 ) -> ChefResult<ImportTask> {
     let sequence = NEXT_JOB_SEQUENCE
@@ -255,10 +280,11 @@ async fn spawn_import_job_inner(
                     ImportEvidence::execute(&bytes, &policy, &clock, Some(blocking_cancel.as_ref()))
                         .map(ImportOutput::from)
                 }
-                ImportFormat::BbotJsonl => ImportBbotEvidence::execute_with_config(
+                ImportFormat::BbotJsonl => ImportBbotEvidence::execute_with_config_and_wordlist(
                     &bytes,
                     &policy,
                     &config,
+                    dns_wordlist.as_deref(),
                     &clock,
                     Some(blocking_cancel.as_ref()),
                 )

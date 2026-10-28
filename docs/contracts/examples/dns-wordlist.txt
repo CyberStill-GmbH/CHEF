@@ -1,0 +1,4 @@
+# Lista local de prefijos DNS para una importación offline CHEF
+www
+api
+staging

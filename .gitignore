@@ -12,6 +12,7 @@ artifacts/
 target/
 /apps/web/public/LICENSE
 /apps/web/public/THIRD_PARTY_NOTICES.md
+/apps/web/public/licenses/
 *.sqlite*
 *.tsbuildinfo
 .DS_Store

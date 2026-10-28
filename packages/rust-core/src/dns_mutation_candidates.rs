@@ -49,6 +49,8 @@ pub enum DnsMutationReason {
     WordCloudBase,
     /// Nombre de servicio o entorno propuesto desde el vocabulario estático local.
     StaticWordlist,
+    /// Prefijo propuesto desde el texto local elegido para esta importación.
+    LocalWordlist,
 }
 
 /// Nombre propuesto por una regla CHEF; no representa una resolución DNS.
@@ -63,6 +65,8 @@ pub struct DnsMutationCandidate {
     pub reasons: Vec<DnsMutationReason>,
     /// IDs representativos de la derivación (máximo dos; no es una lista exhaustiva).
     pub source_event_ids: Vec<String>,
+    /// Huella del contenido de lista local que también propuso este candidato.
+    pub wordlist_sha256: Option<String>,
 }
 
 /// Resultado acotado y estable ante cambios en el orden de entrada.
@@ -85,6 +89,7 @@ struct CandidateAccumulator {
     root_source_id: Option<String>,
     mutation_source_id: Option<String>,
     static_wordlist: bool,
+    wordlist_sha256: Option<String>,
 }
 
 #[derive(Default)]
@@ -96,6 +101,7 @@ struct RootObservations {
 struct ProposalEvidence<'a> {
     root_source_id: Option<&'a str>,
     mutation_source_id: &'a str,
+    wordlist_sha256: Option<&'a str>,
 }
 
 /// Deriva propuestas acotadas usando exclusivamente eventos `DNS_NAME` ya
@@ -105,6 +111,16 @@ struct ProposalEvidence<'a> {
 pub fn generate_dns_mutation_candidates(
     events: &[BbotEvent],
     options: DnsMutationCandidateOptions,
+) -> ChefResult<DnsMutationCandidateBatch> {
+    generate_dns_mutation_candidates_with_wordlist(events, options, None)
+}
+
+/// Variante que suma prefijos de una lista local ya analizada por CHEF.
+/// La huella identifica el texto usado; no se guarda el contenido ni se consulta DNS.
+pub fn generate_dns_mutation_candidates_with_wordlist(
+    events: &[BbotEvent],
+    options: DnsMutationCandidateOptions,
+    wordlist: Option<&crate::DnsWordlist>,
 ) -> ChefResult<DnsMutationCandidateBatch> {
     if events.len() > MAX_INPUT_EVENTS {
         return Err(crate::ChefError::new(
@@ -202,6 +218,7 @@ pub fn generate_dns_mutation_candidates(
                     ProposalEvidence {
                         root_source_id: Some(root_source_id),
                         mutation_source_id: donor_source_id,
+                        wordlist_sha256: None,
                     },
                     MAX_PROPOSALS_PER_ROOT,
                     &mut truncated,
@@ -215,6 +232,7 @@ pub fn generate_dns_mutation_candidates(
                         ProposalEvidence {
                             root_source_id: Some(root_source_id),
                             mutation_source_id: donor_source_id,
+                            wordlist_sha256: None,
                         },
                         MAX_PROPOSALS_PER_ROOT,
                         &mut truncated,
@@ -238,6 +256,7 @@ pub fn generate_dns_mutation_candidates(
                         ProposalEvidence {
                             root_source_id: None,
                             mutation_source_id: source_id,
+                            wordlist_sha256: None,
                         },
                         MAX_PROPOSALS_PER_ROOT,
                         &mut truncated,
@@ -257,10 +276,29 @@ pub fn generate_dns_mutation_candidates(
                 ProposalEvidence {
                     root_source_id: Some(root_source_id),
                     mutation_source_id: root_source_id,
+                    wordlist_sha256: None,
                 },
                 MAX_PROPOSALS_PER_ROOT,
                 &mut truncated,
             ));
+        }
+
+        if let Some(wordlist) = wordlist {
+            for label in &wordlist.entries {
+                duplicates_suppressed += usize::from(add_proposal(
+                    &mut proposals,
+                    label,
+                    root,
+                    DnsMutationReason::LocalWordlist,
+                    ProposalEvidence {
+                        root_source_id: Some(root_source_id),
+                        mutation_source_id: root_source_id,
+                        wordlist_sha256: Some(&wordlist.content_sha256),
+                    },
+                    MAX_PROPOSALS_PER_ROOT,
+                    &mut truncated,
+                ));
+            }
         }
 
         let per_root_limit = options.max_candidates_per_root.min(MAX_CANDIDATES_PER_ROOT);
@@ -301,7 +339,11 @@ pub fn generate_dns_mutation_candidates(
     let candidates = all_candidates
         .into_iter()
         .map(|((root, name), accumulator)| {
-            let id = identity::id(RULE_ID, &[RULE_VERSION, &root, &name]);
+            let id = if let Some(wordlist_sha256) = accumulator.wordlist_sha256.as_deref() {
+                identity::id(RULE_ID, &[RULE_VERSION, &root, &name, wordlist_sha256])
+            } else {
+                identity::id(RULE_ID, &[RULE_VERSION, &root, &name])
+            };
             let source_event_ids = representative_source_ids(&accumulator);
             DnsMutationCandidate {
                 id,
@@ -311,6 +353,7 @@ pub fn generate_dns_mutation_candidates(
                 rule_version: RULE_VERSION.to_owned(),
                 reasons: accumulator.reasons.into_iter().collect(),
                 source_event_ids,
+                wordlist_sha256: accumulator.wordlist_sha256,
             }
         })
         .collect::<Vec<_>>();
@@ -367,7 +410,23 @@ pub(crate) fn is_generated_dns_mutation_hint(event: &BbotEvent) -> bool {
         return false;
     }
 
-    let expected_candidate_id = identity::id(RULE_ID, &[RULE_VERSION, root, &name]);
+    let wordlist_sha256 = event
+        .metadata
+        .get("wordlistSha256")
+        .and_then(serde_json::Value::as_str);
+    if wordlist_sha256.is_some_and(|digest| {
+        digest.len() != 64
+            || !digest
+                .bytes()
+                .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
+    }) {
+        return false;
+    }
+    let expected_candidate_id = if let Some(wordlist_sha256) = wordlist_sha256 {
+        identity::id(RULE_ID, &[RULE_VERSION, root, &name, wordlist_sha256])
+    } else {
+        identity::id(RULE_ID, &[RULE_VERSION, root, &name])
+    };
     let expected_event_id = identity::id("chef-dns-mutation-event", &[&expected_candidate_id]);
     if event.id != expected_event_id
         || event
@@ -439,8 +498,10 @@ pub(crate) fn is_generated_dns_mutation_hint(event: &BbotEvent) -> bool {
                     | "wordcloud_modifier"
                     | "wordcloud_base"
                     | "static_wordlist"
+                    | "local_wordlist"
             )
         })
+        && reason_names.contains(&"local_wordlist") == wordlist_sha256.is_some()
         && reason_names.iter().all(|reason| {
             event
                 .tags
@@ -449,8 +510,9 @@ pub(crate) fn is_generated_dns_mutation_hint(event: &BbotEvent) -> bool {
         })
         && event.locator
             == format!(
-                "rule:{RULE_ID}@{RULE_VERSION};reason={}",
-                reason_names.join(",")
+                "rule:{RULE_ID}@{RULE_VERSION};reason={}{}",
+                reason_names.join(","),
+                wordlist_sha256.map_or_else(String::new, |digest| format!(";wordlist={digest}"))
             )
 }
 
@@ -496,7 +558,18 @@ fn add_proposal(
     }
     let accumulator = proposals.entry(name).or_default();
     accumulator.reasons.insert(reason);
-    accumulator.static_wordlist |= reason == DnsMutationReason::StaticWordlist;
+    accumulator.static_wordlist |= matches!(
+        reason,
+        DnsMutationReason::StaticWordlist | DnsMutationReason::LocalWordlist
+    );
+    if let Some(digest) = evidence.wordlist_sha256
+        && accumulator
+            .wordlist_sha256
+            .as_deref()
+            .is_none_or(|existing| digest < existing)
+    {
+        accumulator.wordlist_sha256 = Some(digest.to_owned());
+    }
     if let Some(source_id) = evidence.root_source_id {
         retain_lexicographically_first(&mut accumulator.root_source_id, source_id);
     }
