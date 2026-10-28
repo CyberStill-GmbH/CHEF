@@ -1,0 +1,11 @@
+[package]
+name = "chef-rust-adapters"
+version = "0.1.0"
+edition = "2024"
+publish = false
+license = "AGPL-3.0-only"
+
+[dependencies]
+chef-application = { path = "../../rust-application" }
+hickory-resolver = { version = "=0.26.3", default-features = false, features = ["tokio"] }
+tokio = { version = "1", features = ["time"] }

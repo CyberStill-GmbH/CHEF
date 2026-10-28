@@ -26,6 +26,8 @@ El archivo `config.toml` guarda preferencias y habilitación de conectores, nunc
 
 La primera versión de escritorio debe demostrar únicamente el flujo offline con fixtures: abrir un snapshot, consultar activos/evidencia, persistirlo localmente y mostrar logs de simulación. No implementa ni ejecuta descubrimiento DNS/HTTP activo. Las fuentes pasivas y el cliente DefectDojo se integran por adaptadores con autorización separada, sin enviar dominios o datos de clientes por defecto. La UI no obtiene acceso directo a filesystem, base, red, shell ni claves; las capacidades de Tauri se limitan a comandos explícitos y cada comando vuelve a validar sus entradas.
 
+El primer corte del resolutor usa `hickory-resolver` 0.26.3 (MIT OR Apache-2.0), con `ResolverConfig` explícita y únicamente la feature Tokio: no habilita `system-config`, configuración de resolvers del SO ni archivo hosts. La configuración CHEF aporta upstreams IP literales y timeout acotado. Esta selección es un detalle de infraestructura; su inclusión no habilita el escaneo ni establece autorización. `ResolveDns` y el adaptador existen en crates separados y permanecen fuera de la composición Tauri hasta completar el flujo de autorización, límites por trabajo y revisión.
+
 ## Consecuencias y migración
 
 - Se conserva React/TypeScript para la interfaz. Tauri v2 compone la importación offline y xterm.js presenta eventos de actividad versionados; Tailwind y shadcn/ui aún deben incorporarse con versiones fijadas y revisión de licencias.
