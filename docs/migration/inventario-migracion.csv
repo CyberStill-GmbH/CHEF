@@ -245,7 +245,7 @@ chef-engine/scanner/preset/path.py,107,Preset/configuración,"Configuración CHE
 chef-engine/scanner/preset/preset.py,1142,Preset/configuración,packages/rust-core/src/presets.rs y Tauri import_bbot_jsonl: composición CHEF acotada y aplicación por trabajo de tres perfiles; catálogo/opciones fuente de referencia restantes pendientes,Parcial
 chef-engine/scanner/preset/validate.py,317,Preset/configuración,Validación estricta de config/presets CHEF; conformidad de validación fuente de referencia pendiente,Parcial
 chef-engine/scanner/scanner.py,1525,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
-chef-engine/scanner/stats.py,165,Motor/escáner,packages/rust-core/src/statistics.rs; producción/consumo por módulo; velocidad por ventana pendiente,Parcial
+chef-engine/scanner/stats.py,165,Motor/escáner,"packages/rust-core/src/statistics.rs porta conteos offline/runtime por módulo; packages/rust-application/src/bbot_event_rate.rs porta ventana móvil 60 s con tiempo monotónico externo y límite/saturación explícitos. Falta conectar al worker y exponer por IPC/UI; no representa velocidad de escaneo",Parcial
 chef-engine/scanner/target.py,440,Motor/escáner,Scope literal CHEF para importaciones; reglas fuente de referencia completas pendientes y no habilitan red,Parcial
 chef-engine/scripts/benchmark_report.py,494,Herramienta auxiliar,Evaluar; portar solo lo necesario al flujo CHEF y documentar exclusión,Pendiente
 chef-engine/scripts/docs.py,308,Herramienta auxiliar,Evaluar; portar solo lo necesario al flujo CHEF y documentar exclusión,Pendiente
