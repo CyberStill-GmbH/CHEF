@@ -181,8 +181,15 @@ fn dns_candidates(text: &str) -> impl Iterator<Item = &str> {
 }
 
 fn canonical_dns_candidate(candidate: &str) -> Option<String> {
-    let candidate = candidate.trim_matches('.');
+    let candidate = candidate
+        .trim_matches(|character| matches!(character, '\'' | '"'))
+        .trim_matches('.');
     if candidate.is_empty() || candidate.len() > 253 {
+        return None;
+    }
+    // No convertir `*.example` en `example`: eso borraría la condición
+    // wildcard y podría sugerir un host distinto al contenido importado.
+    if candidate.starts_with("*.") {
         return None;
     }
     if candidate.parse::<std::net::IpAddr>().is_ok() {

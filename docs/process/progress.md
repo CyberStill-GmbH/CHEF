@@ -170,3 +170,7 @@ Se adaptó `misc.py::split_host_port` como función pura `host::split_host_port`
 Se portó `misc.py::make_netloc` como `host::make_netloc` y se eliminaron formateadores duplicados de `speculate.rs` y `target_seed.rs`. La función encierra direcciones IPv6 literales entre corchetes y añade el puerto opcional; los llamadores entregan hosts ya validados. Sin cambios de contrato ni tráfico de red.
 
 Pasaron `cargo fmt --check`, `cargo check --locked --offline`, Clippy de biblioteca con `-D warnings`, `npm run check:docs` y `git diff --check`. No se ejecutaron pruebas funcionales.
+
+## 28-10-2026 — Limpieza acotada de candidatos RDATA
+
+Se adaptó el saneamiento útil de `misc.py::clean_dns_record` dentro de `dns_records.rs`: al interpretar candidatos se quitan comillas exteriores y puntos finales antes de canonicalizar. CHEF rechaza `*.` como wildcard en lugar de eliminar ese marcador y sugerir una raíz diferente. Los bytes del evento fuente y el RDATA presentado no se reescriben; el límite de 64 KiB permanece vigente. No consulta DNS ni cambia el contrato de Snapshot.
