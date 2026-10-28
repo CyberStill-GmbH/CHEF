@@ -7,13 +7,14 @@ use std::collections::BTreeSet;
 
 use chef_core::{ChefTargetKind, common_dns_service_candidates, parse_chef_target_seed};
 
-use crate::DnsResolutionError;
+use crate::{DnsQueryRequest, DnsResolutionError};
 
 const MAX_DNS_SERVICE_QUERIES: usize = 256;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DnsServiceQueryCandidate {
     owner_name: String,
+    root_domain: String,
 }
 
 impl DnsServiceQueryCandidate {
@@ -23,6 +24,10 @@ impl DnsServiceQueryCandidate {
 
     pub const fn record_type(&self) -> &'static str {
         "SRV"
+    }
+
+    pub fn request(&self) -> Result<DnsQueryRequest, DnsResolutionError> {
+        DnsQueryRequest::for_srv_owner(&self.owner_name, &self.root_domain, 0)
     }
 }
 
@@ -55,7 +60,10 @@ impl DnsServiceQueryPlan {
         let candidates = owners
             .into_iter()
             .filter(|owner_name| seen.insert(owner_name.clone()))
-            .map(|owner_name| DnsServiceQueryCandidate { owner_name })
+            .map(|owner_name| DnsServiceQueryCandidate {
+                owner_name,
+                root_domain: root_domain.clone(),
+            })
             .collect();
 
         Ok(Self {
