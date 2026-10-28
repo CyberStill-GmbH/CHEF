@@ -69,6 +69,30 @@ export function SnapshotExportButton({
     }
   }
 
+  async function exportEvidenceCsv() {
+    if (client.exportEvidenceCsv === undefined || busy) return;
+    setBusy(true);
+    setStatus('Preparando CSV de evidencia CHEF…');
+    try {
+      const exported = await client.exportEvidenceCsv(snapshot.run.id);
+      const blob = new Blob([exported.csv], { type: exported.contentType });
+      const objectUrl = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = objectUrl;
+      anchor.download = exported.fileName;
+      anchor.hidden = true;
+      document.body.append(anchor);
+      anchor.click();
+      anchor.remove();
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
+      setStatus(`CSV de evidencia descargado (${exported.rowCount} filas).`);
+    } catch {
+      setStatus('No se pudo exportar el CSV de evidencia.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <section aria-labelledby="snapshot-export-title">
       <h2 id="snapshot-export-title">Exportación local</h2>
@@ -92,6 +116,20 @@ export function SnapshotExportButton({
         La lista incluye nombres sustentados por eventos DNS_NAME directos.
         Excluye candidatos y nombres sin resolver; no afirma alcance ni
         propiedad.
+      </p>
+      <button
+        type="button"
+        disabled={
+          busy || client.exportEvidenceCsv === undefined || !hasReconGraph
+        }
+        onClick={() => void exportEvidenceCsv()}
+      >
+        {busy ? 'Preparando…' : 'Descargar evidencia CHEF CSV'}
+      </button>
+      <p>
+        El CSV mantiene IDs y linaje, conserva evidencia sin activo adaptado y
+        no incluye payloads originales ni nombres de módulo no verificados;
+        conserva claves CHEF proyectadas y no afirma alcance.
       </p>
       <p role="status" aria-live="polite">
         {status}

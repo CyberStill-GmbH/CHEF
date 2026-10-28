@@ -180,6 +180,22 @@ assert.ok(
   ),
   JSON.stringify(validateObservedDomainExport.errors),
 );
+const evidenceCsvExportSchema = JSON.parse(
+  readFileSync('docs/contracts/evidence-csv-export.schema.json', 'utf8'),
+);
+const validateEvidenceCsvExport = ajv.compile(evidenceCsvExportSchema);
+const evidenceCsvExample = JSON.parse(
+  readFileSync('docs/contracts/examples/evidence-csv-export.json', 'utf8'),
+);
+assert.ok(
+  validateEvidenceCsvExport(evidenceCsvExample),
+  JSON.stringify(validateEvidenceCsvExport.errors),
+);
+const evidenceCsvLines = evidenceCsvExample.csv
+  .split('\r\n')
+  .filter((line) => line.length > 0);
+assert.equal(evidenceCsvLines.length, evidenceCsvExample.rowCount + 1);
+assert.ok(evidenceCsvExample.csv.includes("\"'=example.invalid\""));
 const chefConfigSchema = JSON.parse(
   readFileSync('docs/contracts/chef-config.schema.json', 'utf8'),
 );
