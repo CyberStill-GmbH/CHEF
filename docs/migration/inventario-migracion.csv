@@ -90,7 +90,7 @@ chef-engine/modules/credshed.py,110,Módulo de reconocimiento,"Adaptador Rust CH
 chef-engine/modules/crt.py,44,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
 chef-engine/modules/crt_db.py,84,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
 chef-engine/modules/dehashed.py,122,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
-chef-engine/modules/dnsbimi.py,134,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/dnsbimi.py,134,Módulo de reconocimiento,"speculate.rs registra chef_bimi_hints en offline_hints: parsea RAW_DNS_RECORD TXT importado y produce URL_HINT acotadas con etiqueta de ubicación/autoridad; sin consultas DNS, descarga ni render de SVG/PEM. Falta validar conformidad en fase de pruebas",Parcial
 chef-engine/modules/dnsbrute.py,71,Módulo de reconocimiento,"packages/rust-core/src/dns_candidates.rs adapta localmente wordlist, candidatos y recomendación por profundidad/patrón numérico; esto no valida scope. Wordlist remota, resolver, wildcard y massdns siguen pendientes y desactivados sin autorización",Parcial
 chef-engine/modules/dnsbrute_mutations.py,156,Módulo de reconocimiento,"Generación local de candidatos a partir de etiquetas observadas; resolver y emitir DNS detrás de scope autorizado",Parcial
 chef-engine/modules/dnscaa.py,130,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
