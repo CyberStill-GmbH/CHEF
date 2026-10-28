@@ -15,6 +15,11 @@ const MAX_TARGET_BYTES: usize = 8 * 1024;
 pub enum ChefTargetKind {
     Asn,
     Organization,
+    EmailAddress,
+    Username,
+    Filesystem,
+    MobileApp,
+    BlacklistRegex,
     IpAddress,
     IpRange,
     DnsName,
@@ -22,8 +27,7 @@ pub enum ChefTargetKind {
     TcpEndpoint,
 }
 
-/// Objetivo CHEF clasificado. `kind` expresa el tipo de entrada, no confirma
-/// que el activo exista ni que un servicio esté abierto.
+/// Semilla CHEF clasificada. `kind` no confirma existencia, propiedad ni scope.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ChefTargetSeed {
     pub kind: ChefTargetKind,
@@ -32,15 +36,10 @@ pub struct ChefTargetSeed {
     pub port: Option<u16>,
 }
 
-/// Clasifica los tipos host-based de BBOT que CHEF puede representar sin
-/// resolver nombres ni consultar servicios.
+/// Clasifica semillas literales localmente; no concede alcance ni ejecuta IO.
 pub fn parse_chef_target_seed(input: &str) -> ChefResult<ChefTargetSeed> {
     let value = input.trim();
-    if value.is_empty()
-        || value.len() > MAX_TARGET_BYTES
-        || value.chars().any(char::is_control)
-        || value.contains('\\')
-    {
+    if value.is_empty() || value.len() > MAX_TARGET_BYTES || value.chars().any(char::is_control) {
         return Err(invalid_target());
     }
 
@@ -66,6 +65,23 @@ pub fn parse_chef_target_seed(input: &str) -> ChefResult<ChefTargetSeed> {
             host: None,
             port: None,
         });
+    }
+
+    if let Some((kind, data)) = parse_context_seed(value)? {
+        return Ok(ChefTargetSeed {
+            kind,
+            data,
+            host: None,
+            port: None,
+        });
+    }
+
+    if let Some(seed) = parse_email_seed(value) {
+        return Ok(seed);
+    }
+
+    if value.contains('\\') {
+        return Err(invalid_target());
     }
 
     if let Ok(address) = value.parse::<IpAddr>() {
@@ -151,6 +167,80 @@ fn parse_asn(value: &str) -> Option<u32> {
     digits.parse::<u32>().ok()
 }
 
+fn parse_context_seed(value: &str) -> ChefResult<Option<(ChefTargetKind, String)>> {
+    let Some((prefix, raw_data)) = value.split_once(':') else {
+        return Ok(None);
+    };
+    let kind = if ["USER", "USERNAME"]
+        .iter()
+        .any(|candidate| prefix.eq_ignore_ascii_case(candidate))
+    {
+        ChefTargetKind::Username
+    } else if ["FILESYSTEM", "FILE", "FOLDER", "DIR", "PATH"]
+        .iter()
+        .any(|candidate| prefix.eq_ignore_ascii_case(candidate))
+    {
+        ChefTargetKind::Filesystem
+    } else if ["MOBILE_APP", "APK", "IPA", "APP"]
+        .iter()
+        .any(|candidate| prefix.eq_ignore_ascii_case(candidate))
+    {
+        ChefTargetKind::MobileApp
+    } else if ["RE", "REGEX"]
+        .iter()
+        .any(|candidate| prefix.eq_ignore_ascii_case(candidate))
+    {
+        ChefTargetKind::BlacklistRegex
+    } else {
+        return Ok(None);
+    };
+    let data = raw_data.trim();
+    if data.is_empty() || data.len() > MAX_TARGET_BYTES {
+        return Err(invalid_target());
+    }
+    Ok(Some((kind, data.to_owned())))
+}
+
+fn parse_email_seed(value: &str) -> Option<ChefTargetSeed> {
+    let (local, address) = value.split_once('@')?;
+    if local.is_empty()
+        || local.chars().count() > 101
+        || !local.chars().next()?.is_alphanumeric()
+        || !local
+            .chars()
+            .all(|character| character.is_alphanumeric() || "_-.+'".contains(character))
+    {
+        return None;
+    }
+
+    let (raw_host, port) = match address.rsplit_once(':') {
+        Some((host, raw_port))
+            if (1..=5).contains(&raw_port.len())
+                && raw_port.bytes().all(|byte| byte.is_ascii_digit()) =>
+        {
+            let port = raw_port.parse::<u32>().ok()?.clamp(1, u16::MAX as u32) as u16;
+            (host, Some(port))
+        }
+        _ => (address, None),
+    };
+    let host = crate::host::canonical_host(raw_host)?;
+    if host.contains('@') || host.contains(':') {
+        return None;
+    }
+    let data = format!(
+        "{}@{}{}",
+        local.to_lowercase(),
+        host,
+        port.map_or_else(String::new, |p| format!(":{p}"))
+    );
+    (data.len() <= MAX_TARGET_BYTES).then_some(ChefTargetSeed {
+        kind: ChefTargetKind::EmailAddress,
+        data,
+        host: Some(host),
+        port,
+    })
+}
+
 pub(crate) fn canonical_network(value: &str) -> Option<String> {
     let (address, prefix) = value.split_once('/')?;
     if address.contains('%') || prefix.is_empty() || !prefix.bytes().all(|b| b.is_ascii_digit()) {
@@ -234,6 +324,6 @@ fn format_netloc(host: &str, port: u16) -> String {
 fn invalid_target() -> ChefError {
     ChefError::new(
         ErrorCode::InvalidInput,
-        "El objetivo CHEF no es una IP, CIDR, dominio, URL HTTP(S) o endpoint host:puerto válido",
+        "La semilla CHEF no coincide con un tipo admitido o supera sus límites",
     )
 }

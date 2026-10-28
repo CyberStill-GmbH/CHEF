@@ -211,6 +211,30 @@ assert.ok(
 assert.equal(organizationSeedExample.kind, 'organization');
 assert.equal(organizationSeedExample.host, null);
 assert.equal(organizationSeedExample.port, null);
+const contextualSeedExamples = [
+  ['email-address', 'emailAddress', false],
+  ['username', 'username', true],
+  ['filesystem', 'filesystem', true],
+  ['mobile-app', 'mobileApp', true],
+  ['blacklist-regex', 'blacklistRegex', true],
+];
+for (const [name, kind, hasNullHost] of contextualSeedExamples) {
+  const example = JSON.parse(
+    readFileSync(
+      `docs/contracts/examples/target-seed-${name}.json`,
+      'utf8',
+    ),
+  );
+  assert.ok(validateTargetSeed(example), JSON.stringify(validateTargetSeed.errors));
+  assert.equal(example.schemaVersion, '1.3.0');
+  assert.equal(example.kind, kind);
+  if (hasNullHost) {
+    assert.equal(example.host, null);
+    assert.equal(example.port, null);
+  } else {
+    assert.equal(typeof example.host, 'string');
+  }
+}
 const eventStatisticsSchema = JSON.parse(
   readFileSync('docs/contracts/event-statistics.schema.json', 'utf8'),
 );
