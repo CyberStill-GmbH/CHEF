@@ -15,6 +15,7 @@ mod dns_policy;
 mod dns_records;
 mod dns_service_candidates;
 mod dns_word_segmentation;
+mod dns_wordlist;
 mod domain;
 mod event_engine;
 mod event_import;
@@ -57,6 +58,7 @@ pub use dns_mutation_candidates::{
 pub use dns_policy::{DnsQueryPolicy, DnsZoneDecision};
 pub use dns_records::{DNS_RECORD_TYPES, DnsTarget, extract_dns_targets, is_dns_service_record};
 pub use dns_service_candidates::common_dns_service_candidates;
+pub use dns_wordlist::{DnsWordlist, parse_dns_wordlist};
 pub use domain::{ChefError, ChefResult, ErrorCode, ServiceInput};
 pub use event_engine::{
     BbotEvent, BbotEventDraft, BbotEventEngine, BbotEventGraph, BbotModule, EventScopeGate,
