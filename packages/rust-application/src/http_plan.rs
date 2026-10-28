@@ -5,14 +5,17 @@
 //! una futura composición de infraestructura ejecute cualquier solicitud.
 
 use std::collections::{BTreeMap, BTreeSet};
+use std::time::Duration;
 
 use chef_core::{BbotEvent, ChefTargetKind, parse_chef_target_seed};
 use url::Url;
 
 const MAX_HTTP_PLAN_EVENTS: usize = 10_000;
-const MAX_HTTP_REQUESTS: usize = 512;
+const MAX_HTTP_REQUESTS: usize = 100;
 const MAX_HTTP_REDIRECTS: u8 = 3;
-const MAX_HTTP_RESPONSE_BYTES: usize = 5 * 1024 * 1024;
+const MAX_HTTP_RESPONSE_BYTES: usize = 256 * 1024;
+const MAX_HTTP_REQUEST_TIMEOUT: Duration = Duration::from_secs(5);
+const MAX_HTTP_JOB_TIMEOUT: Duration = Duration::from_secs(30);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum HttpPlanError {
@@ -38,6 +41,8 @@ pub struct HttpPlanSettings {
     max_requests: usize,
     max_redirects: u8,
     max_response_bytes: usize,
+    request_timeout: Duration,
+    job_timeout: Duration,
 }
 
 impl HttpPlanSettings {
@@ -45,12 +50,18 @@ impl HttpPlanSettings {
         max_requests: usize,
         max_redirects: u8,
         max_response_bytes: usize,
+        request_timeout: Duration,
+        job_timeout: Duration,
     ) -> Result<Self, HttpPlanError> {
         if max_requests == 0
             || max_requests > MAX_HTTP_REQUESTS
             || max_redirects > MAX_HTTP_REDIRECTS
             || max_response_bytes == 0
             || max_response_bytes > MAX_HTTP_RESPONSE_BYTES
+            || request_timeout.is_zero()
+            || request_timeout > MAX_HTTP_REQUEST_TIMEOUT
+            || job_timeout.is_zero()
+            || job_timeout > MAX_HTTP_JOB_TIMEOUT
         {
             return Err(HttpPlanError::InvalidSettings);
         }
@@ -58,6 +69,8 @@ impl HttpPlanSettings {
             max_requests,
             max_redirects,
             max_response_bytes,
+            request_timeout,
+            job_timeout,
         })
     }
 
@@ -66,6 +79,8 @@ impl HttpPlanSettings {
             max_requests: MAX_HTTP_REQUESTS,
             max_redirects: MAX_HTTP_REDIRECTS,
             max_response_bytes: MAX_HTTP_RESPONSE_BYTES,
+            request_timeout: MAX_HTTP_REQUEST_TIMEOUT,
+            job_timeout: MAX_HTTP_JOB_TIMEOUT,
         }
     }
 
@@ -79,6 +94,14 @@ impl HttpPlanSettings {
 
     pub fn max_response_bytes(self) -> usize {
         self.max_response_bytes
+    }
+
+    pub fn request_timeout(self) -> Duration {
+        self.request_timeout
+    }
+
+    pub fn job_timeout(self) -> Duration {
+        self.job_timeout
     }
 }
 
