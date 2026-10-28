@@ -10,6 +10,7 @@ use crate::{ChefError, ChefResult, ErrorCode};
 const MAX_INPUT_PREFIXES: usize = 100_000;
 const MAX_CANDIDATES: usize = 10_000;
 const MAX_DNS_WORDLIST_BYTES: usize = 5 * 1024 * 1024;
+const MAX_DNS_BRUTE_DEPTH: usize = 127;
 
 /// Señala nombres DNS con patrones numéricos que el módulo de origen omite al
 /// preparar fuerza bruta. Es una pista de calidad; no invalida ni elimina el
@@ -58,6 +59,46 @@ pub struct DnsWordlist {
     pub duplicates: usize,
     /// Indica que se encontraron más entradas válidas que el límite solicitado.
     pub truncated: bool,
+}
+
+/// Evaluación local de profundidad y patrón numérico para preparar DNS brute.
+/// No comprueba scope, wildcards, autorización, ni conectividad.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DnsBruteRootAssessment {
+    /// Raíz DNS canonicalizada.
+    pub root: String,
+    /// Profundidad que tendría el próximo nivel de candidatos.
+    pub next_candidate_depth: usize,
+    /// Profundidad configurada, normalizada al rango 1–127.
+    pub max_depth: usize,
+    /// Señal no concluyente de nombre generado automáticamente.
+    pub excessive_digit_pattern: bool,
+    /// Recomendación local para omitir la raíz al preparar fuerza bruta.
+    pub recommended_skip: bool,
+}
+
+/// Adapta las condiciones locales de profundidad y exceso de dígitos del
+/// módulo de origen. Una recomendación de omitir no descarta el activo en el
+/// grafo ni sustituye la comprobación de autorización antes de cualquier red.
+pub fn assess_dns_brute_root(root: &str, max_depth: usize) -> ChefResult<DnsBruteRootAssessment> {
+    let Some(root) = crate::host::canonical_domain(root) else {
+        return Err(ChefError::new(
+            ErrorCode::InvalidInput,
+            "La raíz de fuerza bruta DNS no es un dominio válido",
+        ));
+    };
+    let max_depth = max_depth.clamp(1, MAX_DNS_BRUTE_DEPTH);
+    let next_candidate_depth = crate::host::subdomain_depth(&root).saturating_add(1);
+    let excessive_digit_pattern = has_excessive_digits(&root);
+    let recommended_skip = next_candidate_depth > max_depth || excessive_digit_pattern;
+
+    Ok(DnsBruteRootAssessment {
+        root,
+        next_candidate_depth,
+        max_depth,
+        excessive_digit_pattern,
+        recommended_skip,
+    })
 }
 
 /// Analiza una lista DNS UTF-8 acotada, sin consultar filesystem o red.

@@ -168,3 +168,7 @@ Se portaron `has_excessive_digits` y `subdomain_depth` como señales locales par
 ## 28-10-2026 — Ingesta local de wordlists DNS
 
 Se añadió `parse_dns_wordlist`, que recibe bytes explícitos en vez de abrir rutas o descargar el recurso remoto del módulo. Acepta UTF-8 acotado a 5 MiB, omite líneas vacías/comentarios y controles, deduplica en orden de entrada y limita a 100 000 prefijos. El módulo DNS queda parcial por su preparación local; resolver, wildcard, canarios, descarga de listas y `massdns` no están portados. El inventario queda en 26 parciales, 419 pendientes y 21 exclusiones de 466 archivos. Pruebas funcionales permanecen aplazadas.
+
+## 28-10-2026 — Calidad local de raíz DNS
+
+Se añadió `assess_dns_brute_root`, que combina profundidad de siguiente nivel y patrón numérico para recomendar si se omite una raíz al preparar candidatos. Canonicaliza el dominio y limita `max_depth` a 1–127. La recomendación no se aplica al grafo ni sustituye scope, wildcard o autorización; sigue sin ejecutarse DNS.
