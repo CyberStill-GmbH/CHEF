@@ -33,7 +33,7 @@ chef-engine/core/helpers/git.py,30,Motor/escáner,Aplicación Rust/Tokio y puert
 chef-engine/core/helpers/helper.py,369,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
 chef-engine/core/helpers/interactsh.py,353,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
 chef-engine/core/helpers/libmagic.py,65,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
-chef-engine/core/helpers/misc.py,3016,Motor/escáner,packages/rust-core/src/speculate.rs (parent_directory/url_parents); host.rs (clasificación local de raíz registrable/subdominio con PSL ICANN, padres de dominio y profundidad); port_spec.rs (parse_port_string) y text_policy.rs (validación/escape de controles y truncado Unicode acotado); quedan helpers por clasificar,Parcial
+chef-engine/core/helpers/misc.py,3016,Motor/escáner,packages/rust-core/src/speculate.rs (parent_directory/url_parents); host.rs (clasificación local de raíz registrable/subdominio con PSL ICANN, parser host/puerto para la ingesta y profundidad); port_spec.rs (parse_port_string) y text_policy.rs (validación/escape de controles y truncado Unicode acotado); otros usos de origen siguen pendientes,Parcial
 chef-engine/core/helpers/names_generator.py,775,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
 chef-engine/core/helpers/ntlm.py,80,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
 chef-engine/core/helpers/process.py,53,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente

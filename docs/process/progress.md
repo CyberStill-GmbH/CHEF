@@ -160,3 +160,7 @@ Se centralizó en `host.rs` la derivación acotada de padres de dominio, adaptad
 ## 28-10-2026 — Clasificación de dominios para pistas CHEF
 
 Se amplió `packages/rust-core/src/host.rs` para distinguir raíces registrables de subdominios bajo sufijos ICANN conocidos. La derivación de padres usa la misma clasificación y mantiene fuera sufijos privados/desconocidos, IP y entradas inválidas. Es procesamiento local, sin DNS ni cambio de scope; no cambia snapshot ni versión. Se actualizaron inventario, plan y auditoría en español. Pasaron `cargo fmt --check`, `cargo check --locked --offline`, Clippy de biblioteca con `-D warnings`, `npm run check:docs` y `git diff --check`. No se ejecutaron pruebas funcionales; quedan para la fase posterior solicitada.
+
+## 28-10-2026 — Parser estricto de host y puerto para la ingesta
+
+Se adaptó `misc.py::split_host_port` como función pura `host::split_host_port` y se reutilizó desde `event_import` para completar netlocs de eventos `OPEN_TCP_PORT`/`OPEN_UDP_PORT`. La variante CHEF limita longitud, rechaza credenciales, controles, rutas y separadores ambiguos; reconoce IP, host/puerto y puertos por defecto de HTTP(S)/WS(S). El importador sigue exigiendo un puerto explícito para una observación de servicio; una URL sin puerto no se transforma en servicio observado. Sin red ni cambios de snapshot. Se actualizaron auditoría, plan e inventario. Validación de formato/compilación/Clippy y docs; pruebas funcionales aplazadas por indicación del propietario.

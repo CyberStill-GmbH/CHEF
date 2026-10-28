@@ -3,17 +3,15 @@
 use std::collections::{HashMap, HashSet};
 use std::net::IpAddr;
 
-use chrono::{DateTime, SecondsFormat, Utc};
-use serde::Deserialize;
-use serde_json::{Map, Value};
-use url::{Host, Url};
-
 use crate::{
     domain::{ChefError, ChefResult, ErrorCode, ServiceInput},
     event_engine::{
         BbotEvent, BbotEventGraph, event_id, sanitize_event_data, valid_event_type, validate_event,
     },
 };
+use chrono::{DateTime, SecondsFormat, Utc};
+use serde::Deserialize;
+use serde_json::{Map, Value};
 
 const MAX_LINE_BYTES: usize = 128 * 1024;
 const MAX_EVENT_DEPTH: usize = 32;
@@ -242,22 +240,8 @@ fn parse_port_netloc(value: &str) -> ChefResult<(String, u16)> {
     {
         return Err(invalid_port_netloc());
     }
-    let url = Url::parse(&format!("tcp://{value}")).map_err(|_| invalid_port_netloc())?;
-    if !url.username().is_empty()
-        || url.password().is_some()
-        || url.query().is_some()
-        || url.fragment().is_some()
-        || !url.path().is_empty()
-    {
-        return Err(invalid_port_netloc());
-    }
-    let host = match url.host().ok_or_else(invalid_port_netloc)? {
-        Host::Domain(domain) => domain.to_owned(),
-        Host::Ipv4(address) => address.to_string(),
-        Host::Ipv6(address) => address.to_string(),
-    };
-    let port = url
-        .port()
+    let (host, port) = crate::host::split_host_port(value).ok_or_else(invalid_port_netloc)?;
+    let port = port
         .filter(|port| *port > 0)
         .ok_or_else(invalid_port_netloc)?;
     Ok((host, port))

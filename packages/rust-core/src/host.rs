@@ -3,6 +3,8 @@
 
 use std::net::IpAddr;
 
+use url::{Host, Url};
+
 pub(crate) fn canonical_host(value: &str) -> Option<String> {
     let value = value.trim();
     if value.is_empty()
@@ -39,6 +41,61 @@ pub(crate) fn canonical_host(value: &str) -> Option<String> {
 pub(crate) fn canonical_domain(value: &str) -> Option<String> {
     let host = canonical_host(value)?;
     host.parse::<IpAddr>().is_err().then_some(host)
+}
+
+/// Adapta `misc.split_host_port` para entradas de host/netloc. Acepta IP,
+/// host con puerto y esquemas comunes; rechaza credenciales, rutas y controles.
+/// Nunca resuelve el host ni abre conexiones.
+pub(crate) fn split_host_port(value: &str) -> Option<(String, Option<u16>)> {
+    let value = value.trim();
+    if value.is_empty()
+        || value.len() > 8_192
+        || value.chars().any(char::is_control)
+        || value.chars().any(char::is_whitespace)
+        || value.contains(['\\', '@', '?', '#'])
+    {
+        return None;
+    }
+    if let Ok(address) = value.parse::<IpAddr>() {
+        return Some((address.to_string(), None));
+    }
+
+    let (scheme, authority) = match value.split_once("://") {
+        Some((scheme, authority)) => {
+            if scheme.is_empty()
+                || scheme.len() > 20
+                || !scheme.bytes().all(|byte| byte.is_ascii_alphanumeric())
+            {
+                return None;
+            }
+            (Some(scheme.to_ascii_lowercase()), authority)
+        }
+        None => (None, value),
+    };
+    if authority.is_empty() || authority.contains(['/', '\\']) {
+        return None;
+    }
+
+    let url = Url::parse(&format!("tcp://{authority}")).ok()?;
+    if !url.username().is_empty()
+        || url.password().is_some()
+        || url.query().is_some()
+        || url.fragment().is_some()
+        || !(url.path().is_empty() || url.path() == "/")
+    {
+        return None;
+    }
+    let host = match url.host()? {
+        Host::Domain(domain) => domain.to_owned(),
+        Host::Ipv4(address) => address.to_string(),
+        Host::Ipv6(address) => address.to_string(),
+    };
+    let default_port = match scheme.as_deref() {
+        Some("http" | "ws") => Some(80),
+        Some("https" | "wss") => Some(443),
+        _ => None,
+    };
+    Some((host, url.port().or(default_port)))
 }
 
 fn icann_registrable_domain(value: &str) -> Option<(String, String)> {
