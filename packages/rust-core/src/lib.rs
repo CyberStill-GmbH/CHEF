@@ -5,6 +5,7 @@
 
 mod application;
 mod asn;
+mod asn_report;
 mod asset_inventory_export;
 mod config;
 mod config_merge;
@@ -49,6 +50,7 @@ pub use application::{
 pub use asn::{
     AsnEnrichmentCircuitBreaker, AsnRecord, AsnTargetRetryPolicy, normalize_asn_response,
 };
+pub use asn_report::{AsnReportEvidence, AsnReportRow, summarize_asn_report};
 pub use asset_inventory_export::{ChefAssetInventoryExport, export_asset_inventory_csv};
 pub use config::{ChefConfig, DefectDojoSettings, RuntimeSettings, ScopeSettings, SourceSettings};
 pub use config_merge::{

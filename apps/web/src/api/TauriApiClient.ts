@@ -13,6 +13,8 @@ import { decodeNmapEvidenceExport } from '../contracts/decodeNmapEvidenceExport'
 import { decodeAssetInventoryExport } from '../contracts/decodeAssetInventoryExport';
 import { decodeWebEvidenceReportExport } from '../contracts/decodeWebEvidenceReportExport';
 import { decodeObservedEmailExport } from '../contracts/decodeObservedEmailExport';
+import { decodeAsnReport } from '../contracts/decodeAsnReport';
+import { decodeAsnReportRequest } from '../contracts/decodeAsnReportRequest';
 import type { ScanLogDto } from '../contracts/scan-log';
 import type { ScopePolicyDto } from '../contracts/snapshot';
 import type { ApiClient } from './ApiClient';
@@ -209,6 +211,18 @@ export class TauriApiClient implements ApiClient {
     });
     options?.signal?.throwIfAborted();
     return decodeEventStatistics(statistics);
+  }
+
+  async loadAsnReport(runId: string, options?: { signal?: AbortSignal }) {
+    options?.signal?.throwIfAborted();
+    const request = decodeAsnReportRequest({ schemaVersion: '1.0.0', runId });
+    const report = await invoke<unknown>('load_chef_asn_report', { request });
+    options?.signal?.throwIfAborted();
+    const decoded = decodeAsnReport(report);
+    if (decoded.runId !== runId) {
+      throw new Error('El informe ASN corresponde a otra ejecución.');
+    }
+    return decoded;
   }
 }
 

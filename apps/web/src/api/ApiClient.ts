@@ -11,6 +11,7 @@ import type { NmapEvidenceExportDto } from '../contracts/nmap-evidence-export';
 import type { AssetInventoryExportDto } from '../contracts/asset-inventory-export';
 import type { WebEvidenceReportExportDto } from '../contracts/web-evidence-report-export';
 import type { ObservedEmailExportDto } from '../contracts/observed-email-export';
+import type { AsnReportDto } from '../contracts/asn-report';
 
 export interface ApiClient {
   loadSnapshot(options?: { signal?: AbortSignal }): Promise<SnapshotDto>;
@@ -50,6 +51,10 @@ export interface ApiClient {
     runId: string,
     options?: { signal?: AbortSignal },
   ): Promise<EventStatisticsDto>;
+  loadAsnReport?(
+    runId: string,
+    options?: { signal?: AbortSignal },
+  ): Promise<AsnReportDto>;
   importBbotJsonl?(
     jsonl: string,
     scope: ScopePolicyDto,

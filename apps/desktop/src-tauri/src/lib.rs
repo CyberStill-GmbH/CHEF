@@ -5,7 +5,7 @@ use chef_core::{
     spawn_bbot_import_job_with_config,
 };
 use chef_storage::LocalSnapshotStore;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, Manager, State};
 use tokio::sync::Mutex;
 
@@ -405,6 +405,55 @@ struct EventStatisticsDto {
     statistics: chef_core::BbotEventStatistics,
 }
 
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+struct AsnReportRequestDto {
+    schema_version: String,
+    run_id: String,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct AsnReportDto {
+    schema_version: &'static str,
+    run_id: String,
+    rows: Vec<chef_core::AsnReportRow>,
+}
+
+#[tauri::command]
+async fn load_chef_asn_report(
+    request: AsnReportRequestDto,
+    state: State<'_, StoreSlot>,
+) -> Result<AsnReportDto, String> {
+    if request.schema_version != "1.0.0" {
+        return Err("La versión de solicitud del informe ASN no es compatible".to_owned());
+    }
+    validate_run_id(&request.run_id)?;
+
+    let mut slot = state.store.lock().await;
+    if slot.is_none() {
+        *slot = Some(
+            LocalSnapshotStore::open(&state.database_path)
+                .await
+                .map_err(|error| error.to_string())?,
+        );
+    }
+    let graph = slot
+        .as_ref()
+        .expect("el almacén se abrió arriba")
+        .load_bbot_event_graph(&request.run_id)
+        .await
+        .map_err(|error| error.to_string())?
+        .ok_or_else(|| "No existen eventos de origen para esa importación".to_owned())?;
+    drop(slot);
+    let rows = chef_core::summarize_asn_report(&graph).map_err(|error| error.message.to_owned())?;
+    Ok(AsnReportDto {
+        schema_version: "1.0.0",
+        run_id: request.run_id,
+        rows,
+    })
+}
+
 #[tauri::command]
 async fn export_chef_snapshot(
     run_id: String,
@@ -497,8 +546,7 @@ async fn export_chef_nmap_evidence(
         .await
         .map_err(|error| error.to_string())?
         .ok_or_else(|| "No existe un grafo CHEF para esa importación".to_owned())?;
-    chef_core::export_nmap_evidence_xml(&run_id, &graph)
-        .map_err(|error| error.message.to_owned())
+    chef_core::export_nmap_evidence_xml(&run_id, &graph).map_err(|error| error.message.to_owned())
 }
 
 #[tauri::command]
@@ -522,8 +570,7 @@ async fn export_chef_asset_inventory(
         .await
         .map_err(|error| error.to_string())?
         .ok_or_else(|| "No existe un grafo CHEF para esa importación".to_owned())?;
-    chef_core::export_asset_inventory_csv(&run_id, &graph)
-        .map_err(|error| error.message.to_owned())
+    chef_core::export_asset_inventory_csv(&run_id, &graph).map_err(|error| error.message.to_owned())
 }
 
 #[tauri::command]
@@ -547,8 +594,7 @@ async fn export_chef_web_evidence_report(
         .await
         .map_err(|error| error.to_string())?
         .ok_or_else(|| "No existe un grafo CHEF para esa importación".to_owned())?;
-    chef_core::export_web_evidence_report(&run_id, &graph)
-        .map_err(|error| error.message.to_owned())
+    chef_core::export_web_evidence_report(&run_id, &graph).map_err(|error| error.message.to_owned())
 }
 
 #[tauri::command]
@@ -626,6 +672,7 @@ pub fn run() {
             cancel_import_job,
             load_chef_recon_graph,
             load_chef_event_statistics,
+            load_chef_asn_report,
             export_chef_snapshot,
             export_chef_observed_domains,
             export_chef_evidence_csv,
