@@ -1,0 +1,12 @@
+{
+  "queryDomain": "example.com",
+  "response": {
+    "subdomains": ["api", "www", "api", "mail.internal"],
+    "matches": 4
+  },
+  "expectedCandidates": [
+    "api.example.com",
+    "mail.internal.example.com",
+    "www.example.com"
+  ]
+}

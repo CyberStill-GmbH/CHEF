@@ -1,0 +1,7 @@
+{
+  "queryDomain": "example.com",
+  "response": {
+    "subdomains": ["", "*", ".api", "bad_label", "-invalid"]
+  },
+  "expectedCandidates": []
+}
