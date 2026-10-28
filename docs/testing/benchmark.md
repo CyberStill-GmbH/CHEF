@@ -1,4 +1,4 @@
-# Benchmark reproducible
+# Comparativa de rendimiento reproducible
 
 ```sh
 npm run benchmark

@@ -2,6 +2,8 @@
 
 Estado: aceptado para el incremento inicial; decisiones futuras indicadas expresamente. Fecha: 29-09-2026.
 
+Vigencia: decisión histórica que explica el núcleo TypeScript/Node existente. El propietario solicitó migrar el producto a Rust el 18-10-2026; [ADR 0012](0012-escritorio-tauri-rust.md) propone ese portado. Los contratos y fixtures del núcleo actual permanecen como referencia de conformidad hasta que cada módulo Rust tenga paridad comprobada.
+
 ## Contexto
 
 Necesitamos entregar con React/TypeScript y 102.9 h netas; un segundo lenguaje en el core aumenta setup. Burp exige frontera Java.

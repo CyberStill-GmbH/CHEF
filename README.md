@@ -4,25 +4,30 @@
 
 CHEF es un proyecto del **Centro Cultural de Ciberseguridad**. Su objetivo es reducir el trabajo manual de reconocimiento: reunir resultados activos y señales pasivas, quitar duplicados sin perder procedencia y mostrar **por qué** dos observaciones se relacionan. Un servicio abierto es una observación; una relación entre fuentes puede ser una inferencia; ninguno de los dos es por sí mismo una vulnerabilidad confirmada.
 
-La visión de producto es una aplicación web para equipos de pentesting: proyectos separados, mapa interactivo y lista accesible, evidencias fechadas, relaciones observadas o candidatas, y exportaciones reproducibles. La [arquitectura web propuesta](docs/architecture/proposed-web.md) separa React/TypeScript, API Node.js/TypeScript con PostgreSQL/Prisma y GitHub OAuth, y un motor principal de correlación en Go. El propietario confirmó el stack; **ninguna de esas piezas web/Go está implementada todavía**. La [selección OSINT](docs/research/open-osint-selection.md) prioriza Common Crawl, RDAP y RIPEstat con permisos por verificar. Burp Suite vendrá después del producto web.
+La dirección vigente es una aplicación local de escritorio: React/Vite/TypeScript, Tailwind y shadcn/ui en frontend; Tauri v2 con núcleo Rust asíncrono; SurrealDB embebida con RocksDB para persistencia y grafo; xterm.js para logs simulados; y exportación DefectDojo opcional y explícita. La decisión está en el [ADR 0012](docs/adr/0012-escritorio-tauri-rust.md) y el [diseño de persistencia](docs/architecture/persistencia-local.md). **El código actual sigue en migración:** existe un shell Tauri conectado al importador offline y al almacén SurrealDB, además del núcleo/CLI TypeScript y explorador React/Vite que sirven como referencia de conformidad. Faltan capacidades del catálogo, integración y validación manual del ciclo de vida de persistencia. Burp queda como línea posterior.
 
 ## Estado verificable
 
 - **Funciona hoy:** núcleo TypeScript con dominio aislado, importador Nmap XML offline, scope literal, identidad determinista, deduplicación conservadora, relaciones con evidencia y exportación `Snapshot 1.0.0` mediante CLI. Los tests incluyen un control negativo que impide fusionar hosts por hostname compartido y entradas XML hostiles.
 - **Spike separado:** adaptador Java/Montoya para normalizar requests HTTP seleccionadas. Compila y tiene pruebas de conformidad, pero aún requiere validación manual dentro de Burp y no correlaciona HTTP con Nmap.
-- **En propuesta:** UI React, API Node, PostgreSQL/Prisma, OAuth, motor Go, fuentes pasivas, correlación entre fuentes, mapa/exportación visual y actualización periódica. Ninguno de esos componentes se muestra como entregado por figurar en diagramas o contratos.
+- **Implementado:** core/CLI TypeScript offline con importación Nmap acotada, IDs deterministas, evidencia, `Snapshot 1.0.0` y control negativo; explorador React/Vite local con fixture, lista, panel de evidencia y pruebas.
+- **Portado parcialmente:** `packages/rust-core` procesa Nmap y eventos JSONL de evidencia offline, aplica scope, conserva procedencia y produce snapshots 1.0/1.1. Un coordinador Tokio ejecuta estas importaciones en workers bloqueantes, ofrece cancelación cooperativa y comunica estados por un canal acotado; hay nueve pruebas Rust.
+- **Parcial:** `packages/rust-storage` abre SurrealDB embebida sobre RocksDB y persiste snapshots versionados por `runId`; Tauri ya integra importación, consulta del grafo y exportación local. Quedan pendientes la proyección normalizada, recuperación/backups multiplataforma y validación manual del flujo WebView.
+- **Pendiente:** completar las capacidades de reconocimiento compatibles con CHEF y sus adaptadores. Rust adapta eventos de evidencia a activos CHEF tipados con evidencia y relaciones; el motor recursivo admite módulos offline registrados, pero no incluye resolutores DNS/HTTP ni fuentes pasivas activas. La demo inicial usa exclusivamente fixtures offline.
 
-La presentación objetivo es el **31 de octubre de 2026**, con diez horas semanales por cada integrante: César, Diego y Jhojan. El prototipo deseado es web desplegado para el equipo, con crear proyecto → importar Nmap autorizado → consultar una fuente pasiva → correlacionar en Go → revisar activos/relaciones con evidencia → exportar. **Common Crawl fue seleccionado como primer conector candidato, pero su permiso, acceso y dataset correspondiente aún deben verificarse; el nuevo coste de la frontera Go también debe reestimarse.** El [plan](docs/proposals/2026-09-scrum-to-oct31.md) explicita el desfase. En esta fase CHEF **no lanza escaneos**; solo importa resultados autorizados.
+La demo objetivo sigue siendo el **31 de octubre de 2026**. El [plan Scrum vigente](docs/plan/scrum-actual.md) asigna la primera vertical de escritorio offline a César, Diego y Jhojan. CHEF **no lanza escaneos en esta etapa**: los logs representan una simulación con fixtures. Consultas pasivas, sincronización remota y escaneo activo no se habilitan sin permiso, límites y confirmación del usuario.
 
 ## Probar el incremento actual
 
-Requiere Node.js 24 LTS y npm. Los fixtures son sintéticos, usan loopback y no necesitan Nmap, Burp, base de datos ni Internet.
+Requiere Node.js 24 LTS, npm y Rust estable con Cargo/rustfmt/clippy. Los fixtures son sintéticos, usan loopback y no necesitan Nmap, Burp, base de datos ni actividad de red.
 
 ```sh
 npm ci
 npm run check
 npm run demo
 ```
+
+`npm run check` verifica TypeScript, Rust, almacenamiento, contratos, pruebas y build web. Los crates Rust pueden ejecutarse por separado con `npm run rust:check`.
 
 Para generar un snapshot JSON con la CLI:
 
@@ -49,12 +54,16 @@ La idea diferencial es una **hipótesis comprobable**: un analista debería enco
 
 ## Navegar el repositorio
 
-- [Producto y requisitos](docs/product/prd.md) · [propuesta actual de alcance](docs/proposals/2026-09-scope-decision.md)
-- [Arquitectura vigente](docs/architecture/overview.md) · [arquitectura web propuesta](docs/architecture/proposed-web.md) · [ADRs y contratos por reconciliar](docs/proposals/2026-09-adr-contract-deltas.md)
+- [PRD de escritorio](docs/product/desktop-prd.md) · [requisitos de escritorio](docs/product/desktop-requirements.md) · [alcance](docs/product/scope.md)
+- [Arquitectura actual](docs/architecture/overview.md) · [arquitectura Tauri/Rust propuesta](docs/architecture/desktop-tauri.md) · [ADR 0012](docs/adr/0012-escritorio-tauri-rust.md)
 - [Investigación](docs/research/recon-correlation-2026-09.md) · [OSINT abierta](docs/research/open-osint-selection.md) · [fuentes primarias fechadas](docs/research/sources.json)
-- [Scrum hasta octubre](docs/proposals/2026-09-scrum-to-oct31.md) · [backlog sugerido](docs/proposals/2026-09-issues.md)
+- [Scrum vigente hasta el 31-10](docs/plan/scrum-actual.md) · [backlog de migración](docs/plan/backlog-desktop.md) · [backlog web anterior](docs/plan/backlog.md)
 - [Contribuir y revisar PRs](CONTRIBUTING.md) · [CI y CodeQL](docs/governance/ci-security.md) · [índice documental](docs/README.md) · [skills locales](docs/process/skills-usage.md)
 
-El dominio vive en `packages/domain`, los casos de uso en `packages/application`, los adaptadores en `packages/adapters` y la composición actual en `apps/cli`. `apps/api` y `apps/web` reservan fronteras futuras, sin servidores ni UI funcionales. `extensions/burp` contiene el spike separado. Las reglas del equipo están en [AGENTS.md](AGENTS.md).
+El dominio y los casos de uso CHEF viven en `packages/domain` y `packages/rust-core`; `packages/rust-storage` gestiona la persistencia y `apps/desktop/src-tauri` compone el flujo local con React. `apps/cli` conserva la referencia offline TypeScript. `extensions/burp` contiene un spike separado. Las reglas del equipo están en [AGENTS.md](AGENTS.md).
 
-Código original de CHEF bajo [MIT](LICENSE); [dependencias y límites de redistribución](docs/governance/licenses.md). CHEF no está afiliado ni aprobado por PortSwigger o Nmap. Solo se trabaja con datos y entornos autorizados; un archivo importado nunca amplía el scope.
+CHEF se distribuye bajo [AGPL-3.0](LICENSE); la [atribución y las licencias de dependencias](docs/governance/licenses.md) describen sus componentes de terceros. CHEF no está afiliado ni aprobado por PortSwigger o Nmap. Solo se trabaja con datos y entornos autorizados; un archivo importado nunca amplía el scope.
+
+## Referencia del formato de importación
+
+El importador procesa localmente archivos JSONL ya generados; no ejecuta descubrimiento ni concede autorización de red. Para consultar el formato de origen y las capacidades adaptadas, véanse la [referencia upstream de BBOT](https://github.com/blacklanternsecurity/bbot), la [auditoría de capacidades](docs/migration/auditoria-fuente.md), el [inventario](docs/migration/inventario-migracion.csv), el [plan de portado a Rust](docs/migration/plan-migracion-rust.md) y los [contratos CHEF](docs/contracts/README.md).

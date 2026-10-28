@@ -1,4 +1,6 @@
-# PRD · CHEF
+# PRD histórico · CHEF web
+
+> Este documento describe la propuesta web de septiembre de 2026 y se conserva como antecedente. La dirección actual está en el [PRD de escritorio Tauri/Rust](desktop-prd.md), el [ADR 0012](../adr/0012-escritorio-tauri-rust.md) y el [Scrum vigente](../plan/scrum-actual.md). No usar los módulos ni el stack web aquí descritos como alcance activo.
 
 Actualizado 29-09-2026. Producto del **Centro Cultural de Ciberseguridad**. Visión confirmada por el propietario; implementación real delimitada abajo. [Scope](scope.md), [requisitos](requirements.md), [arquitectura](../architecture/overview.md) y [backlog](../plan/backlog.md) son documentos enlazados, no sustitutos del código/prueba.
 

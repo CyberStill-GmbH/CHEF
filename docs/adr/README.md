@@ -1,20 +1,21 @@
 # Registro de decisiones arquitectónicas
 
-Los ADRs preservan **por qué** se eligió una dirección, sus alternativas, consecuencias y evidencia de revisión. El código/contrato actual muestran **qué** se implementó; una propuesta no equivale a aceptación ni a despliegue. El contexto general está en [C4 actual](../architecture/overview.md), [web propuesta](../architecture/proposed-web.md) y [seguridad CWE](../security/cwe-controls.md).
+Los ADRs preservan **por qué** se eligió una dirección, sus alternativas, consecuencias y evidencia de revisión. El código/contrato actual muestran **qué** se implementó; una dirección aceptada no equivale a una implementación. El [ADR 0012](0012-escritorio-tauri-rust.md) registra la dirección de producto aceptada por el propietario, con revisión técnica y toolchain pendientes. El contexto general está en [C4 del código actual](../architecture/overview.md), [arquitectura de escritorio](../architecture/desktop-tauri.md) y [seguridad CWE](../security/cwe-controls.md).
 
 ## Índice y vigencia
 
-- [0001 · núcleo TypeScript](0001-core-language.md), aceptado para el incremento actual.
+- [0001 · núcleo TypeScript](0001-core-language.md), aceptado para el incremento inicial; se conserva como base de compatibilidad mientras se propone el portado Rust.
 - [0002 · identidad y grafo](0002-graph.md), aceptado para el incremento actual.
 - [0003 · ingestión Nmap](0003-ingestion.md), aceptado para el incremento actual.
-- [0004 · memoria y snapshot](0004-persistence.md), aceptado **solo** para el incremento offline; la persistencia web requiere nueva decisión.
-- [0005 · frontera web](0005-web-events.md), aceptado **solo** como dirección exploratoria inicial; el despliegue web requiere nueva decisión.
+- [0004 · memoria y snapshot](0004-persistence.md), aceptado **solo** para el incremento TypeScript offline; la persistencia local de escritorio requiere una nueva decisión.
+- [0005 · comunicación exploratoria](0005-web-events.md), antecedente de API web; la integración de escritorio se rige por la propuesta 0012.
 - [0006 · Burp/Montoya](0006-burp-boundary.md), spike separado; BApp posterior.
 - [0007 · explorador de grafo](0007-graph-ui.md), candidata para React, pendiente benchmark real.
 - [0008 · plataforma web íntegramente TypeScript](0008-web-platform.md), **rechazado como propuesta futura** tras decisión del propietario; se conserva el análisis.
 - [0009 · correlación multifuente](0009-evidence-correlation.md), **propuesto**; conserva los invariantes de 0002.
 - [0010 · fuentes y ejecución activa](0010-source-integration.md), **propuesto**; la fase actual solo importa resultados autorizados.
-- [0011 · frontera Node.js/Prisma/OAuth y motor Go](0011-node-go-boundary.md), **propuesto para revisión técnica**, con stack confirmado por el propietario; preserva el CLI TypeScript.
+- [0011 · frontera Node.js/Prisma/OAuth y motor Go](0011-node-go-boundary.md), **retirado por decisión del propietario el 18-10-2026**; se conserva como antecedente sin implementación.
+- [0012 · escritorio Tauri, núcleo Rust y SurrealDB local](0012-escritorio-tauri-rust.md), **dirección aceptada por el propietario; validación técnica de integración pendiente**; fija gates de migración, seguridad y conformidad.
 
 ## Cuándo abrir un ADR
 

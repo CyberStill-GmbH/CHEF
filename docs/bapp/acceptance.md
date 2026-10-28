@@ -19,6 +19,6 @@ Consulta oficial29-09-2026, página actualizada22-09-2026: [acceptance criteria]
 
 ## Gates propios adicionales
 
-No prometer que el acrónimo CHEF describe la función por sí mismo; acompañarlo siempre del subtítulo. No publicar como BApp terminada un JAR que solo produce metadata. Evidencia mínima: tarea útil dentro de Burp, compatibilidad probada en versiones listadas, resultados manuales, README inglés, licencia/consentimiento de autores y benchmark con límites claros.
+No prometer que el acrónimo CHEF describe la función por sí mismo; acompañarlo siempre del subtítulo. No publicar como BApp terminada un JAR que solo produce metadatos. Evidencia mínima: tarea útil dentro de Burp, compatibilidad probada en las versiones indicadas, resultados manuales, README en inglés para distribución, licencia y consentimiento de autores, y benchmark con límites claros.
 
 Proceso vigente: repositorio fuente, nombre/description y guía de funcionamiento/setup; después New extension submission issue en [extension-portal](https://github.com/PortSwigger/extension-portal). Ver [documentación de submission](https://portswigger.net/burp/documentation/desktop/extend-burp/extensions/creating/bapp-store-submitting-extensions). No se usará un correo antiguo como procedimiento supuesto y no se ha enviado una solicitud.

@@ -2,7 +2,7 @@
 
 Estado: aceptado para el incremento inicial; decisiones futuras indicadas expresamente. Fecha: 29-09-2026.
 
-Vigencia: la CLI y el snapshot siguen siendo reales; la dirección anterior de API loopback/SSE era exploratoria. La web alojable de equipo con Node/Prisma y motor Go se analiza en [ADR 0011 propuesto](0011-node-go-boundary.md). SSE no se prioriza hasta medir latencia/uso, y no hay API implementada.
+Vigencia: la CLI y el snapshot TypeScript siguen siendo reales; la API loopback/SSE era exploratoria. La dirección actual es la aplicación de escritorio propuesta en [ADR 0012](0012-escritorio-tauri-rust.md). Tauri IPC, eventos y canales aún no están implementados; se medirán volumen, latencia, cancelación y límites antes de seleccionar el transporte de logs.
 
 ## Contexto
 
