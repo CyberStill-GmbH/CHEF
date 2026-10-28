@@ -7,6 +7,7 @@ import { decodeScanLog } from '../contracts/decodeScanLog';
 import { decodeChefConfig } from '../contracts/decodeChefConfig';
 import { decodeEventStatistics } from '../contracts/decodeEventStatistics';
 import { decodeTargetSeed } from '../contracts/decodeTargetSeed';
+import type { ScanLogDto } from '../contracts/scan-log';
 import type { ScopePolicyDto } from '../contracts/snapshot';
 import type { ApiClient } from './ApiClient';
 
@@ -21,16 +22,65 @@ export class TauriApiClient implements ApiClient {
   async importBbotJsonl(
     jsonl: string,
     scope: ScopePolicyDto,
-    options?: { signal?: AbortSignal; presetId?: string },
+    options?: {
+      signal?: AbortSignal;
+      presetId?: string;
+      onPhase?: (phase: ScanLogDto['phase']) => void;
+    },
   ) {
     options?.signal?.throwIfAborted();
-    const snapshot = await invoke<unknown>('import_bbot_jsonl', {
-      jsonl,
-      scope,
-      presetId: options?.presetId ?? null,
+    const requestId = crypto.randomUUID();
+    let jobId: string | undefined;
+    let cancelable = false;
+    let cancelRequest: Promise<boolean> | undefined;
+    const requestCancellation = () => {
+      if (!jobId || !cancelable || cancelRequest) return;
+      cancelable = false;
+      cancelRequest = invoke<boolean>('cancel_import_job', { jobId }).catch(
+        () => false,
+      );
+    };
+    const unlisten = await listen<unknown>('scan-log', ({ payload }) => {
+      try {
+        const event = decodeScanLog(payload);
+        if (event.requestId !== requestId) return;
+        options?.onPhase?.(event.phase);
+        if (event.phase === 'started') {
+          jobId = event.jobId;
+          cancelable = true;
+          if (options?.signal?.aborted) requestCancellation();
+        } else if (
+          event.phase === 'validated' ||
+          event.phase === 'stored' ||
+          event.phase === 'completed' ||
+          event.phase === 'failed' ||
+          event.phase === 'cancelled'
+        ) {
+          cancelable = false;
+        }
+      } catch {
+        // Ignorar mensajes IPC que no cumplan el contrato CHEF.
+      }
     });
-    options?.signal?.throwIfAborted();
-    return decodeSnapshot(snapshot);
+    const onAbort = () => requestCancellation();
+    options?.signal?.addEventListener('abort', onAbort, { once: true });
+    try {
+      if (options?.signal?.aborted) requestCancellation();
+      const snapshot = await invoke<unknown>('import_bbot_jsonl', {
+        requestId,
+        jsonl,
+        scope,
+        presetId: options?.presetId ?? null,
+      });
+      if (cancelRequest && (await cancelRequest)) throw abortError();
+      return decodeSnapshot(snapshot);
+    } catch (error) {
+      if (cancelRequest && (await cancelRequest)) throw abortError();
+      throw error;
+    } finally {
+      options?.signal?.removeEventListener('abort', onAbort);
+      unlisten();
+    }
   }
 
   async loadConfig(options?: { signal?: AbortSignal }) {
@@ -88,4 +138,8 @@ export class TauriApiClient implements ApiClient {
     options?.signal?.throwIfAborted();
     return decodeEventStatistics(statistics);
   }
+}
+
+function abortError() {
+  return new DOMException('Importación cancelada.', 'AbortError');
 }
