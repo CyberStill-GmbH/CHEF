@@ -342,3 +342,7 @@ Se añadió `parse_fullhunt_subdomains` para procesar `hosts[]` de respuestas Fu
 ### 28-10-2026 — Parser offline de OTX Passive DNS
 
 Se añadió `parse_otx_passive_dns` para extraer hostnames de `passive_dns[]` en una respuesta JSON archivada. Limita la entrada a 2 MiB, 4 096 registros y 1 024 candidatos; canonicaliza, deduplica y solo conserva descendientes de la raíz ICANN. Omite las direcciones, fechas y ASN para evitar reinterpretar datos históricos como observaciones actuales. No consulta OTX ni maneja API keys. Se añadieron fixtures sintéticos positivos/negativos; inventario: 61 parciales, 375 pendientes y 30 excluidos. Las pruebas funcionales siguen aplazadas.
+
+### 28-10-2026 — Parser offline de Shodan DNS
+
+Se añadió `parse_shodan_dns_subdomains` para expandir prefijos `subdomains[]` de una página JSON archivada. Acota el cuerpo a 1 MiB, los prefijos a 2 048 y los candidatos a 1 024; canonicaliza y deduplica los nombres bajo la raíz consultada. No usa API key, hace solicitudes ni continúa la paginación. Los resultados son candidatos históricos, no observaciones DNS actuales. Fixtures sintéticos positivos/negativos añadidos; inventario: 62 parciales, 374 pendientes y 30 excluidos. Pruebas funcionales aplazadas.
