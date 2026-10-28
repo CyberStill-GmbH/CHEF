@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "1.0.0",
+  "runId": "run:fixture-001",
+  "fileName": "chef-inventario-run-fixture-001.csv",
+  "contentType": "text/csv; charset=utf-8",
+  "scopeStatus": "not_asserted",
+  "rowCount": 1,
+  "csv": "\"id_activo_host\",\"tipo_host\",\"host\",\"ips_observadas_json\",\"puertos_tcp_observados_json\",\"puertos_udp_observados_json\",\"endpoints_observados_json\",\"tecnologias_observadas_json\",\"ids_hallazgos_candidatos_json\",\"observado_desde\",\"observado_hasta\",\"ids_evidencia_json\"\r\n\"asset:example-domain\",\"domain\",\"example.invalid\",\"[\\\"192.0.2.25\\\"]\",\"[443]\",\"[]\",\"[\\\"https://example.invalid/\\\"]\",\"[\\\"nginx\\\"]\",\"[]\",\"2026-10-28T12:00:00.000Z\",\"2026-10-28T12:03:00.000Z\",\"[\\\"chef-evidence:example\"]\"\r\n"
+}
