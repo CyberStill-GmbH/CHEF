@@ -122,6 +122,7 @@ impl PresetCatalog {
                     ("chef_ip_range_expansion".to_owned(), true),
                     ("chef_dns_parent_hints".to_owned(), true),
                     ("chef_dns_rdata_hints".to_owned(), true),
+                    ("chef_bimi_url_hints".to_owned(), true),
                     ("chef_dns_mutation_hints".to_owned(), true),
                     ("chef_common_port_hints".to_owned(), true),
                     ("chef_cloud_storage_hints".to_owned(), true),

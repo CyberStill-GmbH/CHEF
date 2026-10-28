@@ -6,6 +6,7 @@
 mod application;
 mod asn;
 mod asset_inventory_export;
+mod bimi;
 mod config;
 mod config_merge;
 mod contracts;
