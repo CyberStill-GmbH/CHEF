@@ -157,8 +157,66 @@ pub struct BbotEventEngine {
     modules: Vec<Box<dyn BbotModule>>,
     dispatch_by_event_type: BTreeMap<&'static str, Box<[usize]>>,
     wildcard_modules: Box<[usize]>,
+    pending_queue_schedule: Box<[usize]>,
     max_events: usize,
     max_depth: usize,
+}
+
+/// Cola de ingreso para semillas y una cola FIFO por módulo productor.
+/// La selección ponderada es determinista: cada módulo recibe `6 - priority`
+/// turnos por ciclo y el ingreso cinco, como base CHEF del ScanIngress fuente.
+struct PendingEventQueues {
+    ingress: VecDeque<BbotEvent>,
+    modules: Vec<VecDeque<BbotEvent>>,
+    schedule: Box<[usize]>,
+    cursor: usize,
+    pending: usize,
+}
+
+impl PendingEventQueues {
+    fn new(modules: &[Box<dyn BbotModule>], schedule: Box<[usize]>) -> Self {
+        Self {
+            ingress: VecDeque::new(),
+            modules: (0..modules.len()).map(|_| VecDeque::new()).collect(),
+            schedule,
+            cursor: 0,
+            pending: 0,
+        }
+    }
+
+    fn push_ingress(&mut self, event: BbotEvent) {
+        self.ingress.push_back(event);
+        self.pending += 1;
+    }
+
+    fn push_from_module(&mut self, module_index: usize, event: BbotEvent) {
+        self.modules[module_index].push_back(event);
+        self.pending += 1;
+    }
+
+    fn pop_next(&mut self) -> Option<BbotEvent> {
+        if self.pending == 0 {
+            return None;
+        }
+        for _ in 0..self.schedule.len() {
+            let queue_id = self.schedule[self.cursor];
+            self.cursor = (self.cursor + 1) % self.schedule.len();
+            let event = if queue_id == 0 {
+                self.ingress.pop_front()
+            } else {
+                self.modules[queue_id - 1].pop_front()
+            };
+            if event.is_some() {
+                self.pending -= 1;
+                return event;
+            }
+        }
+        None
+    }
+
+    fn len(&self) -> usize {
+        self.pending
+    }
 }
 
 impl BbotEventEngine {
@@ -173,6 +231,7 @@ impl BbotEventEngine {
             modules: Vec::new(),
             dispatch_by_event_type: BTreeMap::new(),
             wildcard_modules: Box::default(),
+            pending_queue_schedule: vec![0; 5].into_boxed_slice(),
             max_events,
             max_depth,
         })
@@ -252,11 +311,17 @@ impl BbotEventEngine {
             modules.sort_unstable();
             modules.dedup();
         }
+        let mut pending_queue_schedule = vec![0; 5];
+        for (module_index, module) in self.modules.iter().enumerate() {
+            let weight = usize::from(MAX_MODULE_PRIORITY + 1 - module.priority());
+            pending_queue_schedule.extend(std::iter::repeat_n(module_index + 1, weight));
+        }
         self.dispatch_by_event_type = dispatch_by_event_type
             .into_iter()
             .map(|(event_type, modules)| (event_type, modules.into_boxed_slice()))
             .collect();
         self.wildcard_modules = wildcard_modules.into_boxed_slice();
+        self.pending_queue_schedule = pending_queue_schedule.into_boxed_slice();
     }
 
     fn modules_watching(&self, event_type: &str) -> &[usize] {
@@ -355,14 +420,18 @@ impl BbotEventEngine {
         }
         config.validate()?;
 
-        let mut pending = VecDeque::from(seeds);
+        let mut pending =
+            PendingEventQueues::new(&self.modules, self.pending_queue_schedule.clone());
+        for seed in seeds {
+            pending.push_ingress(seed);
+        }
         let mut events = Vec::new();
         let mut identities = HashSet::new();
         let mut modules_run = 0;
         let mut duplicates_suppressed = 0;
         let mut runtime_statistics = RuntimeStatisticsBuilder::default();
 
-        while let Some(mut event) = pending.pop_front() {
+        while let Some(mut event) = pending.pop_next() {
             if cancelled.is_some_and(|flag| flag.load(Ordering::SeqCst)) {
                 return Err(ChefError::new(
                     ErrorCode::Cancelled,
@@ -458,7 +527,7 @@ impl BbotEventEngine {
                             "El motor de eventos superó el máximo CHEF",
                         ));
                     }
-                    pending.push_back(child);
+                    pending.push_from_module(module_index, child);
                 }
             }
         }
