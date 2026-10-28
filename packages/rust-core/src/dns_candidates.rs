@@ -77,6 +77,25 @@ pub struct DnsBruteRootAssessment {
     pub recommended_skip: bool,
 }
 
+/// Candidato de mutación local con la etiqueta semilla y la regla explicable.
+/// No representa una observación DNS ni incluye resultado de resolución.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DnsMutationCandidate {
+    pub name: String,
+    pub root: String,
+    pub seed_label: String,
+    pub rule_id: &'static str,
+}
+
+/// Resultado acotado de generar mutaciones DNS sin filesystem ni red.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DnsMutationBatch {
+    pub candidates: Vec<DnsMutationCandidate>,
+    pub skipped_invalid: usize,
+    pub duplicates: usize,
+    pub truncated: bool,
+}
+
 /// Adapta las condiciones locales de profundidad y exceso de dígitos del
 /// módulo de origen. Una recomendación de omitir no descarta el activo en el
 /// grafo ni sustituye la comprobación de autorización antes de cualquier red.
@@ -99,6 +118,134 @@ pub fn assess_dns_brute_root(root: &str, max_depth: usize) -> ChefResult<DnsBrut
         excessive_digit_pattern,
         recommended_skip,
     })
+}
+
+/// Propone variantes locales desde etiquetas observadas y conserva su semilla
+/// y regla de generación. No marca el resultado como activo ni autoriza tráfico.
+///
+/// El subconjunto CHEF incluye etiqueta original, segmentos separados por
+/// `-`, `_` o `.`, unión de esos segmentos y sufijos numéricos 0–2. Se omiten
+/// las mutaciones recursivas, recursos externos y consulta/resolución DNS.
+pub fn generate_dns_mutation_candidates(
+    root: &str,
+    observed_labels: &[String],
+    max_candidates: usize,
+) -> ChefResult<DnsMutationBatch> {
+    if observed_labels.len() > MAX_INPUT_PREFIXES {
+        return Err(ChefError::new(
+            ErrorCode::LimitExceeded,
+            "La lista de etiquetas DNS excede el límite CHEF",
+        ));
+    }
+    let Some(root) = crate::host::canonical_domain(root) else {
+        return Err(ChefError::new(
+            ErrorCode::InvalidInput,
+            "La raíz para generar mutaciones DNS no es válida",
+        ));
+    };
+
+    let limit = max_candidates.min(MAX_CANDIDATES);
+    let mut candidates = Vec::with_capacity(observed_labels.len().min(limit));
+    let mut seen = HashSet::with_capacity(observed_labels.len().min(limit));
+    let mut skipped_invalid = 0;
+    let mut duplicates = 0;
+    let mut truncated = false;
+
+    for seed in observed_labels {
+        let seed = seed.trim().to_ascii_lowercase();
+        if seed.is_empty() || seed.len() > 63 || seed.chars().any(char::is_control) {
+            skipped_invalid += 1;
+            continue;
+        }
+        let mut mutations: Vec<(String, &'static str)> = vec![(seed.clone(), "seed")];
+        let segments: Vec<&str> = seed
+            .split(['-', '_', '.'])
+            .filter(|segment| !segment.is_empty())
+            .collect();
+        for segment in &segments {
+            if *segment != seed {
+                mutations.push(((*segment).to_owned(), "segment"));
+            }
+        }
+        if segments.len() > 1 {
+            mutations.push((segments.concat(), "separator-join"));
+        }
+        mutations.extend(numeric_mutations(&seed));
+        for number in 0..3 {
+            mutations.push((format!("{seed}{number}"), "numeric-suffix"));
+        }
+
+        for (label, rule_id) in mutations {
+            let hostname = format!("{label}.{root}");
+            let Some(name) = crate::host::canonical_domain(&hostname) else {
+                skipped_invalid += 1;
+                continue;
+            };
+            if name == root || !name.ends_with(&format!(".{root}")) {
+                skipped_invalid += 1;
+                continue;
+            }
+            if !seen.insert(name.clone()) {
+                duplicates += 1;
+                continue;
+            }
+            if candidates.len() == limit {
+                truncated = true;
+                continue;
+            }
+            candidates.push(DnsMutationCandidate {
+                name,
+                root: root.clone(),
+                seed_label: seed.clone(),
+                rule_id,
+            });
+        }
+    }
+
+    Ok(DnsMutationBatch {
+        candidates,
+        skipped_invalid,
+        duplicates,
+        truncated,
+    })
+}
+
+fn numeric_mutations(seed: &str) -> Vec<(String, &'static str)> {
+    let mut spans = Vec::new();
+    let mut start = None;
+    for (index, character) in seed.char_indices() {
+        if character.is_ascii_digit() {
+            start.get_or_insert(index);
+        } else if let Some(begin) = start.take() {
+            spans.push((begin, index));
+        }
+    }
+    if let Some(begin) = start {
+        spans.push((begin, seed.len()));
+    }
+
+    let mut mutations = Vec::new();
+    for (begin, end) in spans.into_iter().rev().take(3).rev() {
+        let digits = &seed[begin..end];
+        if digits.len() > 6 {
+            continue;
+        }
+        let Ok(number) = digits.parse::<i32>() else {
+            continue;
+        };
+        let min = (number - 3).max(0);
+        let max = (number + 3).min(10_i32.pow(digits.len() as u32) - 1);
+        for value in min..=max {
+            let replacement = format!("{value:0width$}", width = digits.len());
+            if replacement != digits {
+                mutations.push((
+                    format!("{}{replacement}{}", &seed[..begin], &seed[end..]),
+                    "numeric-adjustment",
+                ));
+            }
+        }
+    }
+    mutations
 }
 
 /// Analiza una lista DNS UTF-8 acotada, sin consultar filesystem o red.

@@ -172,3 +172,7 @@ Se añadió `parse_dns_wordlist`, que recibe bytes explícitos en vez de abrir r
 ## 28-10-2026 — Calidad local de raíz DNS
 
 Se añadió `assess_dns_brute_root`, que combina profundidad de siguiente nivel y patrón numérico para recomendar si se omite una raíz al preparar candidatos. Canonicaliza el dominio y limita `max_depth` a 1–127. La recomendación no se aplica al grafo ni sustituye scope, wildcard o autorización; sigue sin ejecutarse DNS.
+
+## 28-10-2026 — Mutaciones DNS offline
+
+Se añadió `generate_dns_mutation_candidates` como portado parcial del mutador de word cloud y del módulo DNS de mutaciones. Propone la etiqueta fuente, segmentos, unión de separadores y ajustes/sufijos numéricos acotados; cada resultado retiene raíz, etiqueta semilla y regla, con deduplicación exacta y reporte de límites. La función solo propone candidatos y no los convierte en observaciones. Wordninja, listas de frecuencia/DevOps, agregación entre proyectos, rondas iterativas, resolución DNS y emisión de eventos siguen pendientes y apagados. Inventario: 28 parciales, 417 pendientes y 21 exclusiones de 466 archivos. No se ejecutaron pruebas funcionales, según la indicación del propietario.

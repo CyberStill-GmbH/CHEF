@@ -47,8 +47,9 @@ pub use config_merge::{
 pub use contracts::{ScopePolicy, Snapshot};
 pub use dns_cache::DnsCache;
 pub use dns_candidates::{
-    DnsBruteRootAssessment, DnsCandidateBatch, DnsWordlist, assess_dns_brute_root,
-    generate_dns_name_candidates, has_excessive_digits, parse_dns_wordlist,
+    DnsBruteRootAssessment, DnsCandidateBatch, DnsMutationBatch, DnsMutationCandidate, DnsWordlist,
+    assess_dns_brute_root, generate_dns_mutation_candidates, generate_dns_name_candidates,
+    has_excessive_digits, parse_dns_wordlist,
 };
 pub use dns_format::format_dns_rdata;
 pub use dns_policy::{DnsQueryPolicy, DnsZoneDecision};
