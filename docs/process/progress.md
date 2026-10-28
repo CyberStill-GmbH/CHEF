@@ -275,3 +275,6 @@ Se añade `HttpAuthorizationRegistry` en el adaptador Rust: permanece vacío al 
 ## 28-10-2026 — Auditoría de inventario y riesgos HTTP
 
 Se recalculó el estado de las 466 filas del inventario y se corrigieron los totales publicados: 45 parciales, 391 pendientes y 30 excluidas. El modelo de amenazas ahora distingue los controles implementados en el plan/registro/transporte HTTP de la composición y validación de autorización que siguen pendientes. La copia fuente solo se leyó; la carpeta local indicada no expone un repositorio Git para comparar estados. Pasan los validadores de documentación y arquitectura y `git diff --check`; no se ejecutaron pruebas.
+## 28-10-2026 — Proyección local de eventos de almacenamiento
+
+`chef_cloud_storage_hints` ahora consume eventos `STORAGE_BUCKET` importados cuando el perfil `offline_hints` está habilitado. Valida los campos `name`/`url`, deriva solo el origen canónico como `URL_HINT` y enlaza la evidencia con el evento padre; no prueba existencia, acceso o propiedad. Se actualizan la auditoría, el plan y el inventario. Pasan `cargo check` y Clippy de `rust-core`, validadores documental/arquitectónico y `git diff --check`; no se ejecutaron pruebas por indicación del propietario.

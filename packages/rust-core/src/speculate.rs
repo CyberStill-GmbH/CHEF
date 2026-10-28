@@ -35,7 +35,7 @@ impl BbotModule for ChefCloudStorageHints {
     fn descriptor(&self) -> ModuleDescriptor {
         ModuleDescriptor {
             name: "chef_cloud_storage_hints",
-            watches: &["DNS_NAME", "URL"],
+            watches: &["DNS_NAME", "URL", "STORAGE_BUCKET"],
             produces: &["URL_HINT"],
         }
     }
@@ -52,6 +52,18 @@ impl BbotModule for ChefCloudStorageHints {
     ) -> ChefResult<Vec<BbotEventDraft>> {
         if event.data_redacted {
             return Ok(Vec::new());
+        }
+        if event.event_type == "STORAGE_BUCKET" {
+            let Some((url, host, port)) = storage_bucket_origin_hint(event) else {
+                return Ok(Vec::new());
+            };
+            return Ok(vec![BbotEventDraft {
+                event_type: "URL_HINT".to_owned(),
+                data: Value::String(url),
+                host: Some(host),
+                port: Some(port),
+                tags: vec!["chef:derived-storage-bucket-candidate".to_owned()],
+            }]);
         }
         let Some(host) = observed_cloud_host(event) else {
             return Ok(Vec::new());
@@ -71,6 +83,26 @@ impl BbotModule for ChefCloudStorageHints {
             ],
         }])
     }
+}
+
+/// Adapta un resultado importado como candidato URL local. El nombre y la URL
+/// se validan como datos no confiables; solo se conserva el origen canónico y
+/// se exige revisión para afirmar existencia, propiedad o permisos.
+fn storage_bucket_origin_hint(event: &BbotEvent) -> Option<(String, String, u16)> {
+    if event.event_type != "STORAGE_BUCKET" {
+        return None;
+    }
+    let data = event.data.as_object()?;
+    let name = data.get("name")?.as_str()?;
+    if !valid_bucket_name(name) {
+        return None;
+    }
+    let raw_url = data.get("url")?.as_str()?;
+    let origin = crate::url_tools::canonical_http_origin(raw_url)?;
+    let parsed = Url::parse(&origin).ok()?;
+    let host = parsed.host_str().and_then(crate::host::canonical_domain)?;
+    let port = parsed.port_or_known_default()?;
+    Some((origin, host, port))
 }
 
 fn observed_cloud_host(event: &BbotEvent) -> Option<String> {
