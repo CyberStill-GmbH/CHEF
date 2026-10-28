@@ -3,6 +3,7 @@
 mod dns;
 mod dns_plan;
 mod dns_plan_runner;
+mod dns_wildcard;
 
 pub use dns::{
     DnsAnswer, DnsAnswerDisposition, DnsAnswerEvidence, DnsAuthorizationFailure,
@@ -13,4 +14,8 @@ pub use dns::{
 pub use dns_plan::{DnsQueryPlan, DnsQueryPlanSettings, DnsQueryStage, PlannedDnsQuery};
 pub use dns_plan_runner::{
     DnsPlanExecution, DnsPlanQueryResult, DnsPlanTermination, ExecuteDnsPlan,
+};
+pub use dns_wildcard::{
+    DnsWildcardAssessment, DnsWildcardBaseline, DnsWildcardDisposition, DnsWildcardProbeSet,
+    DnsWildcardRecordAssessment,
 };
