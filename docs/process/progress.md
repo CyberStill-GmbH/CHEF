@@ -334,3 +334,7 @@ Se añadió `parse_hackertarget_subdomains` en `chef-core` para convertir respue
 ### 28-10-2026 — Parser offline de CertSpotter
 
 Se añadió `parse_certspotter_subdomains` para cuerpos JSON archivados. Limita respuesta a 2 MiB, 2 048 emisiones, 16 384 nombres DNS y 1 024 candidatos; valida estructura, normaliza SAN wildcard, deduplica y acepta solo descendientes canónicos de una raíz registrable ICANN. No usa clave, consulta la API ni sigue el cursor de paginación; los nombres de certificados no son observaciones DNS. Se añadieron fixtures sintéticos positivos/negativos y se actualizó el inventario a 59 parciales, 377 pendientes y 30 exclusiones (466 archivos). Las pruebas funcionales siguen aplazadas.
+
+### 28-10-2026 — Parser offline de FullHunt
+
+Se añadió `parse_fullhunt_subdomains` para procesar `hosts[]` de respuestas FullHunt ya archivadas. La entrada admite hasta 1 MiB, 3 000 hosts y 1 024 candidatos; valida el objeto JSON, canonicaliza y deduplica nombres que descienden de la raíz registrable ICANN. No consulta la API, verifica créditos ni usa API key; tampoco crea eventos/linaje. Fixtures sintéticos positivos/negativos añadidos. Inventario: 60 parciales, 376 pendientes y 30 exclusiones. No se ejecutaron pruebas funcionales, aplazadas por indicación del propietario.
