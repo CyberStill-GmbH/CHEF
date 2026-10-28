@@ -19,8 +19,9 @@ pub use dns_plan_runner::{
     DnsPlanExecution, DnsPlanQueryResult, DnsPlanTermination, ExecuteDnsPlan,
 };
 pub use dns_wildcard::{
-    DnsWildcardAssessment, DnsWildcardBaseline, DnsWildcardDisposition, DnsWildcardPlanStatus,
-    DnsWildcardProbeGroup, DnsWildcardProbePlan, DnsWildcardProbeSet, DnsWildcardRecordAssessment,
+    DnsWildcardAssessment, DnsWildcardBaseline, DnsWildcardDisposition, DnsWildcardPlanExecution,
+    DnsWildcardPlanStatus, DnsWildcardProbeExecution, DnsWildcardProbeGroup, DnsWildcardProbePlan,
+    DnsWildcardProbeSet, DnsWildcardRecordAssessment, ExecuteDnsWildcardPlan,
 };
 pub use import_history::{
     IMPORT_HISTORY_MAX_PAGE_SIZE, ImportHistoryError, ImportHistoryPort, ImportRunSummary,

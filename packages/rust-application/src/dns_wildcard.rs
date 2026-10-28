@@ -7,7 +7,10 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use chef_core::{dns_parent_zones, extract_dns_targets};
 
-use crate::{DnsAnswer, DnsLookupOutcome, DnsQueryRequest, DnsResolutionError};
+use crate::{
+    DnsAnswer, DnsAuthorizationPort, DnsCancellation, DnsLookupOutcome, DnsPlanTermination,
+    DnsQueryRequest, DnsResolutionError, DnsResolutionResult, DnsResolverPort, ResolveDns,
+};
 
 const MAX_WILDCARD_PROBES_PER_ZONE: usize = 8;
 const MAX_WILDCARD_ZONES: usize = 32;
@@ -193,6 +196,128 @@ fn validate_sample_labels(labels: &[String]) -> Result<(), DnsResolutionError> {
         }
     }
     Ok(())
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DnsWildcardProbeExecution {
+    zone: String,
+    record_type: String,
+    expected_query_count: usize,
+    results: Vec<DnsResolutionResult>,
+}
+
+impl DnsWildcardProbeExecution {
+    pub fn zone(&self) -> &str {
+        &self.zone
+    }
+
+    pub fn record_type(&self) -> &str {
+        &self.record_type
+    }
+
+    pub fn results(&self) -> &[DnsResolutionResult] {
+        &self.results
+    }
+
+    /// Solo los grupos completos se convierten en muestras clasificables.
+    /// Una autorización rechazada o cancelación deja visible el resultado
+    /// parcial, pero no lo presenta como una evaluación negativa.
+    pub fn complete_probe_set(&self) -> Result<Option<DnsWildcardProbeSet>, DnsResolutionError> {
+        if self.results.len() != self.expected_query_count {
+            return Ok(None);
+        }
+        let outcomes = self
+            .results
+            .iter()
+            .map(|result| result.outcome.clone())
+            .collect();
+        DnsWildcardProbeSet::new(&self.zone, &self.record_type, outcomes).map(Some)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DnsWildcardPlanExecution {
+    groups: Vec<DnsWildcardProbeExecution>,
+    termination: DnsPlanTermination,
+}
+
+impl DnsWildcardPlanExecution {
+    pub fn groups(&self) -> &[DnsWildcardProbeExecution] {
+        &self.groups
+    }
+
+    pub fn termination(&self) -> DnsPlanTermination {
+        self.termination
+    }
+
+    /// Devuelve únicamente grupos completos para que el clasificador no
+    /// confunda consultas omitidas con ausencia de wildcard.
+    pub fn complete_probe_sets(&self) -> Result<Vec<DnsWildcardProbeSet>, DnsResolutionError> {
+        let mut sets = Vec::with_capacity(self.groups.len());
+        for group in &self.groups {
+            if let Some(set) = group.complete_probe_set()? {
+                sets.push(set);
+            }
+        }
+        Ok(sets)
+    }
+}
+
+pub struct ExecuteDnsWildcardPlan<'a, R, A> {
+    resolver: &'a R,
+    authorization: &'a A,
+}
+
+impl<'a, R, A> ExecuteDnsWildcardPlan<'a, R, A>
+where
+    R: DnsResolverPort,
+    A: DnsAuthorizationPort,
+{
+    pub fn new(resolver: &'a R, authorization: &'a A) -> Self {
+        Self {
+            resolver,
+            authorization,
+        }
+    }
+
+    /// Ejecuta muestras en serie. Cada nombre vuelve a validar autorización
+    /// mediante `ResolveDns`; cancelación/rechazo termina conservando resultados
+    /// anteriores para el caller, sin clasificarlos como negativos.
+    pub async fn execute(
+        &self,
+        plan: &DnsWildcardProbePlan,
+        cancellation: &DnsCancellation,
+    ) -> DnsWildcardPlanExecution {
+        let mut groups = Vec::with_capacity(plan.groups().len());
+        let resolver = ResolveDns::new(self.resolver, self.authorization);
+
+        for planned_group in plan.groups() {
+            let mut group = DnsWildcardProbeExecution {
+                zone: planned_group.zone().to_owned(),
+                record_type: planned_group.record_type().to_owned(),
+                expected_query_count: planned_group.requests().len(),
+                results: Vec::with_capacity(planned_group.requests().len()),
+            };
+            for request in planned_group.requests() {
+                match resolver.execute(request.clone(), cancellation).await {
+                    Ok(result) => group.results.push(result),
+                    Err(error) => {
+                        groups.push(group);
+                        return DnsWildcardPlanExecution {
+                            groups,
+                            termination: DnsPlanTermination::Stopped(error),
+                        };
+                    }
+                }
+            }
+            groups.push(group);
+        }
+
+        DnsWildcardPlanExecution {
+            groups,
+            termination: DnsPlanTermination::Completed,
+        }
+    }
 }
 
 /// Respuestas ya obtenidas para un tipo consultado sobre el nombre objetivo.
