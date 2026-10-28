@@ -10,6 +10,7 @@ mod bimi;
 mod caa;
 mod censys_dns;
 mod certspotter;
+mod chaos;
 mod config;
 mod config_merge;
 mod contracts;
@@ -61,6 +62,7 @@ pub use asn::{
 pub use asset_inventory_export::{ChefAssetInventoryExport, export_asset_inventory_csv};
 pub use censys_dns::{CensysDnsCertificatePage, parse_censys_dns_certificate_page};
 pub use certspotter::{CertSpotterSubdomainPage, parse_certspotter_subdomains};
+pub use chaos::{ChaosParentCollapse, ChaosSubdomainPage, parse_chaos_subdomain_response};
 pub use config::{ChefConfig, DefectDojoSettings, RuntimeSettings, ScopeSettings, SourceSettings};
 pub use config_merge::{
     deep_merge_toml, dotted_get, dotted_set, iter_dotted_paths, parse_layered_toml,

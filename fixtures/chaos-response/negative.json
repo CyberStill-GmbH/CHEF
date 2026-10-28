@@ -1,0 +1,14 @@
+{
+  "queryDomain": "cluster.example.com",
+  "response": {
+    "domain": "example.com",
+    "subdomains": [
+      "onlyroot",
+      "outside.other",
+      "192.168.1.10.reverse",
+      "001-106-103-218.ptr"
+    ]
+  },
+  "expectedCandidates": [],
+  "expectedCollapsedParents": []
+}
