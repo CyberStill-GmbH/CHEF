@@ -66,7 +66,10 @@ pub use dns_policy::{DnsQueryPolicy, DnsZoneDecision};
 pub use dns_records::{DNS_RECORD_TYPES, DnsTarget, extract_dns_targets, is_dns_service_record};
 pub use dns_service_candidates::common_dns_service_candidates;
 pub use domain::{ChefError, ChefResult, ErrorCode, ServiceInput};
-pub use domain_affinity::{DomainAffinityCandidate, DomainAffinityEvidence, summarize_domain_affinity};
+pub use domain_affinity::{
+    DomainAffinityCandidate, DomainAffinityEvidence, canonicalize_domain_analysis_roots,
+    summarize_domain_affinity,
+};
 pub use domain_export::{
     ChefObservedDomain, ChefObservedDomainEvidence, ChefObservedDomainExport,
     export_observed_domain_list,
