@@ -1,0 +1,8 @@
+{
+  "queryDomain": "example.com",
+  "response": "<div>www.example.com api.example.com outside.example.net example.com</div>",
+  "expectedCandidates": [
+    "api.example.com",
+    "www.example.com"
+  ]
+}
