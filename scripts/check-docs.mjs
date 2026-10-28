@@ -195,7 +195,19 @@ const evidenceCsvLines = evidenceCsvExample.csv
   .split('\r\n')
   .filter((line) => line.length > 0);
 assert.equal(evidenceCsvLines.length, evidenceCsvExample.rowCount + 1);
-assert.ok(evidenceCsvExample.csv.includes("\"'=example.invalid\""));
+assert.ok(evidenceCsvExample.csv.includes('"\'=example.invalid"'));
+const nmapEvidenceExportSchema = JSON.parse(
+  readFileSync('docs/contracts/nmap-evidence-export.schema.json', 'utf8'),
+);
+const validateNmapEvidenceExport = ajv.compile(nmapEvidenceExportSchema);
+assert.ok(
+  validateNmapEvidenceExport(
+    JSON.parse(
+      readFileSync('docs/contracts/examples/nmap-evidence-export.json', 'utf8'),
+    ),
+  ),
+  JSON.stringify(validateNmapEvidenceExport.errors),
+);
 const chefConfigSchema = JSON.parse(
   readFileSync('docs/contracts/chef-config.schema.json', 'utf8'),
 );
@@ -230,10 +242,7 @@ assert.ok(
 assert.equal(asnSeedExample.kind, 'asn');
 assert.equal(asnSeedExample.host, null);
 const organizationSeedExample = JSON.parse(
-  readFileSync(
-    'docs/contracts/examples/target-seed-organization.json',
-    'utf8',
-  ),
+  readFileSync('docs/contracts/examples/target-seed-organization.json', 'utf8'),
 );
 assert.ok(
   validateTargetSeed(organizationSeedExample),
@@ -251,12 +260,12 @@ const contextualSeedExamples = [
 ];
 for (const [name, kind, hasNullHost] of contextualSeedExamples) {
   const example = JSON.parse(
-    readFileSync(
-      `docs/contracts/examples/target-seed-${name}.json`,
-      'utf8',
-    ),
+    readFileSync(`docs/contracts/examples/target-seed-${name}.json`, 'utf8'),
   );
-  assert.ok(validateTargetSeed(example), JSON.stringify(validateTargetSeed.errors));
+  assert.ok(
+    validateTargetSeed(example),
+    JSON.stringify(validateTargetSeed.errors),
+  );
   assert.equal(example.schemaVersion, '1.3.0');
   assert.equal(example.kind, kind);
   if (hasNullHost) {

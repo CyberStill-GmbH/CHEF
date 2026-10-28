@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "1.0.0",
+  "runId": "run:fixture-001",
+  "fileName": "chef-evidencia-nmap-run-fixture-001.xml",
+  "contentType": "application/xml; charset=utf-8",
+  "scopeStatus": "not_asserted",
+  "observationStart": "2026-10-28T12:00:00.000Z",
+  "observationEnd": "2026-10-28T12:03:00.000Z",
+  "hostCount": 1,
+  "portCount": 2,
+  "xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE nmaprun>\n<nmaprun scanner=\"chef\" args=\"CHEF local evidence export\" start=\"1793188800\" startstr=\"Wed Oct 28 12:00:00 2026 UTC\" version=\"CHEF 1.0.0\" xmloutputversion=\"1.05\">\n  <host>\n    <status state=\"up\" reason=\"unknown\" reason_ttl=\"0\"/>\n    <address addr=\"192.0.2.25\" addrtype=\"ipv4\"/>\n    <ports>\n      <port protocol=\"tcp\" portid=\"443\"><state state=\"open\" reason=\"unknown\" reason_ttl=\"0\"/></port>\n      <port protocol=\"tcp\" portid=\"8443\"><state state=\"open\" reason=\"unknown\" reason_ttl=\"0\"/></port>\n    </ports>\n  </host>\n</nmaprun>\n"
+}

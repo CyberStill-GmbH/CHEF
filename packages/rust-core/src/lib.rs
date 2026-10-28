@@ -25,6 +25,7 @@ mod identity;
 mod jobs;
 mod keyed_lock;
 mod nmap;
+mod nmap_export;
 mod port_spec;
 mod presets;
 mod rate_limit;
@@ -74,6 +75,7 @@ pub use jobs::{
     spawn_bbot_import_job, spawn_bbot_import_job_with_config, spawn_import_job,
 };
 pub use keyed_lock::{KeyedLock, KeyedLockGuard};
+pub use nmap_export::{ChefNmapEvidenceExport, export_nmap_evidence_xml};
 pub use port_spec::parse_port_string;
 pub use presets::{ChefPreset, PresetCatalog, ResolvedPreset};
 pub use rate_limit::RateLimiter;

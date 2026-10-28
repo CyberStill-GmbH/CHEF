@@ -7,6 +7,7 @@ import type { ScopePolicyDto } from '../contracts/snapshot';
 import type { TargetSeedDto } from '../contracts/target-seed';
 import type { ObservedDomainExportDto } from '../contracts/observed-domain-export';
 import type { EvidenceCsvExportDto } from '../contracts/evidence-csv-export';
+import type { NmapEvidenceExportDto } from '../contracts/nmap-evidence-export';
 
 export interface ApiClient {
   loadSnapshot(options?: { signal?: AbortSignal }): Promise<SnapshotDto>;
@@ -22,6 +23,10 @@ export interface ApiClient {
     runId: string,
     options?: { signal?: AbortSignal },
   ): Promise<EvidenceCsvExportDto>;
+  exportNmapEvidence?(
+    runId: string,
+    options?: { signal?: AbortSignal },
+  ): Promise<NmapEvidenceExportDto>;
   loadReconGraph?(
     runId: string,
     options?: { signal?: AbortSignal },
