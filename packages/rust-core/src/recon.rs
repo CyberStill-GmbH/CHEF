@@ -630,25 +630,14 @@ fn add_explicit_dns_resolutions(
         return;
     };
     for value in hosts.iter().filter_map(Value::as_str) {
-        let Some(address) = value
-            .parse::<std::net::IpAddr>()
-            .ok()
-            .map(|address| address.to_string())
-        else {
+        let Some((target_kind, target)) = dns_asset_key(value) else {
             continue;
         };
-        let address_id = asset_id(ReconAssetKind::IpAddress, &address);
+        let address_id = asset_id(target_kind, &target);
         if owner_id == address_id {
             continue;
         }
-        upsert_asset(
-            assets,
-            ReconAssetKind::IpAddress,
-            address,
-            None,
-            event,
-            evidence_id,
-        );
+        upsert_asset(assets, target_kind, target, None, event, evidence_id);
         add_relationship(
             relationships,
             owner_id.to_owned(),
