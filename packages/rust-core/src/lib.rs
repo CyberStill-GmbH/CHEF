@@ -46,7 +46,10 @@ pub use config_merge::{
 };
 pub use contracts::{ScopePolicy, Snapshot};
 pub use dns_cache::DnsCache;
-pub use dns_candidates::{DnsCandidateBatch, generate_dns_name_candidates, has_excessive_digits};
+pub use dns_candidates::{
+    DnsCandidateBatch, DnsWordlist, generate_dns_name_candidates, has_excessive_digits,
+    parse_dns_wordlist,
+};
 pub use dns_format::format_dns_rdata;
 pub use dns_policy::{DnsQueryPolicy, DnsZoneDecision};
 pub use dns_records::{DNS_RECORD_TYPES, DnsTarget, extract_dns_targets, is_dns_service_record};

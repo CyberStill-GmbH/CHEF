@@ -9,6 +9,7 @@ use crate::{ChefError, ChefResult, ErrorCode};
 
 const MAX_INPUT_PREFIXES: usize = 100_000;
 const MAX_CANDIDATES: usize = 10_000;
+const MAX_DNS_WORDLIST_BYTES: usize = 5 * 1024 * 1024;
 
 /// Señala nombres DNS con patrones numéricos que el módulo de origen omite al
 /// preparar fuerza bruta. Es una pista de calidad; no invalida ni elimina el
@@ -43,6 +44,74 @@ pub struct DnsCandidateBatch {
     pub skipped_invalid: usize,
     /// Indica que se encontraron candidatos válidos más allá del límite.
     pub truncated: bool,
+}
+
+/// Resultado de leer contenido de una lista entregada explícitamente por el
+/// adaptador de aplicación. El núcleo no abre rutas ni descarga listas.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DnsWordlist {
+    /// Prefijos únicos y en orden de primera aparición.
+    pub prefixes: Vec<String>,
+    /// Líneas vacías, comentarios o entradas inválidas ignoradas.
+    pub skipped_lines: usize,
+    /// Entradas repetidas después de quitar espacios exteriores.
+    pub duplicates: usize,
+    /// Indica que se encontraron más entradas válidas que el límite solicitado.
+    pub truncated: bool,
+}
+
+/// Analiza una lista DNS UTF-8 acotada, sin consultar filesystem o red.
+/// Ignora líneas vacías, comentarios con `#` y controles; elimina duplicados
+/// de forma determinista y limita el resultado a 100 000 prefijos.
+pub fn parse_dns_wordlist(bytes: &[u8], max_entries: usize) -> ChefResult<DnsWordlist> {
+    if bytes.len() > MAX_DNS_WORDLIST_BYTES {
+        return Err(ChefError::new(
+            ErrorCode::LimitExceeded,
+            "La lista DNS excede el máximo de 5 MiB",
+        ));
+    }
+    let text = std::str::from_utf8(bytes).map_err(|_| {
+        ChefError::new(
+            ErrorCode::InvalidInput,
+            "La lista DNS debe usar codificación UTF-8 válida",
+        )
+    })?;
+    let text = text.strip_prefix('\u{feff}').unwrap_or(text);
+    let limit = max_entries.min(MAX_INPUT_PREFIXES);
+    let mut prefixes = Vec::with_capacity(text.lines().count().min(limit));
+    let mut seen = HashSet::with_capacity(text.lines().count().min(limit));
+    let mut skipped_lines = 0;
+    let mut duplicates = 0;
+    let mut truncated = false;
+
+    for line in text.lines() {
+        let prefix = line.trim();
+        if prefix.is_empty() || prefix.starts_with('#') {
+            skipped_lines += 1;
+            continue;
+        }
+        if prefix.len() > 253 || prefix.chars().any(char::is_control) {
+            skipped_lines += 1;
+            continue;
+        }
+        if seen.contains(prefix) {
+            duplicates += 1;
+            continue;
+        }
+        if prefixes.len() == limit {
+            truncated = true;
+            continue;
+        }
+        seen.insert(prefix.to_owned());
+        prefixes.push(prefix.to_owned());
+    }
+
+    Ok(DnsWordlist {
+        prefixes,
+        skipped_lines,
+        duplicates,
+        truncated,
+    })
 }
 
 /// Compone una lista de prefijos con una raíz, sin hacer resolución DNS.
