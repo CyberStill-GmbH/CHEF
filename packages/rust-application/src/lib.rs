@@ -7,6 +7,7 @@ mod dns_plan_runner;
 mod dns_service_plan;
 mod dns_service_plan_runner;
 mod dns_wildcard;
+mod http_execution;
 mod http_plan;
 mod import_history;
 mod import_jobs;
@@ -32,6 +33,12 @@ pub use dns_wildcard::{
     DnsWildcardAssessment, DnsWildcardBaseline, DnsWildcardDisposition, DnsWildcardPlanExecution,
     DnsWildcardPlanStatus, DnsWildcardProbeExecution, DnsWildcardProbeGroup, DnsWildcardProbePlan,
     DnsWildcardProbeSet, DnsWildcardRecordAssessment, ExecuteDnsWildcardPlan,
+};
+pub use http_execution::{
+    ExecuteHttpPlan, HttpAuthorizationFailure, HttpAuthorizationPort, HttpAuthorizationReceipt,
+    HttpAuthorizationUse, HttpCancellation, HttpExecutionError, HttpExecutionGate,
+    HttpExecutionTermination, HttpPlanExecution, HttpRequestOutcome, HttpRequestResult,
+    HttpTransportFailure, HttpTransportPort, HttpTransportRequest, HttpTransportResponse,
 };
 pub use http_plan::{HttpPlanError, HttpPlanSettings, HttpRequestPlan, PlannedHttpRequest};
 pub use import_history::{
