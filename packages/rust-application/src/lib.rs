@@ -14,10 +14,10 @@ mod import_jobs;
 mod keyed_lock;
 
 pub use dns::{
-    DnsAnswer, DnsAnswerDisposition, DnsAnswerEvidence, DnsAuthorizationFailure,
-    DnsAuthorizationPort, DnsAuthorizationReceipt, DnsCancellation, DnsLookupOutcome,
-    DnsQueryRequest, DnsRecordType, DnsResolutionError, DnsResolutionResult, DnsResolverFailure,
-    DnsResolverPort, ResolveDns,
+    DnsAnswer, DnsAnswerDisposition, DnsAnswerEvidence, DnsAuthorizationControl,
+    DnsAuthorizationFailure, DnsAuthorizationPort, DnsAuthorizationReceipt, DnsCancellation,
+    DnsLookupOutcome, DnsQueryRequest, DnsRecordType, DnsResolutionError, DnsResolutionResult,
+    DnsResolverFailure, DnsResolverPort, ResolveDns,
 };
 pub use dns_plan::{DnsQueryPlan, DnsQueryPlanSettings, DnsQueryStage, PlannedDnsQuery};
 pub use dns_plan_runner::{
