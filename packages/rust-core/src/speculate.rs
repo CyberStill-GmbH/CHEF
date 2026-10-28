@@ -13,12 +13,138 @@ use crate::{
 const MAX_URL_PARENT_HINTS: usize = 32;
 const MAX_IP_RANGE_MEMBERS: usize = 256;
 const MAX_ORG_STUBS_PER_EVENT: usize = 64;
+const MAX_BIMI_RECORD_BYTES: usize = 1024;
 
 pub(crate) struct ChefUrlParentHints;
 pub(crate) struct ChefUrlAttributeHints;
 pub(crate) struct ChefDnsParentHints;
 pub(crate) struct ChefCommonPortHints;
 pub(crate) struct ChefOrgStubHints;
+pub(crate) struct ChefBimiHints;
+
+/// Extrae ubicaciones BIMI desde un TXT ya importado. Las URLs son candidatas
+/// sin verificar y nunca se descargan ni se presentan como contenido activo.
+impl BbotModule for ChefBimiHints {
+    fn descriptor(&self) -> ModuleDescriptor {
+        ModuleDescriptor {
+            name: "chef_bimi_hints",
+            watches: &["RAW_DNS_RECORD"],
+            produces: &["URL_HINT"],
+        }
+    }
+
+    fn offline_only(&self) -> bool {
+        true
+    }
+
+    fn handle(
+        &self,
+        event: &BbotEvent,
+        _config: &ChefConfig,
+        _clock: &dyn Clock,
+    ) -> ChefResult<Vec<BbotEventDraft>> {
+        let Some(record) = event.data.as_object() else {
+            return Ok(Vec::new());
+        };
+        if !record
+            .get("type")
+            .and_then(Value::as_str)
+            .is_some_and(|record_type| record_type.eq_ignore_ascii_case("TXT"))
+        {
+            return Ok(Vec::new());
+        }
+        let Some(answer) = record.get("answer").and_then(Value::as_str) else {
+            return Ok(Vec::new());
+        };
+
+        let mut drafts = Vec::new();
+        for (kind, value) in parse_bimi_record(answer) {
+            let Some((url, host, port)) = checked_url_attribute(value) else {
+                continue;
+            };
+            if kind == "bimi-authority"
+                && !Url::parse(&url).is_ok_and(|parsed| parsed.scheme() == "https")
+            {
+                continue;
+            }
+            drafts.push(BbotEventDraft {
+                event_type: "URL_HINT".to_owned(),
+                data: Value::String(url),
+                host: Some(host),
+                port,
+                tags: vec!["chef:derived-bimi-url-hint".to_owned(), kind.to_owned()],
+            });
+        }
+        Ok(drafts)
+    }
+}
+
+fn parse_bimi_record(record: &str) -> Vec<(&'static str, &str)> {
+    if record.len() > MAX_BIMI_RECORD_BYTES || !record.contains(';') {
+        return Vec::new();
+    }
+    let mut fields = record.split(';');
+    let Some(version) = fields.next().and_then(parse_bimi_field) else {
+        return Vec::new();
+    };
+    if !version.0.eq_ignore_ascii_case("v") || !version.1.eq_ignore_ascii_case("BIMI1") {
+        return Vec::new();
+    }
+
+    let mut location = None;
+    let mut authority = None;
+    let mut stage = 0_u8;
+    for field in fields {
+        let field = field.trim();
+        if field.is_empty() {
+            continue;
+        }
+        let Some((key, value)) = parse_bimi_field(field) else {
+            return Vec::new();
+        };
+        if key.eq_ignore_ascii_case("l") && stage == 0 {
+            if !valid_bimi_url(value, true) {
+                return Vec::new();
+            }
+            location = Some(value);
+            stage = 1;
+        } else if key.eq_ignore_ascii_case("a") && stage <= 1 {
+            if !valid_bimi_url(value, false) {
+                return Vec::new();
+            }
+            authority = Some(value);
+            stage = 2;
+        } else {
+            return Vec::new();
+        }
+    }
+
+    let mut links = Vec::new();
+    if let Some(value) = location.filter(|value| !value.is_empty()) {
+        links.push(("bimi-location", value));
+    }
+    if let Some(value) = authority.filter(|value| !value.is_empty()) {
+        links.push(("bimi-authority", value));
+    }
+    links
+}
+
+fn parse_bimi_field(field: &str) -> Option<(&str, &str)> {
+    let (key, value) = field.trim().split_once('=')?;
+    Some((key.trim(), value.trim()))
+}
+
+fn valid_bimi_url(value: &str, allow_http: bool) -> bool {
+    value.is_empty()
+        || (value.len() <= 255
+            && (value
+                .get(..8)
+                .is_some_and(|scheme| scheme.eq_ignore_ascii_case("https://"))
+                || (allow_http
+                    && value
+                        .get(..7)
+                        .is_some_and(|scheme| scheme.eq_ignore_ascii_case("http://")))))
+}
 
 /// Adaptación offline y acotada del puente IP_RANGE -> IP_ADDRESS de BBOT.
 /// No resuelve nombres ni abre conexiones; cada IP conserva el evento CIDR

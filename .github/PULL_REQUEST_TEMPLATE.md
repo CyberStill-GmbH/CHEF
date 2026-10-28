@@ -1,5 +1,7 @@
 ## Problema y resultado
 
+Título recomendado: `tipo(área): resultado concreto` (se usa como título del commit squash).
+
 Issue/Backlog: <!-- WBxx o enlace; ADR si aplica -->
 
 Trigger concreto y comportamiento antes → después:

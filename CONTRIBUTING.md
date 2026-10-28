@@ -5,11 +5,11 @@ CHEF es un proyecto del Centro Cultural de Ciberseguridad para reconocimiento **
 ## Recorrido de una contribución
 
 1. Elige una historia `listo` del backlog o abre una issue con problema y criterio Dado/Cuando/Entonces. Comprueba que fuente/permiso, contrato, responsable y revisor estén definidos. Si el cambio afecta una decisión difícil de revertir, propone un ADR antes de implementar.
-2. Parte de `main` actualizado en una rama propia. Inspecciona `git status` y conserva trabajo ajeno. Usa el [formato de rama/commit](docs/governance/commits-and-prs.md), con un cambio revisable por PR.
+2. Parte de la rama destino vigente indicada por el backlog o mantenedor, actualízala y crea una rama propia. Inspecciona `git status` y conserva trabajo ajeno. Usa el [formato de rama/commit](docs/governance/commits-and-prs.md), con commits atómicos y un cambio revisable por PR.
 3. Implementa respetando capas: dominio Rust sin Tauri/IO, casos de uso por puertos, adaptadores de infraestructura y composición en Tauri. React no recalcula identidad ni consulta la base directamente. Conserva IDs, observaciones, evidencias, control negativo y la CLI TypeScript como referencia de migración. No cambies `Snapshot 1.0.0` silenciosamente.
 4. Añade prueba positiva **y de fallo relevante**. Para port Rust, compara golden TypeScript; para IPC valida versión, límites, orden y cancelación; para persistencia revisa cierre/reinicio y referencias. Para UI comprueba teclado, estados y texto importado seguro. Para fuentes remotas, exige permiso y fixture; para escaneo activo, scope escrito y laboratorio aprobado.
 5. Ejecuta `npm ci` y `npm run check`; este comando verifica también formato, Clippy y pruebas Rust. Si tocas Montoya, compila `mvn -B -f extensions/burp/pom.xml clean verify` y registra aparte las pruebas manuales Burp realizadas/pendientes. Prepara la [plantilla de PR](.github/PULL_REQUEST_TEMPLATE.md), enlaza issue/ADR, muestra resultados y solicita revisión de otra persona.
-6. Tras review y CI verde, integra mediante PR. No conviertas “propuesto” o “compila” en “validado en navegador/Burp/desplegado”. El maintainer verifica el resultado en `main`.
+6. Tras aprobación independiente, conversaciones resueltas y CI verde, el maintainer integra la PR con **Squash and merge**; el título final sigue `tipo(área): resultado concreto`. No conviertas “propuesto” o “compila” en “validado en navegador/Burp/desplegado”. El maintainer verifica el resultado en la rama destino.
 
 ## Seguridad, datos y fuentes
 

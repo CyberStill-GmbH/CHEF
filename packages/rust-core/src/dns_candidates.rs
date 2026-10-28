@@ -12,6 +12,14 @@ const MAX_CANDIDATES: usize = 10_000;
 const MAX_DNS_WORDLIST_BYTES: usize = 5 * 1024 * 1024;
 const MAX_DNS_BRUTE_DEPTH: usize = 127;
 
+struct MutationSpec {
+    label: String,
+    rule_id: &'static str,
+    modifier: Option<crate::DnsWordFrequency>,
+    modifier_value: Option<String>,
+    separator: Option<char>,
+}
+
 /// Señala nombres DNS con patrones numéricos que el módulo de origen omite al
 /// preparar fuerza bruta. Es una pista de calidad; no invalida ni elimina el
 /// nombre de evidencia CHEF.
@@ -77,6 +85,33 @@ pub struct DnsBruteRootAssessment {
     pub recommended_skip: bool,
 }
 
+/// Candidato de mutación local con la etiqueta semilla y la regla explicable.
+/// No representa una observación DNS ni incluye resultado de resolución.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DnsMutationCandidate {
+    pub name: String,
+    pub root: String,
+    pub seed_label: String,
+    pub rule_id: &'static str,
+    pub modifier: Option<crate::DnsWordFrequency>,
+    pub modifier_value: Option<String>,
+    pub separator: Option<char>,
+    /// IDs deterministas de la evidencia usada como semilla, si la capa
+    /// aplicativa los adjuntó. La generación aislada deja esta lista vacía.
+    pub source_event_ids: Vec<String>,
+    /// IDs de eventos que aportaron el término usado como modificador.
+    pub modifier_source_event_ids: Vec<String>,
+}
+
+/// Resultado acotado de generar mutaciones DNS sin filesystem ni red.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DnsMutationBatch {
+    pub candidates: Vec<DnsMutationCandidate>,
+    pub skipped_invalid: usize,
+    pub duplicates: usize,
+    pub truncated: bool,
+}
+
 /// Adapta las condiciones locales de profundidad y exceso de dígitos del
 /// módulo de origen. Una recomendación de omitir no descarta el activo en el
 /// grafo ni sustituye la comprobación de autorización antes de cualquier red.
@@ -99,6 +134,274 @@ pub fn assess_dns_brute_root(root: &str, max_depth: usize) -> ChefResult<DnsBrut
         excessive_digit_pattern,
         recommended_skip,
     })
+}
+
+/// Propone variantes locales desde etiquetas observadas y conserva su semilla
+/// y regla de generación. No marca el resultado como activo ni autoriza tráfico.
+///
+/// El subconjunto CHEF incluye etiqueta original, segmentos separados por
+/// `-`, `_` o `.`, unión de esos segmentos, ajustes numéricos y combinaciones
+/// prefijo/sufijo con letras, números y términos de nube. Se omiten las
+/// mutaciones recursivas, recursos externos y consulta/resolución DNS.
+pub fn generate_dns_mutation_candidates(
+    root: &str,
+    observed_labels: &[String],
+    max_candidates: usize,
+) -> ChefResult<DnsMutationBatch> {
+    generate_dns_mutation_candidates_with_modifiers(
+        root,
+        observed_labels,
+        &[],
+        None,
+        max_candidates,
+    )
+}
+
+/// Genera las variantes anteriores y añade prefijos/sufijos de las palabras
+/// más frecuentes de una nube del mismo trabajo.
+pub fn generate_dns_mutation_candidates_with_wordcloud(
+    root: &str,
+    observed_labels: &[String],
+    word_cloud: &crate::DnsWordCloud,
+    max_modifiers: usize,
+    max_candidates: usize,
+) -> ChefResult<DnsMutationBatch> {
+    let modifiers = word_cloud.top_words(max_modifiers.min(128));
+    generate_dns_mutation_candidates_with_modifiers(
+        root,
+        observed_labels,
+        &modifiers,
+        Some(word_cloud),
+        max_candidates,
+    )
+}
+
+fn generate_dns_mutation_candidates_with_modifiers(
+    root: &str,
+    observed_labels: &[String],
+    modifiers: &[crate::DnsWordFrequency],
+    word_cloud: Option<&crate::DnsWordCloud>,
+    max_candidates: usize,
+) -> ChefResult<DnsMutationBatch> {
+    if observed_labels.len() > MAX_INPUT_PREFIXES {
+        return Err(ChefError::new(
+            ErrorCode::LimitExceeded,
+            "La lista de etiquetas DNS excede el límite CHEF",
+        ));
+    }
+    let Some(root) = crate::host::canonical_domain(root) else {
+        return Err(ChefError::new(
+            ErrorCode::InvalidInput,
+            "La raíz para generar mutaciones DNS no es válida",
+        ));
+    };
+
+    let limit = max_candidates.min(MAX_CANDIDATES);
+    let mut candidates = Vec::with_capacity(observed_labels.len().min(limit));
+    let mut seen = HashSet::with_capacity(observed_labels.len().min(limit));
+    let mut skipped_invalid = 0;
+    let mut duplicates = 0;
+    let mut truncated = false;
+
+    'seeds: for seed in observed_labels {
+        let seed = seed.trim().to_ascii_lowercase();
+        if seed.is_empty() || seed.len() > 63 || seed.chars().any(char::is_control) {
+            skipped_invalid += 1;
+            continue;
+        }
+        let mut mutations = vec![MutationSpec {
+            label: seed.clone(),
+            rule_id: "seed",
+            modifier: None,
+            modifier_value: None,
+            separator: None,
+        }];
+        let segments: Vec<&str> = seed
+            .split(['-', '_', '.'])
+            .filter(|segment| !segment.is_empty())
+            .collect();
+        for segment in &segments {
+            if *segment != seed {
+                mutations.push(MutationSpec {
+                    label: (*segment).to_owned(),
+                    rule_id: "segment",
+                    modifier: None,
+                    modifier_value: None,
+                    separator: None,
+                });
+            }
+        }
+        if segments.len() > 1 {
+            mutations.push(MutationSpec {
+                label: segments.concat(),
+                rule_id: "separator-join",
+                modifier: None,
+                modifier_value: None,
+                separator: None,
+            });
+        }
+        if let Some(word_cloud) = word_cloud
+            && let Some(parts) = word_cloud.split_known_compound(&seed)
+        {
+            for part in parts {
+                mutations.push(MutationSpec {
+                    label: part.clone(),
+                    rule_id: "wordcloud-segment",
+                    modifier: word_cloud.frequency(&part),
+                    modifier_value: Some(part),
+                    separator: None,
+                });
+            }
+        }
+        mutations.extend(
+            numeric_mutations(&seed)
+                .into_iter()
+                .map(|(label, rule_id)| MutationSpec {
+                    label,
+                    rule_id,
+                    modifier: None,
+                    modifier_value: None,
+                    separator: None,
+                }),
+        );
+        for number in 0..3 {
+            add_modifier_mutations(
+                &mut mutations,
+                &seed,
+                &number.to_string(),
+                "numeric-prefix",
+                "numeric-suffix",
+                None,
+            );
+        }
+        for letter in b'a'..=b'z' {
+            let modifier = char::from(letter).to_string();
+            add_modifier_mutations(
+                &mut mutations,
+                &seed,
+                &modifier,
+                "letter-prefix",
+                "letter-suffix",
+                None,
+            );
+        }
+        for modifier in modifiers {
+            if modifier.word == seed {
+                continue;
+            }
+            add_modifier_mutations(
+                &mut mutations,
+                &seed,
+                &modifier.word,
+                "wordcloud-prefix",
+                "wordcloud-suffix",
+                Some(modifier.clone()),
+            );
+        }
+
+        for mutation in mutations {
+            let hostname = format!("{}.{root}", mutation.label);
+            let Some(name) = crate::host::canonical_domain(&hostname) else {
+                skipped_invalid += 1;
+                continue;
+            };
+            if name == root || !name.ends_with(&format!(".{root}")) {
+                skipped_invalid += 1;
+                continue;
+            }
+            if !seen.insert(name.clone()) {
+                duplicates += 1;
+                continue;
+            }
+            if candidates.len() == limit {
+                truncated = true;
+                break 'seeds;
+            }
+            candidates.push(DnsMutationCandidate {
+                name,
+                root: root.clone(),
+                seed_label: seed.clone(),
+                rule_id: mutation.rule_id,
+                modifier: mutation.modifier,
+                modifier_value: mutation.modifier_value,
+                separator: mutation.separator,
+                source_event_ids: Vec::new(),
+                modifier_source_event_ids: Vec::new(),
+            });
+        }
+    }
+
+    Ok(DnsMutationBatch {
+        candidates,
+        skipped_invalid,
+        duplicates,
+        truncated,
+    })
+}
+
+fn add_modifier_mutations(
+    mutations: &mut Vec<MutationSpec>,
+    seed: &str,
+    modifier_value: &str,
+    prefix_rule: &'static str,
+    suffix_rule: &'static str,
+    frequency: Option<crate::DnsWordFrequency>,
+) {
+    for separator in [None, Some('.'), Some('-')] {
+        let delimiter = separator.map_or_else(String::new, |value| value.to_string());
+        mutations.push(MutationSpec {
+            label: format!("{modifier_value}{delimiter}{seed}"),
+            rule_id: prefix_rule,
+            modifier: frequency.clone(),
+            modifier_value: Some(modifier_value.to_owned()),
+            separator,
+        });
+        mutations.push(MutationSpec {
+            label: format!("{seed}{delimiter}{modifier_value}"),
+            rule_id: suffix_rule,
+            modifier: frequency.clone(),
+            modifier_value: Some(modifier_value.to_owned()),
+            separator,
+        });
+    }
+}
+
+fn numeric_mutations(seed: &str) -> Vec<(String, &'static str)> {
+    let mut spans = Vec::new();
+    let mut start = None;
+    for (index, character) in seed.char_indices() {
+        if character.is_ascii_digit() {
+            start.get_or_insert(index);
+        } else if let Some(begin) = start.take() {
+            spans.push((begin, index));
+        }
+    }
+    if let Some(begin) = start {
+        spans.push((begin, seed.len()));
+    }
+
+    let mut mutations = Vec::new();
+    for (begin, end) in spans.into_iter().rev().take(3).rev() {
+        let digits = &seed[begin..end];
+        if digits.len() > 6 {
+            continue;
+        }
+        let Ok(number) = digits.parse::<i32>() else {
+            continue;
+        };
+        let min = (number - 3).max(0);
+        let max = (number + 3).min(10_i32.pow(digits.len() as u32) - 1);
+        for value in min..=max {
+            let replacement = format!("{value:0width$}", width = digits.len());
+            if replacement != digits {
+                mutations.push((
+                    format!("{}{replacement}{}", &seed[..begin], &seed[end..]),
+                    "numeric-adjustment",
+                ));
+            }
+        }
+    }
+    mutations
 }
 
 /// Analiza una lista DNS UTF-8 acotada, sin consultar filesystem o red.
