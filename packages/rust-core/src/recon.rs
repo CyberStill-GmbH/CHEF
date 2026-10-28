@@ -214,6 +214,23 @@ pub fn adapt_bbot_to_chef(graph: &BbotEventGraph) -> ChefResult<ChefReconGraph> 
             }
         }
 
+        if mapped
+            && crate::speculate::is_generated_bimi_url_hint(event)
+            && let Some(parent_id) = event.parent_id.as_deref()
+            && events_by_id.contains_key(parent_id)
+            && let Some(url) =
+                event_value(event).and_then(|value| crate::url_tools::canonical_http_url(&value))
+        {
+            let asset_key = asset_id(ReconAssetKind::WebEndpoint, &url);
+            let source_evidence_id = identity::id("chef-evidence", &[parent_id]);
+            if let Some(asset) = assets.get_mut(&asset_key)
+                && !asset.evidence_ids.contains(&source_evidence_id)
+            {
+                asset.evidence_ids.push(source_evidence_id);
+                asset.evidence_ids.sort();
+            }
+        }
+
         if event
             .tags
             .iter()
@@ -473,6 +490,7 @@ fn named_asset_qualification(kind: ReconAssetKind, event: &BbotEvent) -> Option<
         {
             Some("hint")
         }
+        ReconAssetKind::Domain if event.event_type == "URL_HINT" => Some("hint"),
         ReconAssetKind::Domain if event.event_type == "DNS_NAME_UNRESOLVED" => Some(
             if event.module.as_deref() == Some("chef_dns_parent_hints")
                 && event
