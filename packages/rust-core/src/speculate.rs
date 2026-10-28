@@ -29,6 +29,10 @@ const MAX_DNS_RDATA_HINTS_PER_EVENT: usize = 32;
 /// `RAW_DNS_RECORD` ya presentes en un JSONL. No consulta DNS ni crea hechos
 /// observados: publica nombres de destino como pistas con el registro padre.
 impl BbotModule for ChefDnsRdataHints {
+    fn priority(&self) -> u8 {
+        1
+    }
+
     fn descriptor(&self) -> ModuleDescriptor {
         ModuleDescriptor {
             name: "chef_dns_rdata_hints",
@@ -102,6 +106,10 @@ pub(crate) fn is_generated_dns_rdata_hint(event: &BbotEvent) -> bool {
 pub(crate) struct ChefIpRangeExpansion;
 
 impl BbotModule for ChefIpRangeExpansion {
+    fn priority(&self) -> u8 {
+        4
+    }
+
     fn descriptor(&self) -> ModuleDescriptor {
         ModuleDescriptor {
             name: "chef_ip_range_expansion",
@@ -143,6 +151,10 @@ impl BbotModule for ChefIpRangeExpansion {
 /// publica solo una pista no verificada; nunca visita el destino ni retiene
 /// query o fragmento, que pueden contener datos sensibles.
 impl BbotModule for ChefUrlAttributeHints {
+    fn priority(&self) -> u8 {
+        4
+    }
+
     fn descriptor(&self) -> ModuleDescriptor {
         ModuleDescriptor {
             name: "chef_url_attribute_hints",
@@ -200,6 +212,10 @@ pub(crate) fn derive_dns_parent_hints(value: &str) -> Vec<String> {
 }
 
 impl BbotModule for ChefDnsParentHints {
+    fn priority(&self) -> u8 {
+        4
+    }
+
     fn descriptor(&self) -> ModuleDescriptor {
         ModuleDescriptor {
             name: "chef_dns_parent_hints",
@@ -239,6 +255,10 @@ impl BbotModule for ChefDnsParentHints {
 pub(crate) const DEFAULT_HINT_PORTS: [u16; 2] = [80, 443];
 
 impl BbotModule for ChefCommonPortHints {
+    fn priority(&self) -> u8 {
+        4
+    }
+
     fn descriptor(&self) -> ModuleDescriptor {
         ModuleDescriptor {
             name: "chef_common_port_hints",
@@ -303,6 +323,10 @@ impl BbotModule for ChefCommonPortHints {
 /// perfiles sociales y nombres de tenant Azure. No afirma propiedad ni hace
 /// consultas externas; el evento hijo conserva la procedencia del origen.
 impl BbotModule for ChefOrgStubHints {
+    fn priority(&self) -> u8 {
+        4
+    }
+
     fn descriptor(&self) -> ModuleDescriptor {
         ModuleDescriptor {
             name: "chef_org_stub_hints",
@@ -470,6 +494,10 @@ fn bounded_network_members(value: &str) -> Option<Vec<IpAddr>> {
 }
 
 impl BbotModule for ChefUrlParentHints {
+    fn priority(&self) -> u8 {
+        4
+    }
+
     fn descriptor(&self) -> ModuleDescriptor {
         ModuleDescriptor {
             name: "chef_url_parents",

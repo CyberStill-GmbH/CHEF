@@ -20,6 +20,8 @@ const MAX_EVENT_DATA_BYTES: usize = 128 * 1024;
 const MAX_EVENT_TAGS: usize = 128;
 const MAX_TAG_BYTES: usize = 128;
 const MAX_MODULE_NAME_BYTES: usize = 128;
+const MIN_MODULE_PRIORITY: u8 = 1;
+const MAX_MODULE_PRIORITY: u8 = 5;
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
@@ -66,6 +68,13 @@ pub struct ModuleDescriptor {
 /// Módulo CHEF puro; dependencias externas se inyectan en la capa adaptadora.
 pub trait BbotModule: Send + Sync {
     fn descriptor(&self) -> ModuleDescriptor;
+
+    /// Prioridad fuente acotada; valores menores se ejecutan primero.
+    /// BBOT usa 3 por defecto. CHEF desempata por nombre para que el resultado
+    /// no dependa del orden de registro o del runtime.
+    fn priority(&self) -> u8 {
+        3
+    }
 
     /// Solo los módulos que garantizan no usar red pueden participar en la
     /// expansión offline de evidencia importada.
@@ -187,6 +196,7 @@ impl BbotEventEngine {
         let descriptor = module.descriptor();
         if descriptor.name.is_empty()
             || descriptor.name.len() > MAX_MODULE_NAME_BYTES
+            || !(MIN_MODULE_PRIORITY..=MAX_MODULE_PRIORITY).contains(&module.priority())
             || descriptor.watches.is_empty()
             || descriptor.produces.is_empty()
             || descriptor
@@ -208,14 +218,18 @@ impl BbotEventEngine {
             ));
         }
         self.modules.push(module);
-        self.modules
-            .sort_by(|left, right| left.descriptor().name.cmp(right.descriptor().name));
+        self.modules.sort_by(|left, right| {
+            left.priority()
+                .cmp(&right.priority())
+                .then_with(|| left.descriptor().name.cmp(right.descriptor().name))
+        });
         self.rebuild_dispatch_index();
         Ok(())
     }
 
     /// Reproduce la selección por `watched_events` del gestor de BBOT con un
-    /// índice estático Rust. Los índices conservan el orden de módulo CHEF.
+    /// índice estático Rust. Los índices conservan prioridad ascendente y
+    /// desempate por nombre de módulo.
     fn rebuild_dispatch_index(&mut self) {
         let mut dispatch_by_event_type = BTreeMap::<&'static str, Vec<usize>>::new();
         let mut wildcard_modules = Vec::new();
