@@ -338,3 +338,7 @@ Se añadió `parse_certspotter_subdomains` para cuerpos JSON archivados. Limita 
 ### 28-10-2026 — Parser offline de FullHunt
 
 Se añadió `parse_fullhunt_subdomains` para procesar `hosts[]` de respuestas FullHunt ya archivadas. La entrada admite hasta 1 MiB, 3 000 hosts y 1 024 candidatos; valida el objeto JSON, canonicaliza y deduplica nombres que descienden de la raíz registrable ICANN. No consulta la API, verifica créditos ni usa API key; tampoco crea eventos/linaje. Fixtures sintéticos positivos/negativos añadidos. Inventario: 60 parciales, 376 pendientes y 30 exclusiones. No se ejecutaron pruebas funcionales, aplazadas por indicación del propietario.
+
+### 28-10-2026 — Parser offline de OTX Passive DNS
+
+Se añadió `parse_otx_passive_dns` para extraer hostnames de `passive_dns[]` en una respuesta JSON archivada. Limita la entrada a 2 MiB, 4 096 registros y 1 024 candidatos; canonicaliza, deduplica y solo conserva descendientes de la raíz ICANN. Omite las direcciones, fechas y ASN para evitar reinterpretar datos históricos como observaciones actuales. No consulta OTX ni maneja API keys. Se añadieron fixtures sintéticos positivos/negativos; inventario: 61 parciales, 375 pendientes y 30 excluidos. Las pruebas funcionales siguen aplazadas.
