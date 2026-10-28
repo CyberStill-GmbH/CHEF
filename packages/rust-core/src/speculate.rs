@@ -27,13 +27,13 @@ const MAX_DNS_RDATA_HINTS_PER_EVENT: usize = 32;
 
 /// Adapta la parte offline de `internal.dnsresolve` que interpreta registros
 /// `RAW_DNS_RECORD` ya presentes en un JSONL. No consulta DNS ni crea hechos
-/// observados: publica nombres de destino como pistas con el registro padre.
+/// observados: publica nombres y orígenes URL como pistas con el registro padre.
 impl BbotModule for ChefDnsRdataHints {
     fn descriptor(&self) -> ModuleDescriptor {
         ModuleDescriptor {
             name: "chef_dns_rdata_hints",
             watches: &["RAW_DNS_RECORD"],
-            produces: &["DNS_NAME_HINT"],
+            produces: &["DNS_NAME_HINT", "URL_HINT"],
         }
     }
 
@@ -69,10 +69,14 @@ impl BbotModule for ChefDnsRdataHints {
 
         let mut names = BTreeSet::new();
         let mut caa_roles = BTreeSet::new();
+        let mut caa_report_urls = Vec::new();
         if record_type == "CAA" {
             for hint in crate::dns_policy_records::extract_caa_dns_name_hints(answer) {
                 names.insert(hint.name);
                 caa_roles.insert(hint.role);
+            }
+            if let Some(hint) = crate::dns_policy_records::extract_caa_report_url_hint(answer) {
+                caa_report_urls.push(hint);
             }
         } else {
             let targets = crate::extract_dns_targets(&record_type, answer)?;
@@ -83,7 +87,7 @@ impl BbotModule for ChefDnsRdataHints {
             );
         }
         let record_tag = format!("chef:dns-rdata:{}", record_type.to_ascii_lowercase());
-        Ok(names
+        let mut drafts = names
             .into_iter()
             .take(MAX_DNS_RDATA_HINTS_PER_EVENT)
             .map(|name| BbotEventDraft {
@@ -96,7 +100,15 @@ impl BbotModule for ChefDnsRdataHints {
                     .chain(caa_roles.iter().map(|role| format!("chef:caa:{role}-hint")))
                     .collect(),
             })
-            .collect())
+            .collect::<Vec<_>>();
+        drafts.extend(caa_report_urls.into_iter().map(|hint| BbotEventDraft {
+            event_type: "URL_HINT".to_owned(),
+            data: Value::String(hint.url),
+            host: Some(hint.host),
+            port: hint.port,
+            tags: vec![record_tag.clone(), "chef:caa:report-url-hint".to_owned()],
+        }));
+        Ok(drafts)
     }
 }
 

@@ -677,6 +677,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "chef-application"
+version = "0.1.0"
+dependencies = [
+ "chef-core",
+ "tokio",
+]
+
+[[package]]
 name = "chef-core"
 version = "0.1.0"
 dependencies = [
@@ -710,6 +718,7 @@ dependencies = [
 name = "chef-storage"
 version = "0.1.0"
 dependencies = [
+ "chef-application",
  "chef-core",
  "serde_json",
  "surrealdb",

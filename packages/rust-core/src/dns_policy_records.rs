@@ -5,7 +5,7 @@
 
 use std::collections::BTreeSet;
 
-use url::{Host, Url};
+use url::Url;
 
 const MAX_CAA_RDATA_BYTES: usize = 64 * 1024;
 const MAX_CAA_VALUE_BYTES: usize = 4 * 1024;
@@ -17,36 +17,26 @@ pub(crate) struct CaaDnsNameHint {
     pub role: &'static str,
 }
 
+/// Origen HTTP(S) de un destino iodef, sin ruta ni parámetros sensibles.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct CaaReportUrlHint {
+    pub url: String,
+    pub host: String,
+    pub port: Option<u16>,
+}
+
 /// Extrae únicamente hosts literales de CAA RDATA con formato de presentación.
 ///
-/// `issue*` produce el nombre de CA; `iodef` y `contactemail` producen solo el
-/// dominio del URI/correo. Nunca devuelve URI, ruta, query, correo ni RDATA.
+/// `issue*` produce el nombre de CA; `mailto:` y `contactemail` producen solo
+/// el dominio del correo. Nunca devuelve URI, ruta, query, correo ni RDATA.
 pub(crate) fn extract_caa_dns_name_hints(rdata: &str) -> Vec<CaaDnsNameHint> {
     if rdata.len() > MAX_CAA_RDATA_BYTES || rdata.chars().any(char::is_control) {
         return Vec::new();
     }
 
-    let Some((flags, remainder)) = split_ascii_whitespace(rdata.trim()) else {
+    let Some((tag, value)) = parse_caa_rdata(rdata) else {
         return Vec::new();
     };
-    if flags.parse::<u8>().is_err() {
-        return Vec::new();
-    }
-
-    let Some((tag, value)) = split_ascii_whitespace(remainder.trim()) else {
-        return Vec::new();
-    };
-    let tag = tag.to_ascii_lowercase();
-    if tag.is_empty() || tag.len() > 15 || !tag.bytes().all(|byte| byte.is_ascii_alphanumeric()) {
-        return Vec::new();
-    }
-
-    let Some(value) = unquote_value(value.trim()) else {
-        return Vec::new();
-    };
-    if value.len() > MAX_CAA_VALUE_BYTES || value.chars().any(char::is_control) {
-        return Vec::new();
-    }
 
     let extracted = match tag.as_str() {
         "issue" => ca_issuer_host(&value).map(|name| (name, "issuer")),
@@ -62,6 +52,40 @@ pub(crate) fn extract_caa_dns_name_hints(rdata: &str) -> Vec<CaaDnsNameHint> {
     BTreeSet::from([CaaDnsNameHint { name, role }])
         .into_iter()
         .collect()
+}
+
+/// Extrae como máximo el origen de un URI HTTP(S) de una etiqueta CAA `iodef`.
+/// Las URI `mailto:` conservan solo el dominio mediante la proyección DNS.
+pub(crate) fn extract_caa_report_url_hint(rdata: &str) -> Option<CaaReportUrlHint> {
+    let (tag, value) = parse_caa_rdata(rdata)?;
+    if tag != "iodef" {
+        return None;
+    }
+    let safe_url = crate::url_tools::canonical_http_origin(&value)?;
+    let parsed = Url::parse(&safe_url).ok()?;
+    Some(CaaReportUrlHint {
+        url: safe_url,
+        host: parsed.host_str()?.to_owned(),
+        port: parsed.port_or_known_default(),
+    })
+}
+
+fn parse_caa_rdata(rdata: &str) -> Option<(String, String)> {
+    if rdata.len() > MAX_CAA_RDATA_BYTES || rdata.chars().any(char::is_control) {
+        return None;
+    }
+    let (flags, remainder) = split_ascii_whitespace(rdata.trim())?;
+    flags.parse::<u8>().ok()?;
+    let (tag, value) = split_ascii_whitespace(remainder.trim())?;
+    let tag = tag.to_ascii_lowercase();
+    if tag.is_empty() || tag.len() > 15 || !tag.bytes().all(|byte| byte.is_ascii_alphanumeric()) {
+        return None;
+    }
+    let value = unquote_value(value.trim())?;
+    if value.len() > MAX_CAA_VALUE_BYTES || value.chars().any(char::is_control) {
+        return None;
+    }
+    Some((tag, value))
 }
 
 fn split_ascii_whitespace(value: &str) -> Option<(&str, &str)> {
@@ -103,31 +127,13 @@ fn ca_issuer_host(value: &str) -> Option<String> {
 }
 
 fn report_host(value: &str) -> Option<String> {
-    if value.len() > MAX_CAA_VALUE_BYTES {
-        return None;
-    }
     if value
         .get(..7)
         .is_some_and(|prefix| prefix.eq_ignore_ascii_case("mailto:"))
     {
         return email_domain(&value[7..]);
     }
-
-    let authority = value.split_once("://")?.1.split(['/', '?', '#']).next()?;
-    if authority.is_empty() || authority.contains(['@', '\\']) {
-        return None;
-    }
-    let url = Url::parse(value).ok()?;
-    if !matches!(url.scheme(), "http" | "https")
-        || !url.username().is_empty()
-        || url.password().is_some()
-    {
-        return None;
-    }
-    match url.host()? {
-        Host::Domain(domain) => crate::host::canonical_domain(domain),
-        Host::Ipv4(_) | Host::Ipv6(_) => None,
-    }
+    None
 }
 
 fn email_domain(value: &str) -> Option<String> {
