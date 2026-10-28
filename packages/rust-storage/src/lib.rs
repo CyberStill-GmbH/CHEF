@@ -279,12 +279,32 @@ impl LocalSnapshotStore {
             return Err(StorageError::DnsObservationConflict);
         }
 
-        let _: Option<Value> = self
+        let create_result = self
             .db
             .create((DNS_OBSERVATION_TABLE, key.as_str()))
             .content(payload)
-            .await?;
-        Ok(())
+            .await;
+        match create_result {
+            Ok(_) => Ok(()),
+            Err(create_error) => {
+                // CREATE is the atomic uniqueness gate. If another caller won
+                // the race, identical payloads remain idempotent; conflicting
+                // payloads never overwrite the existing observation.
+                let Some(existing) = self
+                    .db
+                    .select::<Option<Value>>((DNS_OBSERVATION_TABLE, key.as_str()))
+                    .await?
+                else {
+                    return Err(StorageError::Database(create_error));
+                };
+                if dns_observation_record_matches(&existing, run_id, batch.batch_id(), &batch_value)
+                {
+                    Ok(())
+                } else {
+                    Err(StorageError::DnsObservationConflict)
+                }
+            }
+        }
     }
 
     /// Recupera un lote DNS y vuelve a validar esquema, clave y linaje local.
@@ -336,18 +356,37 @@ fn validate_dns_batch_lineage(
     batch: &DnsObservationBatch,
     graph: &ChefReconGraph,
 ) -> Result<(), StorageError> {
-    let evidence_ids = graph
-        .evidence
+    let domain_evidence = graph
+        .assets
         .iter()
-        .map(|evidence| evidence.id.as_str())
+        .filter(|asset| asset.kind == chef_core::ReconAssetKind::Domain)
+        .flat_map(|asset| {
+            asset
+                .evidence_ids
+                .iter()
+                .map(move |evidence_id| (asset.key.as_str(), evidence_id.as_str()))
+        })
         .collect::<std::collections::BTreeSet<_>>();
     if batch
-        .source_evidence_ids()
-        .any(|evidence_id| !evidence_ids.contains(evidence_id))
+        .source_evidence_bindings()
+        .any(|(evidence_id, scope_host)| !domain_evidence.contains(&(scope_host, evidence_id)))
     {
         return Err(StorageError::InvalidDnsObservation);
     }
     Ok(())
+}
+
+fn dns_observation_record_matches(
+    record: &Value,
+    run_id: &str,
+    batch_id: &str,
+    batch: &Value,
+) -> bool {
+    record.get("run_id").and_then(Value::as_str) == Some(run_id)
+        && record.get("batch_id").and_then(Value::as_str) == Some(batch_id)
+        && record.get("schema_version").and_then(Value::as_str)
+            == Some(DNS_OBSERVATION_SCHEMA_VERSION)
+        && record.get("batch") == Some(batch)
 }
 
 impl ImportHistoryPort for LocalSnapshotStore {

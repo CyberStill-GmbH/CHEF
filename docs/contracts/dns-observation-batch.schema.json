@@ -8,7 +8,7 @@
   "required": ["schemaVersion", "batchId", "termination", "observations"],
   "properties": {
     "schemaVersion": { "const": "1.0.0" },
-    "batchId": { "type": "string", "pattern": "^dns-batch:[a-z0-9:_-]{0,117}$" },
+    "batchId": { "type": "string", "pattern": "^dns-batch:[a-z0-9:_-]{1,118}$" },
     "termination": {
       "enum": ["completed", "invalid_query", "limit_exceeded", "not_authorized", "invalid_authorization", "authorization_expired", "cancelled"]
     },
@@ -23,7 +23,7 @@
     "queryObservation": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["ownerName", "scopeHost", "recordType", "observedAt", "resolutionHops", "authorizationId", "scopeDigest", "sourceEvidenceId", "outcome"],
+      "required": ["ownerName", "scopeHost", "recordType", "observedAt", "resolutionHops", "authorizationId", "authorizationScopeDigest", "sourceEvidenceId", "outcome"],
       "properties": {
         "ownerName": { "type": "string", "minLength": 1, "maxLength": 253 },
         "scopeHost": { "type": "string", "minLength": 1, "maxLength": 253 },
@@ -31,7 +31,7 @@
         "observedAt": { "type": "string", "format": "date-time" },
         "resolutionHops": { "type": "integer", "minimum": 0, "maximum": 32 },
         "authorizationId": { "type": "string", "minLength": 1, "maxLength": 128 },
-        "scopeDigest": { "$ref": "#/$defs/sha256" },
+        "authorizationScopeDigest": { "$ref": "#/$defs/sha256" },
         "sourceEvidenceId": { "oneOf": [{ "$ref": "#/$defs/evidenceId" }, { "type": "null" }] },
         "outcome": { "$ref": "#/$defs/outcome" }
       }
@@ -69,7 +69,7 @@
       "additionalProperties": false,
       "required": ["recordType", "ttlSeconds", "disposition", "rdataSha256", "targetCandidates"],
       "properties": {
-        "recordType": { "type": "string", "minLength": 1, "maxLength": 16, "pattern": "^[A-Za-z0-9-]+$" },
+        "recordType": { "const": "SRV" },
         "ttlSeconds": { "type": "integer", "minimum": 0 },
         "disposition": { "enum": ["follow_up_allowed", "evidence_only"] },
         "rdataSha256": { "$ref": "#/$defs/sha256" },

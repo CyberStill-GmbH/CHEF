@@ -33,7 +33,7 @@ pub struct DnsQueryObservation {
     observed_at: String,
     resolution_hops: u8,
     authorization_id: String,
-    scope_digest: String,
+    authorization_scope_digest: String,
     source_evidence_id: Option<String>,
     outcome: DnsObservationOutcome,
 }
@@ -126,7 +126,7 @@ impl DnsObservationBatch {
                     observed_at: result.observed_at.clone(),
                     resolution_hops: resolution.resolution_hops,
                     authorization_id: resolution.authorization_id.clone(),
-                    scope_digest: resolution.scope_digest.clone(),
+                    authorization_scope_digest: resolution.scope_digest.clone(),
                     source_evidence_id: result.source_evidence_id.clone(),
                     outcome,
                 })
@@ -175,22 +175,25 @@ impl DnsObservationBatch {
                 || chrono::DateTime::parse_from_rfc3339(&observation.observed_at).is_err()
                 || observation.authorization_id.is_empty()
                 || observation.authorization_id.len() > 128
-                || observation.scope_digest.len() != 64
+                || observation.authorization_scope_digest.len() != 64
                 || !observation
-                    .scope_digest
+                    .authorization_scope_digest
                     .bytes()
                     .all(|byte| byte.is_ascii_hexdigit())
                 || observation
                     .source_evidence_id
                     .as_deref()
                     .is_some_and(|id| !is_evidence_id(id))
-                || DnsQueryRequest::for_srv_owner(
-                    &observation.owner_name,
-                    &observation.scope_host,
-                    observation.resolution_hops,
-                )
-                .is_err()
             {
+                return Err(DnsObservationError::InvalidBatch);
+            }
+            let request = DnsQueryRequest::for_srv_owner(
+                &observation.owner_name,
+                &observation.scope_host,
+                observation.resolution_hops,
+            )
+            .map_err(|_| DnsObservationError::InvalidBatch)?;
+            if request.scope_host() != observation.scope_host {
                 return Err(DnsObservationError::InvalidBatch);
             }
             if let DnsObservationOutcome::Answers { answers } = &observation.outcome {
@@ -198,18 +201,25 @@ impl DnsObservationBatch {
                     return Err(DnsObservationError::LimitExceeded);
                 }
                 for answer in answers {
-                    if answer.record_type.is_empty()
-                        || answer.record_type.len() > 16
-                        || answer
-                            .record_type
-                            .bytes()
-                            .any(|byte| !byte.is_ascii_alphanumeric() && byte != b'-')
+                    if answer.record_type != "SRV"
                         || !matches!(
                             answer.disposition.as_str(),
                             "follow_up_allowed" | "evidence_only"
                         )
                         || !is_sha256(&answer.rdata_sha256)
                         || answer.target_candidates.len() > MAX_TARGET_CANDIDATES_PER_ANSWER
+                        || answer.target_candidates.iter().any(|target| {
+                            if target.is_empty() || target.len() > 253 {
+                                return true;
+                            }
+                            match chef_core::parse_chef_target_seed(target) {
+                                Ok(seed) => {
+                                    seed.kind != chef_core::ChefTargetKind::DnsName
+                                        || seed.host.as_deref() != Some(target.as_str())
+                                }
+                                Err(_) => true,
+                            }
+                        })
                         || (answer.disposition == "evidence_only"
                             && !answer.target_candidates.is_empty())
                     {
@@ -264,6 +274,15 @@ impl DnsObservationBatch {
         self.observations
             .iter()
             .filter_map(|observation| observation.source_evidence_id.as_deref())
+    }
+
+    pub fn source_evidence_bindings(&self) -> impl Iterator<Item = (&str, &str)> {
+        self.observations.iter().filter_map(|observation| {
+            observation
+                .source_evidence_id
+                .as_deref()
+                .map(|evidence_id| (evidence_id, observation.scope_host.as_str()))
+        })
     }
 
     pub fn to_json_value(&self) -> Result<serde_json::Value, serde_json::Error> {
