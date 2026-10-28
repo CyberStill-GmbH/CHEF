@@ -59,7 +59,7 @@ impl BbotModule for ChefDnsRdataHints {
         let record_type = record_type.trim().to_ascii_uppercase();
         if !matches!(
             record_type.as_str(),
-            "MX" | "NAPTR" | "NS" | "SOA" | "SRV" | "TXT"
+            "ANAME" | "CNAME" | "MX" | "NAPTR" | "NS" | "PTR" | "SOA" | "SRV" | "TXT"
         ) {
             return Ok(Vec::new());
         }
