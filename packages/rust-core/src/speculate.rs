@@ -22,6 +22,7 @@ pub(crate) struct ChefDnsParentHints;
 pub(crate) struct ChefCommonPortHints;
 pub(crate) struct ChefOrgStubHints;
 pub(crate) struct ChefDnsRdataHints;
+pub(crate) struct ChefBimiRecordHints;
 
 const MAX_DNS_RDATA_HINTS_PER_EVENT: usize = 32;
 
@@ -94,6 +95,151 @@ pub(crate) fn is_generated_dns_rdata_hint(event: &BbotEvent) -> bool {
             .tags
             .iter()
             .any(|tag| tag == "chef:derived-dns-rdata-hint")
+}
+
+pub(crate) fn is_generated_bimi_url_hint(event: &BbotEvent) -> bool {
+    event.event_type == "URL_HINT"
+        && event.module.as_deref() == Some("chef_bimi_record_hints")
+        && event
+            .tags
+            .iter()
+            .any(|tag| tag == "chef:derived-bimi-url-hint")
+}
+
+/// Adapta el parser BIMI de BBOT a RDATA TXT ya importado. Extrae únicamente
+/// las URL del logo/certificado; no consulta DNS, descarga ni valida destinos.
+impl BbotModule for ChefBimiRecordHints {
+    fn descriptor(&self) -> ModuleDescriptor {
+        ModuleDescriptor {
+            name: "chef_bimi_record_hints",
+            watches: &["RAW_DNS_RECORD"],
+            produces: &["URL_HINT"],
+        }
+    }
+
+    fn offline_only(&self) -> bool {
+        true
+    }
+
+    fn handle(
+        &self,
+        event: &BbotEvent,
+        _config: &ChefConfig,
+        _clock: &dyn Clock,
+    ) -> ChefResult<Vec<BbotEventDraft>> {
+        if event.data_redacted {
+            return Ok(Vec::new());
+        }
+        let Some(data) = event.data.as_object() else {
+            return Ok(Vec::new());
+        };
+        if !data
+            .get("type")
+            .and_then(Value::as_str)
+            .is_some_and(|record_type| record_type.eq_ignore_ascii_case("TXT"))
+        {
+            return Ok(Vec::new());
+        }
+        let bimi_source = event.module.as_deref() == Some("dnsbimi")
+            || event.tags.iter().any(|tag| tag == "bimi-record")
+            || event
+                .host
+                .as_deref()
+                .or_else(|| data.get("host").and_then(Value::as_str))
+                .is_some_and(is_bimi_record_host);
+        if !bimi_source {
+            return Ok(Vec::new());
+        }
+        let Some(answer) = data.get("answer").and_then(Value::as_str) else {
+            return Ok(Vec::new());
+        };
+        if answer.len() > 1024 {
+            return Ok(Vec::new());
+        }
+
+        Ok(parse_bimi_urls(answer)
+            .into_iter()
+            .filter_map(|(url_value, kind)| {
+                let (url, host, port) = checked_url_attribute(&url_value)?;
+                Some(BbotEventDraft {
+                    event_type: "URL_HINT".to_owned(),
+                    data: Value::String(url),
+                    host: Some(host),
+                    port,
+                    tags: vec![
+                        "chef:derived-bimi-url-hint".to_owned(),
+                        format!("chef:bimi:{kind}"),
+                    ],
+                })
+            })
+            .collect())
+    }
+}
+
+fn is_bimi_record_host(host: &str) -> bool {
+    host.len() <= 253
+        && !host.chars().any(char::is_control)
+        && host
+            .trim_end_matches('.')
+            .split('.')
+            .any(|label| label.eq_ignore_ascii_case("_bimi"))
+}
+
+fn parse_bimi_urls(answer: &str) -> Vec<(String, &'static str)> {
+    let mut fields = answer.trim().split(';').map(str::trim);
+    if !fields
+        .next()
+        .and_then(|version| version.split_once('='))
+        .is_some_and(|(key, value)| {
+            key.eq_ignore_ascii_case("v") && value.eq_ignore_ascii_case("BIMI1")
+        })
+    {
+        return Vec::new();
+    }
+
+    let mut urls = Vec::new();
+    let mut seen_location = false;
+    let mut seen_authority = false;
+    for field in fields {
+        if field.is_empty() {
+            continue;
+        }
+        let Some((key, value)) = field.split_once('=') else {
+            return Vec::new();
+        };
+        let (kind, secure_only) =
+            if key.eq_ignore_ascii_case("l") && !seen_location && !seen_authority {
+                seen_location = true;
+                ("location", false)
+            } else if key.eq_ignore_ascii_case("a") && !seen_authority {
+                seen_authority = true;
+                ("authority", true)
+            } else {
+                return Vec::new();
+            };
+        if value.is_empty() {
+            continue;
+        }
+        if value.len() > 255 || value.chars().any(char::is_whitespace) {
+            return Vec::new();
+        }
+        let valid_scheme = if secure_only {
+            value
+                .get(..8)
+                .is_some_and(|scheme| scheme.eq_ignore_ascii_case("https://"))
+        } else {
+            value
+                .get(..7)
+                .is_some_and(|scheme| scheme.eq_ignore_ascii_case("http://"))
+                || value
+                    .get(..8)
+                    .is_some_and(|scheme| scheme.eq_ignore_ascii_case("https://"))
+        };
+        if valid_scheme {
+            urls.push((value.to_owned(), kind));
+        }
+    }
+    urls
 }
 
 /// Adaptación offline y acotada del puente IP_RANGE -> IP_ADDRESS de BBOT.

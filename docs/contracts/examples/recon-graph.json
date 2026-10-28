@@ -81,6 +81,18 @@
       ]
     },
     {
+      "id": "asset-bimi-url-hint-example",
+      "kind": "web_endpoint",
+      "key": "https://bimi.example.net/brand/logo.svg",
+      "qualification": "hint",
+      "firstSeen": "2026-10-18T00:00:00.000Z",
+      "lastSeen": "2026-10-18T00:00:00.000Z",
+      "evidenceIds": [
+        "evidence-bimi-url-hint-example",
+        "evidence-bimi-record-source-example"
+      ]
+    },
+    {
       "id": "asset-organization-example",
       "kind": "organization",
       "key": "bücher",
@@ -218,6 +230,26 @@
       "observedAt": "2026-10-18T00:00:00.000Z",
       "locator": "chef:dns-rdata:mx",
       "module": "chef_dns_rdata_hints",
+      "redacted": false
+    },
+    {
+      "id": "evidence-bimi-record-source-example",
+      "sourceEventId": "event-bimi-record-source-example",
+      "parentEvidenceId": "evidence-dns-target-example",
+      "eventType": "RAW_DNS_RECORD",
+      "observedAt": "2026-10-18T00:00:00.000Z",
+      "locator": "/events/bimi-txt-record",
+      "module": "dnsbimi",
+      "redacted": false
+    },
+    {
+      "id": "evidence-bimi-url-hint-example",
+      "sourceEventId": "event-bimi-url-hint-example",
+      "parentEvidenceId": "evidence-bimi-record-source-example",
+      "eventType": "URL_HINT",
+      "observedAt": "2026-10-18T00:00:00.000Z",
+      "locator": "bimi_location",
+      "module": "chef_bimi_record_hints",
       "redacted": false
     }
   ],

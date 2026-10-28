@@ -56,6 +56,8 @@ El perfil `offline_hints` también añade `DNS_NAME_HINT` después de derivar pr
 
 Con `offline_hints`, `chef_dns_rdata_hints` procesa respuestas `RAW_DNS_RECORD` ya importadas de MX, NAPTR, NS, SOA, SRV y TXT. De cada evento emite hasta 32 nombres canónicos como `DNS_NAME_HINT`, conserva el registro padre como evidencia y usa la calificación `hint`. No procesa respuestas A/AAAA como pistas, no hace resolución, no convierte la respuesta en una observación actual y no amplía el scope. Reutiliza el grafo `1.4.0`; el ejemplo `recon-graph.json` muestra la evidencia de origen y la pista derivada. Falta la prueba funcional positiva/negativa, aplazada con la fase de pruebas indicada por el propietario.
 
+El módulo `chef_bimi_record_hints` aplica el parser del origen `dnsbimi` a respuestas TXT BIMI importadas (registro con tag BIMI, módulo fuente `dnsbimi` o selector `_bimi`). Extrae `l=` y `a=` válidos como `URL_HINT` de hasta 255 bytes, los canonicaliza y conserva el evento TXT como evidencia padre. Nunca hace las consultas de selectores, solicita las URL ni las clasifica como verificadas. Reutiliza `web_endpoint` con `qualification: hint` del grafo `1.4.0`; su ejemplo representa la relación de evidencia. La verificación positiva/negativa y de formato queda pendiente para la fase de pruebas posterior.
+
 Ejemplo de activación local opcional:
 
 ```toml
@@ -65,6 +67,7 @@ chef_url_attribute_hints = true
 chef_ip_range_expansion = true
 chef_dns_parent_hints = true
 chef_dns_rdata_hints = true
+chef_bimi_record_hints = true
 chef_common_port_hints = true
 chef_org_stub_hints = true
 chef_dns_mutation_hints = true
