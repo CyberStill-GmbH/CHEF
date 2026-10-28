@@ -99,6 +99,8 @@ pub struct DnsMutationCandidate {
     /// IDs deterministas de la evidencia usada como semilla, si la capa
     /// aplicativa los adjuntó. La generación aislada deja esta lista vacía.
     pub source_event_ids: Vec<String>,
+    /// IDs de eventos que aportaron el término usado como modificador.
+    pub modifier_source_event_ids: Vec<String>,
 }
 
 /// Resultado acotado de generar mutaciones DNS sin filesystem ni red.
@@ -303,6 +305,7 @@ fn generate_dns_mutation_candidates_with_modifiers(
                 modifier_value: mutation.modifier_value,
                 separator: mutation.separator,
                 source_event_ids: Vec::new(),
+                modifier_source_event_ids: Vec::new(),
             });
         }
     }

@@ -15,6 +15,8 @@ pub struct DnsMutationHintBatch {
     pub candidates: Vec<DnsMutationCandidate>,
     pub roots_processed: usize,
     pub events_skipped: usize,
+    pub candidates_skipped_invalid: usize,
+    pub duplicates_suppressed: usize,
     pub observed_candidates_suppressed: usize,
     pub truncated: bool,
 }
@@ -70,6 +72,8 @@ pub fn generate_dns_mutation_hints(
 
     let mut candidates_by_name: BTreeMap<String, DnsMutationCandidate> = BTreeMap::new();
     let mut roots_processed = 0;
+    let mut candidates_skipped_invalid: usize = 0;
+    let mut duplicates_suppressed: usize = 0;
     let mut observed_candidates_suppressed = 0;
     let mut truncated = false;
 
@@ -80,15 +84,28 @@ pub fn generate_dns_mutation_hints(
         }
         roots_processed += 1;
         let mut cloud = DnsWordCloud::default();
+        let mut token_sources: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
         let mut labels = Vec::with_capacity(seeds.len());
-        for label in seeds.keys() {
-            cloud.absorb_text(label, true);
+        for (label, source_ids) in &seeds {
             labels.push(label.clone());
+            let tokens = crate::dns_wordcloud::extract_dns_words(label, true);
+            for source_id in source_ids {
+                for token in &tokens {
+                    cloud.add_word(token);
+                    token_sources
+                        .entry(token.clone())
+                        .or_default()
+                        .insert(source_id.clone());
+                }
+            }
         }
         let remaining = limit.saturating_sub(candidates_by_name.len());
         let batch =
             generate_dns_mutation_candidates_with_wordcloud(&root, &labels, &cloud, 64, remaining)?;
         truncated |= batch.truncated;
+        candidates_skipped_invalid =
+            candidates_skipped_invalid.saturating_add(batch.skipped_invalid);
+        duplicates_suppressed = duplicates_suppressed.saturating_add(batch.duplicates);
         for mut candidate in batch.candidates {
             if observed.contains(&candidate.name) {
                 observed_candidates_suppressed += 1;
@@ -99,10 +116,23 @@ pub fn generate_dns_mutation_hints(
                 .into_iter()
                 .flat_map(|ids| ids.iter().cloned())
                 .collect();
+            if let Some(modifier_value) = candidate.modifier_value.as_deref() {
+                candidate.modifier_source_event_ids = token_sources
+                    .get(modifier_value)
+                    .into_iter()
+                    .flat_map(|ids| ids.iter().cloned())
+                    .collect();
+            }
             if let Some(existing) = candidates_by_name.get_mut(&candidate.name) {
+                duplicates_suppressed = duplicates_suppressed.saturating_add(1);
                 existing.source_event_ids.extend(candidate.source_event_ids);
                 existing.source_event_ids.sort();
                 existing.source_event_ids.dedup();
+                existing
+                    .modifier_source_event_ids
+                    .extend(candidate.modifier_source_event_ids);
+                existing.modifier_source_event_ids.sort();
+                existing.modifier_source_event_ids.dedup();
                 continue;
             }
             if candidates_by_name.len() == limit {
@@ -118,6 +148,8 @@ pub fn generate_dns_mutation_hints(
         candidates,
         roots_processed,
         events_skipped,
+        candidates_skipped_invalid,
+        duplicates_suppressed,
         observed_candidates_suppressed,
         truncated,
     })

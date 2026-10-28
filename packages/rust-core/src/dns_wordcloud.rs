@@ -3,7 +3,7 @@
 //! El núcleo recibe tokens ya extraídos de evidencia aceptada; no abre wordlists,
 //! no parsea eventos sin validar y no comparte estado entre proyectos.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 const MAX_WORDS: usize = 100_000;
 const MAX_WORD_LENGTH: usize = 100;
@@ -52,63 +52,8 @@ impl DnsWordCloud {
     /// grupos alfanuméricos, variantes con `-`/`_`, segmentos y acrónimos;
     /// no realiza segmentación estadística de palabras concatenadas.
     pub fn absorb_text(&mut self, text: &str, include_acronyms: bool) -> usize {
-        let mut tokens = std::collections::BTreeSet::new();
-        let mut compound = String::new();
-        let mut segment = String::new();
-        let mut segments = Vec::new();
-
-        let flush_segment = |segment: &mut String,
-                             tokens: &mut std::collections::BTreeSet<String>,
-                             segments: &mut Vec<String>| {
-            if !segment.is_empty() {
-                let value = std::mem::take(segment).to_lowercase();
-                tokens.insert(value.clone());
-                segments.push(value);
-            }
-        };
-
-        let flush_compound =
-            |compound: &mut String, tokens: &mut std::collections::BTreeSet<String>| {
-                if !compound.is_empty() {
-                    tokens.insert(std::mem::take(compound).to_lowercase());
-                }
-            };
-
-        for character in text.chars() {
-            if character.is_alphanumeric() {
-                compound.push(character);
-                segment.push(character);
-            } else if character == '-' || character == '_' {
-                flush_segment(&mut segment, &mut tokens, &mut segments);
-                if !compound.ends_with(['-', '_']) && !compound.is_empty() {
-                    compound.push(character);
-                }
-            } else {
-                flush_segment(&mut segment, &mut tokens, &mut segments);
-                flush_compound(&mut compound, &mut tokens);
-                if include_acronyms && segments.len() > 1 {
-                    let acronym: String = segments
-                        .iter()
-                        .filter_map(|word| word.chars().next())
-                        .collect();
-                    tokens.insert(acronym);
-                }
-                segments.clear();
-            }
-        }
-        flush_segment(&mut segment, &mut tokens, &mut segments);
-        flush_compound(&mut compound, &mut tokens);
-        if include_acronyms && segments.len() > 1 {
-            tokens.insert(
-                segments
-                    .iter()
-                    .filter_map(|word| word.chars().next())
-                    .collect(),
-            );
-        }
-
         let mut added = 0;
-        for token in tokens {
+        for token in extract_dns_words(text, include_acronyms) {
             if self.add_word(&token) {
                 added += 1;
             }
@@ -157,5 +102,59 @@ impl DnsWordCloud {
 
     pub fn rejected_words(&self) -> usize {
         self.rejected_words
+    }
+}
+
+pub(crate) fn extract_dns_words(text: &str, include_acronyms: bool) -> BTreeSet<String> {
+    let mut tokens = BTreeSet::new();
+    let mut compound = String::new();
+    let mut segment = String::new();
+    let mut segments = Vec::new();
+
+    let flush_segment =
+        |segment: &mut String, tokens: &mut BTreeSet<String>, segments: &mut Vec<String>| {
+            if !segment.is_empty() {
+                let value = std::mem::take(segment).to_lowercase();
+                tokens.insert(value.clone());
+                segments.push(value);
+            }
+        };
+
+    let flush_compound = |compound: &mut String, tokens: &mut BTreeSet<String>| {
+        if !compound.is_empty() {
+            tokens.insert(std::mem::take(compound).to_lowercase());
+        }
+    };
+
+    for character in text.chars() {
+        if character.is_alphanumeric() {
+            compound.push(character);
+            segment.push(character);
+        } else if character == '-' || character == '_' {
+            flush_segment(&mut segment, &mut tokens, &mut segments);
+            if !compound.ends_with(['-', '_']) && !compound.is_empty() {
+                compound.push(character);
+            }
+        } else {
+            flush_segment(&mut segment, &mut tokens, &mut segments);
+            flush_compound(&mut compound, &mut tokens);
+            add_acronym(&segments, include_acronyms, &mut tokens);
+            segments.clear();
+        }
+    }
+    flush_segment(&mut segment, &mut tokens, &mut segments);
+    flush_compound(&mut compound, &mut tokens);
+    add_acronym(&segments, include_acronyms, &mut tokens);
+    tokens
+}
+
+fn add_acronym(segments: &[String], enabled: bool, tokens: &mut BTreeSet<String>) {
+    if enabled && segments.len() > 1 {
+        tokens.insert(
+            segments
+                .iter()
+                .filter_map(|word| word.chars().next())
+                .collect(),
+        );
     }
 }
