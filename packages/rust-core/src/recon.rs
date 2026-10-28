@@ -241,6 +241,18 @@ pub fn adapt_bbot_to_chef(graph: &BbotEventGraph) -> ChefResult<ChefReconGraph> 
         let Some(host_id) = add_observed_host(&mut assets, event, &evidence_id) else {
             continue;
         };
+        if matches!(
+            event.event_type.as_str(),
+            "DNS_NAME" | "DNS_NAME_UNRESOLVED" | "URL" | "URL_UNVERIFIED" | "HTTP_RESPONSE"
+        ) {
+            add_explicit_dns_resolutions(
+                &mut assets,
+                &mut relationships,
+                event,
+                &host_id,
+                &evidence_id,
+            );
+        }
         match event.event_type.as_str() {
             "OPEN_TCP_PORT" | "OPEN_UDP_PORT" | "TCP_PORT_HINT" => {
                 if let Some(service_id) = find_asset_for_event(&assets, event, &evidence_id) {
@@ -307,10 +319,6 @@ pub fn adapt_bbot_to_chef(graph: &BbotEventGraph) -> ChefResult<ChefReconGraph> 
                 }
             }
             _ => {}
-        }
-
-        if event.event_type == "DNS_NAME" || event.event_type == "DNS_NAME_UNRESOLVED" {
-            add_explicit_dns_resolutions(&mut assets, &mut relationships, event, &evidence_id);
         }
     }
 
@@ -608,12 +616,12 @@ fn add_explicit_dns_resolutions(
     assets: &mut BTreeMap<String, ReconAsset>,
     relationships: &mut BTreeMap<String, ReconRelationship>,
     event: &BbotEvent,
+    owner_id: &str,
     evidence_id: &str,
 ) {
-    let Some(domain) = event_value(event).and_then(|value| crate::host::canonical_domain(&value))
-    else {
+    if event.metadata_redacted {
         return;
-    };
+    }
     let Some(hosts) = event
         .metadata
         .get("resolved_hosts")
@@ -621,15 +629,6 @@ fn add_explicit_dns_resolutions(
     else {
         return;
     };
-    let domain_id = asset_id(ReconAssetKind::Domain, &domain);
-    upsert_asset(
-        assets,
-        ReconAssetKind::Domain,
-        domain,
-        None,
-        event,
-        evidence_id,
-    );
     for value in hosts.iter().filter_map(Value::as_str) {
         let Some(address) = value
             .parse::<std::net::IpAddr>()
@@ -639,6 +638,9 @@ fn add_explicit_dns_resolutions(
             continue;
         };
         let address_id = asset_id(ReconAssetKind::IpAddress, &address);
+        if owner_id == address_id {
+            continue;
+        }
         upsert_asset(
             assets,
             ReconAssetKind::IpAddress,
@@ -649,7 +651,7 @@ fn add_explicit_dns_resolutions(
         );
         add_relationship(
             relationships,
-            domain_id.clone(),
+            owner_id.to_owned(),
             address_id,
             ReconRelationshipKind::ResolvesTo,
             "observed",
