@@ -474,6 +474,7 @@ version = "0.1.0"
 dependencies = [
  "chef-core",
  "tokio",
+ "url",
 ]
 
 [[package]]
@@ -488,7 +489,6 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2",
- "tokio",
  "toml",
  "url",
 ]
