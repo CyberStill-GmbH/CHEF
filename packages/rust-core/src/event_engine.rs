@@ -5,7 +5,7 @@
 //! adaptadores de aplicación y necesitan su propio permiso.
 
 use std::{
-    collections::{HashSet, VecDeque},
+    collections::{BTreeMap, HashSet, VecDeque},
     sync::atomic::{AtomicBool, Ordering},
 };
 
@@ -146,6 +146,8 @@ pub(crate) fn validate_event_graph(graph: &BbotEventGraph) -> ChefResult<()> {
 
 pub struct BbotEventEngine {
     modules: Vec<Box<dyn BbotModule>>,
+    dispatch_by_event_type: BTreeMap<&'static str, Vec<usize>>,
+    wildcard_modules: Vec<usize>,
     max_events: usize,
     max_depth: usize,
 }
@@ -160,6 +162,8 @@ impl BbotEventEngine {
         }
         Ok(Self {
             modules: Vec::new(),
+            dispatch_by_event_type: BTreeMap::new(),
+            wildcard_modules: Vec::new(),
             max_events,
             max_depth,
         })
@@ -206,7 +210,45 @@ impl BbotEventEngine {
         self.modules.push(module);
         self.modules
             .sort_by(|left, right| left.descriptor().name.cmp(right.descriptor().name));
+        self.rebuild_dispatch_index();
         Ok(())
+    }
+
+    /// Reproduce la selección por `watched_events` del gestor de BBOT con un
+    /// índice estático Rust. Los índices conservan el orden de módulo CHEF.
+    fn rebuild_dispatch_index(&mut self) {
+        self.dispatch_by_event_type.clear();
+        self.wildcard_modules.clear();
+        for (module_index, module) in self.modules.iter().enumerate() {
+            for event_type in module.descriptor().watches {
+                if *event_type == "*" {
+                    self.wildcard_modules.push(module_index);
+                } else {
+                    self.dispatch_by_event_type
+                        .entry(event_type)
+                        .or_default()
+                        .push(module_index);
+                }
+            }
+        }
+        self.wildcard_modules.sort_unstable();
+        self.wildcard_modules.dedup();
+        for modules in self.dispatch_by_event_type.values_mut() {
+            modules.sort_unstable();
+            modules.dedup();
+        }
+    }
+
+    fn modules_watching(&self, event_type: &str) -> Vec<usize> {
+        let mut modules = self
+            .dispatch_by_event_type
+            .get(event_type)
+            .cloned()
+            .unwrap_or_default();
+        modules.extend(self.wildcard_modules.iter().copied());
+        modules.sort_unstable();
+        modules.dedup();
+        modules
     }
 
     /// Expande eventos mediante módulos registrados, validando permiso, linaje
@@ -333,21 +375,20 @@ impl BbotEventEngine {
             events.push(event);
             observer(&parent)?;
 
-            for module in &self.modules {
+            for module_index in self.modules_watching(&parent.event_type) {
                 if cancelled.is_some_and(|flag| flag.load(Ordering::SeqCst)) {
                     return Err(ChefError::new(
                         ErrorCode::Cancelled,
                         "Motor de eventos cancelado",
                     ));
                 }
+                let module = &self.modules[module_index];
                 let descriptor = module.descriptor();
                 if !config
                     .modules
                     .get(descriptor.name)
                     .copied()
                     .unwrap_or(false)
-                    || !(descriptor.watches.contains(&parent.event_type.as_str())
-                        || descriptor.watches.contains(&"*"))
                 {
                     continue;
                 }

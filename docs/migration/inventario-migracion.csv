@@ -50,7 +50,7 @@ chef-engine/core/helpers/web/ssl_context.py,8,Helper HTTP,Puerto/adaptador HTTP 
 chef-engine/core/helpers/web/web.py,797,Helper HTTP,Puerto/adaptador HTTP Rust; ejecución desactivada sin scope autorizado,Pendiente
 chef-engine/core/helpers/wordcloud.py,526,Motor/escáner,"wordcloud.rs porta variantes numéricas, letras, 108 modificadores operativos y separadores; dns_word_segmentation.rs integra el léxico DNS y segmentación probabilística en dns_mutation_candidates.rs para generar DNS_NAME_HINT con IDs de regla v4. Equivalencia pendiente de pruebas",Parcial
 chef-engine/core/helpers/yara_helper.py,50,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
-chef-engine/core/modules.py,1182,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
+chef-engine/core/modules.py,1182,Motor/escáner,"Registro estático en packages/rust-core/src/event_engine.rs; el descubrimiento/caché dinámica Python se sustituye por módulos compilados. Catálogo completo, ciclo de vida y configuración/equivalencia de todos los módulos siguen pendientes",Parcial
 chef-engine/core/multiprocess.py,58,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
 chef-engine/core/shared_deps.py,240,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
 chef-engine/errors.py,78,Herramienta auxiliar,Evaluar; portar solo lo necesario al flujo CHEF y documentar exclusión,Pendiente
@@ -235,8 +235,8 @@ chef-engine/modules/wayback.py,787,Módulo de reconocimiento,"Adaptador Rust CHE
 chef-engine/modules/webbrute.py,369,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
 chef-engine/modules/webbrute_shortnames.py,382,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
 chef-engine/scanner/__init__.py,33,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
-chef-engine/scanner/dispatcher.py,33,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
-chef-engine/scanner/manager.py,294,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
+chef-engine/scanner/dispatcher.py,33,Motor/escáner,"packages/rust-core/src/event_engine.rs ordena de forma determinista eventos y sus reglas offline; la ejecución de red y el despacho asíncrono quedan pendientes",Parcial
+chef-engine/scanner/manager.py,294,Motor/escáner,"packages/rust-core/src/event_engine.rs indexa módulos estáticos por tipo observado y conserva orden determinista; colas por módulo, prioridades ponderadas y ciclo de vida de escaneo quedan pendientes",Parcial
 chef-engine/scanner/preset/__init__.py,30,Preset/configuración,"Configuración CHEF validada, sin ampliar scope silenciosamente",Pendiente
 chef-engine/scanner/preset/args.py,535,Preset/configuración,"Configuración CHEF validada, sin ampliar scope silenciosamente",Pendiente
 chef-engine/scanner/preset/conditions.py,54,Preset/configuración,"Configuración CHEF validada, sin ampliar scope silenciosamente",Pendiente
