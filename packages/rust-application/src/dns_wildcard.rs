@@ -7,7 +7,10 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use chef_core::{dns_parent_zones, extract_dns_targets};
 
-use crate::{DnsAnswer, DnsLookupOutcome, DnsQueryRequest, DnsResolutionError};
+use crate::{
+    DnsAnswer, DnsAuthorizationPort, DnsCancellation, DnsLookupOutcome, DnsPlanTermination,
+    DnsQueryRequest, DnsResolutionError, DnsResolutionResult, DnsResolverPort, ResolveDns,
+};
 
 const MAX_WILDCARD_PROBES_PER_ZONE: usize = 8;
 const MAX_WILDCARD_ZONES: usize = 32;
@@ -15,6 +18,316 @@ const MAX_WILDCARD_PROBE_SETS: usize = 256;
 const MAX_WILDCARD_ANSWER_COUNT: usize = 8192;
 const MAX_WILDCARD_BASELINE_COUNT: usize = 4096;
 const MAX_WILDCARD_RESPONSE_BYTES: usize = 2 * 1024 * 1024;
+const MAX_WILDCARD_PROBE_REQUESTS: usize = 256;
+const WILDCARD_SAMPLE_COUNT: usize = 5;
+const WILDCARD_SAMPLE_LABEL_LENGTH: usize = 10;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DnsWildcardPlanStatus {
+    Ready,
+    SeedSkipped,
+    NoParentZones,
+    AllZonesExcluded,
+}
+
+/// Solicitudes para un par zona/tipo; cada solicitud usa un nombre de muestra
+/// diferente bajo la misma zona para reducir respuestas de caché compartidas.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DnsWildcardProbeGroup {
+    zone: String,
+    record_type: String,
+    requests: Vec<DnsQueryRequest>,
+}
+
+impl DnsWildcardProbeGroup {
+    pub fn zone(&self) -> &str {
+        &self.zone
+    }
+
+    pub fn record_type(&self) -> &str {
+        &self.record_type
+    }
+
+    pub fn requests(&self) -> &[DnsQueryRequest] {
+        &self.requests
+    }
+}
+
+/// Plan puro de muestras wildcard. Las etiquetas impredecibles las entrega el
+/// caller; crear este plan no consulta DNS ni implica autorización de alcance.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DnsWildcardProbePlan {
+    target: String,
+    status: DnsWildcardPlanStatus,
+    groups: Vec<DnsWildcardProbeGroup>,
+}
+
+impl DnsWildcardProbePlan {
+    /// Construye cinco muestras por zona y tipo desde baselines existentes.
+    /// `sample_labels` debe contener cinco etiquetas frescas, únicas, de diez
+    /// letras minúsculas ASCII; se reutilizan entre pares zona/tipo.
+    /// `excluded_zones` contiene zonas canónicas que el plan debe omitir.
+    pub fn for_target(
+        target: &str,
+        baseline: &[DnsWildcardBaseline],
+        sample_labels: &[String],
+        excluded_zones: &[String],
+        is_seed: bool,
+    ) -> Result<Self, DnsResolutionError> {
+        let request = DnsQueryRequest::new(target, "A", 0)?;
+        if request.host().parse::<std::net::IpAddr>().is_ok() {
+            return Err(DnsResolutionError::InvalidQuery);
+        }
+        let target = request.host().to_owned();
+
+        if is_seed {
+            return Ok(Self {
+                target,
+                status: DnsWildcardPlanStatus::SeedSkipped,
+                groups: Vec::new(),
+            });
+        }
+
+        let zones = dns_parent_zones(&target);
+        if zones.len() > MAX_WILDCARD_ZONES {
+            return Err(DnsResolutionError::LimitExceeded);
+        }
+        if zones.is_empty() {
+            return Ok(Self {
+                target,
+                status: DnsWildcardPlanStatus::NoParentZones,
+                groups: Vec::new(),
+            });
+        }
+
+        if excluded_zones.len() > MAX_WILDCARD_ZONES {
+            return Err(DnsResolutionError::LimitExceeded);
+        }
+        let excluded_zones = excluded_zones
+            .iter()
+            .map(|zone| {
+                let request = DnsQueryRequest::new(zone, "A", 0)?;
+                if request.host().parse::<std::net::IpAddr>().is_ok() {
+                    return Err(DnsResolutionError::InvalidQuery);
+                }
+                Ok(request.host().to_owned())
+            })
+            .collect::<Result<BTreeSet<_>, DnsResolutionError>>()?;
+        let zones = zones
+            .into_iter()
+            .filter(|zone| {
+                !excluded_zones
+                    .iter()
+                    .any(|excluded| zone == excluded || zone.ends_with(&format!(".{excluded}")))
+            })
+            .collect::<Vec<_>>();
+        if zones.is_empty() {
+            return Ok(Self {
+                target,
+                status: DnsWildcardPlanStatus::AllZonesExcluded,
+                groups: Vec::new(),
+            });
+        }
+
+        if baseline.is_empty() || baseline.len() > MAX_WILDCARD_PROBE_SETS {
+            return Err(if baseline.is_empty() {
+                DnsResolutionError::InvalidQuery
+            } else {
+                DnsResolutionError::LimitExceeded
+            });
+        }
+        if zones.len().saturating_mul(baseline.len()) > MAX_WILDCARD_PROBE_SETS {
+            return Err(DnsResolutionError::LimitExceeded);
+        }
+        validate_sample_labels(sample_labels)?;
+
+        let mut record_types = BTreeSet::new();
+        for item in baseline {
+            if !record_types.insert(item.record_type().to_owned()) {
+                return Err(DnsResolutionError::InvalidQuery);
+            }
+        }
+        let request_count = zones
+            .len()
+            .checked_mul(record_types.len())
+            .and_then(|groups| groups.checked_mul(WILDCARD_SAMPLE_COUNT))
+            .ok_or(DnsResolutionError::LimitExceeded)?;
+        if request_count > MAX_WILDCARD_PROBE_REQUESTS {
+            return Err(DnsResolutionError::LimitExceeded);
+        }
+
+        let mut groups = Vec::with_capacity(zones.len() * record_types.len());
+        for zone in zones {
+            for record_type in &record_types {
+                let requests = sample_labels
+                    .iter()
+                    .map(|label| DnsQueryRequest::new(&format!("{label}.{zone}"), record_type, 0))
+                    .collect::<Result<Vec<_>, _>>()?;
+                groups.push(DnsWildcardProbeGroup {
+                    zone: zone.clone(),
+                    record_type: record_type.clone(),
+                    requests,
+                });
+            }
+        }
+
+        Ok(Self {
+            target,
+            status: DnsWildcardPlanStatus::Ready,
+            groups,
+        })
+    }
+
+    pub fn target(&self) -> &str {
+        &self.target
+    }
+
+    pub fn status(&self) -> DnsWildcardPlanStatus {
+        self.status
+    }
+
+    pub fn groups(&self) -> &[DnsWildcardProbeGroup] {
+        &self.groups
+    }
+}
+
+fn validate_sample_labels(labels: &[String]) -> Result<(), DnsResolutionError> {
+    if labels.len() != WILDCARD_SAMPLE_COUNT {
+        return Err(DnsResolutionError::InvalidQuery);
+    }
+    let mut unique = BTreeSet::new();
+    for label in labels {
+        if label.len() != WILDCARD_SAMPLE_LABEL_LENGTH
+            || !label.bytes().all(|byte| byte.is_ascii_lowercase())
+            || !unique.insert(label)
+        {
+            return Err(DnsResolutionError::InvalidQuery);
+        }
+    }
+    Ok(())
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DnsWildcardProbeExecution {
+    zone: String,
+    record_type: String,
+    expected_query_count: usize,
+    results: Vec<DnsResolutionResult>,
+}
+
+impl DnsWildcardProbeExecution {
+    pub fn zone(&self) -> &str {
+        &self.zone
+    }
+
+    pub fn record_type(&self) -> &str {
+        &self.record_type
+    }
+
+    pub fn results(&self) -> &[DnsResolutionResult] {
+        &self.results
+    }
+
+    /// Solo los grupos completos se convierten en muestras clasificables.
+    /// Una autorización rechazada o cancelación deja visible el resultado
+    /// parcial, pero no lo presenta como una evaluación negativa.
+    pub fn complete_probe_set(&self) -> Result<Option<DnsWildcardProbeSet>, DnsResolutionError> {
+        if self.results.len() != self.expected_query_count {
+            return Ok(None);
+        }
+        let outcomes = self
+            .results
+            .iter()
+            .map(|result| result.outcome.clone())
+            .collect();
+        DnsWildcardProbeSet::new(&self.zone, &self.record_type, outcomes).map(Some)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DnsWildcardPlanExecution {
+    groups: Vec<DnsWildcardProbeExecution>,
+    termination: DnsPlanTermination,
+}
+
+impl DnsWildcardPlanExecution {
+    pub fn groups(&self) -> &[DnsWildcardProbeExecution] {
+        &self.groups
+    }
+
+    pub fn termination(&self) -> DnsPlanTermination {
+        self.termination
+    }
+
+    /// Devuelve únicamente grupos completos para que el clasificador no
+    /// confunda consultas omitidas con ausencia de wildcard.
+    pub fn complete_probe_sets(&self) -> Result<Vec<DnsWildcardProbeSet>, DnsResolutionError> {
+        let mut sets = Vec::with_capacity(self.groups.len());
+        for group in &self.groups {
+            if let Some(set) = group.complete_probe_set()? {
+                sets.push(set);
+            }
+        }
+        Ok(sets)
+    }
+}
+
+pub struct ExecuteDnsWildcardPlan<'a, R, A> {
+    resolver: &'a R,
+    authorization: &'a A,
+}
+
+impl<'a, R, A> ExecuteDnsWildcardPlan<'a, R, A>
+where
+    R: DnsResolverPort,
+    A: DnsAuthorizationPort,
+{
+    pub fn new(resolver: &'a R, authorization: &'a A) -> Self {
+        Self {
+            resolver,
+            authorization,
+        }
+    }
+
+    /// Ejecuta muestras en serie. Cada nombre vuelve a validar autorización
+    /// mediante `ResolveDns`; cancelación/rechazo termina conservando resultados
+    /// anteriores para el caller, sin clasificarlos como negativos.
+    pub async fn execute(
+        &self,
+        plan: &DnsWildcardProbePlan,
+        cancellation: &DnsCancellation,
+    ) -> DnsWildcardPlanExecution {
+        let mut groups = Vec::with_capacity(plan.groups().len());
+        let resolver = ResolveDns::new(self.resolver, self.authorization);
+
+        for planned_group in plan.groups() {
+            let mut group = DnsWildcardProbeExecution {
+                zone: planned_group.zone().to_owned(),
+                record_type: planned_group.record_type().to_owned(),
+                expected_query_count: planned_group.requests().len(),
+                results: Vec::with_capacity(planned_group.requests().len()),
+            };
+            for request in planned_group.requests() {
+                match resolver.execute(request.clone(), cancellation).await {
+                    Ok(result) => group.results.push(result),
+                    Err(error) => {
+                        groups.push(group);
+                        return DnsWildcardPlanExecution {
+                            groups,
+                            termination: DnsPlanTermination::Stopped(error),
+                        };
+                    }
+                }
+            }
+            groups.push(group);
+        }
+
+        DnsWildcardPlanExecution {
+            groups,
+            termination: DnsPlanTermination::Completed,
+        }
+    }
+}
 
 /// Respuestas ya obtenidas para un tipo consultado sobre el nombre objetivo.
 #[derive(Debug, Clone, PartialEq, Eq)]
