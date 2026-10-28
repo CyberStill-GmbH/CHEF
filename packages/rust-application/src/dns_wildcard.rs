@@ -18,6 +18,7 @@ const MAX_WILDCARD_PROBE_SETS: usize = 256;
 const MAX_WILDCARD_ANSWER_COUNT: usize = 8192;
 const MAX_WILDCARD_BASELINE_COUNT: usize = 4096;
 const MAX_WILDCARD_RESPONSE_BYTES: usize = 2 * 1024 * 1024;
+const MAX_WILDCARD_PROBE_REQUESTS: usize = 256;
 const WILDCARD_SAMPLE_COUNT: usize = 5;
 const WILDCARD_SAMPLE_LABEL_LENGTH: usize = 10;
 
@@ -145,6 +146,14 @@ impl DnsWildcardProbePlan {
             if !record_types.insert(item.record_type().to_owned()) {
                 return Err(DnsResolutionError::InvalidQuery);
             }
+        }
+        let request_count = zones
+            .len()
+            .checked_mul(record_types.len())
+            .and_then(|groups| groups.checked_mul(WILDCARD_SAMPLE_COUNT))
+            .ok_or(DnsResolutionError::LimitExceeded)?;
+        if request_count > MAX_WILDCARD_PROBE_REQUESTS {
+            return Err(DnsResolutionError::LimitExceeded);
         }
 
         let mut groups = Vec::with_capacity(zones.len() * record_types.len());
