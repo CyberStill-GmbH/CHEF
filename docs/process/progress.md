@@ -168,3 +168,5 @@ Se adaptó `misc.py::split_host_port` como función pura `host::split_host_port`
 ## 28-10-2026 — Formato de endpoints IPv6
 
 Se portó `misc.py::make_netloc` como `host::make_netloc` y se eliminaron formateadores duplicados de `speculate.rs` y `target_seed.rs`. La función encierra direcciones IPv6 literales entre corchetes y añade el puerto opcional; los llamadores entregan hosts ya validados. Sin cambios de contrato ni tráfico de red.
+
+Pasaron `cargo fmt --check`, `cargo check --locked --offline`, Clippy de biblioteca con `-D warnings`, `npm run check:docs` y `git diff --check`. No se ejecutaron pruebas funcionales.

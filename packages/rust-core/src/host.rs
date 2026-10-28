@@ -98,8 +98,8 @@ pub(crate) fn split_host_port(value: &str) -> Option<(String, Option<u16>)> {
     Some((host, url.port().or(default_port)))
 }
 
-/// Adapta `misc.make_netloc`: bracket IPv6 literals and append el puerto
-/// opcional. Los llamadores validan el host antes de formatear.
+/// Adapta `misc.make_netloc`: encierra literales IPv6 entre corchetes y añade
+/// el puerto opcional. Los llamadores validan el host antes de formatear.
 pub(crate) fn make_netloc(host: &str, port: Option<u16>) -> String {
     let formatted_host = if host.starts_with('[') && host.ends_with(']') {
         host.to_owned()
