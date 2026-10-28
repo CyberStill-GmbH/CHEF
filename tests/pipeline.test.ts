@@ -53,13 +53,13 @@ test('lab: only open ports are correlated; distinct hosts never merge', () => {
   }
 });
 
-test('Snapshot 1.1 accepts BBOT provenance and rejects source/version mismatch', () => {
-  const bbotExample = JSON.parse(
+test('Snapshot 1.1 accepts imported event provenance and rejects source/version mismatch', () => {
+  const eventExample = JSON.parse(
     readFileSync('docs/contracts/examples/event-snapshot.json', 'utf8'),
   ) as Snapshot;
-  assert.equal(contracts.snapshot(bbotExample).schemaVersion, '1.1.0');
+  assert.equal(contracts.snapshot(eventExample).schemaVersion, '1.1.0');
   assert.throws(
-    () => contracts.snapshot({ ...bbotExample, schemaVersion: '1.0.0' }),
+    () => contracts.snapshot({ ...eventExample, schemaVersion: '1.0.0' }),
     code('INVALID_INPUT'),
   );
 });
