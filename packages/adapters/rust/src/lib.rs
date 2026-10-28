@@ -1,5 +1,7 @@
 //! Adaptadores de infraestructura Rust para casos de uso CHEF.
 
 mod dns_resolver;
+mod dns_wildcard_labels;
 
 pub use dns_resolver::{DnsResolverConfig, DnsResolverConfigError, HickoryDnsResolver};
+pub use dns_wildcard_labels::{DnsWildcardLabelGenerationError, SystemDnsWildcardSampleLabels};

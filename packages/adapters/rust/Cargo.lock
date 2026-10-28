@@ -112,6 +112,7 @@ name = "chef-rust-adapters"
 version = "0.1.0"
 dependencies = [
  "chef-application",
+ "getrandom 0.4.3",
  "hickory-resolver",
  "tokio",
 ]
