@@ -164,3 +164,7 @@ Se amplió `packages/rust-core/src/host.rs` para distinguir raíces registrables
 ## 28-10-2026 — Parser estricto de host y puerto para la ingesta
 
 Se adaptó `misc.py::split_host_port` como función pura `host::split_host_port`, reutilizada por `event_import` para completar netlocs de `OPEN_TCP_PORT`/`OPEN_UDP_PORT` y por `target_seed` para clasificar endpoints TCP. La variante CHEF limita longitud, rechaza credenciales, controles, rutas y separadores ambiguos; reconoce IP, host/puerto y puertos por defecto de HTTP(S)/WS(S). La ingesta exige un puerto explícito para registrar un servicio; una URL sin puerto no se transforma en servicio observado. Sin red ni cambios de snapshot. Se actualizaron auditoría, plan e inventario. Validación de formato/compilación/Clippy y docs; pruebas funcionales aplazadas por indicación del propietario.
+
+## 28-10-2026 — Formato de endpoints IPv6
+
+Se portó `misc.py::make_netloc` como `host::make_netloc` y se eliminaron formateadores duplicados de `speculate.rs` y `target_seed.rs`. La función encierra direcciones IPv6 literales entre corchetes y añade el puerto opcional; los llamadores entregan hosts ya validados. Sin cambios de contrato ni tráfico de red.

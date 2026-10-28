@@ -1,7 +1,7 @@
 //! Canonicalización local de hosts adaptada de los validadores BBOT.
 //! No resuelve nombres ni hace solicitudes de red.
 
-use std::net::IpAddr;
+use std::net::{IpAddr, Ipv6Addr};
 
 use url::{Host, Url};
 
@@ -96,6 +96,22 @@ pub(crate) fn split_host_port(value: &str) -> Option<(String, Option<u16>)> {
         _ => None,
     };
     Some((host, url.port().or(default_port)))
+}
+
+/// Adapta `misc.make_netloc`: bracket IPv6 literals and append el puerto
+/// opcional. Los llamadores validan el host antes de formatear.
+pub(crate) fn make_netloc(host: &str, port: Option<u16>) -> String {
+    let formatted_host = if host.starts_with('[') && host.ends_with(']') {
+        host.to_owned()
+    } else if host.parse::<Ipv6Addr>().is_ok() {
+        format!("[{host}]")
+    } else {
+        host.to_owned()
+    };
+    match port {
+        Some(port) => format!("{formatted_host}:{port}"),
+        None => formatted_host,
+    }
 }
 
 fn icann_registrable_domain(value: &str) -> Option<(String, String)> {

@@ -196,7 +196,7 @@ impl BbotModule for ChefCommonPortHints {
             };
             return Ok(vec![BbotEventDraft {
                 event_type: "TCP_PORT_HINT".to_owned(),
-                data: Value::String(format_netloc(&host, port)),
+                data: Value::String(crate::host::make_netloc(&host, Some(port))),
                 host: Some(host),
                 port: Some(port),
                 tags: vec!["chef:derived-url-port-hint".to_owned()],
@@ -214,7 +214,7 @@ impl BbotModule for ChefCommonPortHints {
             .into_iter()
             .map(|port| BbotEventDraft {
                 event_type: "TCP_PORT_HINT".to_owned(),
-                data: Value::String(format_netloc(&host, port)),
+                data: Value::String(crate::host::make_netloc(&host, Some(port))),
                 host: Some(host.clone()),
                 port: Some(port),
                 tags: vec!["chef:derived-common-port-hint".to_owned()],
@@ -311,14 +311,6 @@ fn add_org_stub(stubs: &mut std::collections::BTreeSet<String>, value: &str) {
     let value = value.trim().to_lowercase();
     if !value.is_empty() && value.len() <= 256 && !value.chars().any(char::is_control) {
         stubs.insert(value);
-    }
-}
-
-fn format_netloc(host: &str, port: u16) -> String {
-    if host.contains(':') {
-        format!("[{host}]:{port}")
-    } else {
-        format!("{host}:{port}")
     }
 }
 

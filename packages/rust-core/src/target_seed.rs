@@ -125,7 +125,7 @@ pub fn parse_chef_target_seed(input: &str) -> ChefResult<ChefTargetSeed> {
         && let Some((host, Some(port))) = crate::host::split_host_port(value)
         && port > 0
     {
-        let netloc = format_netloc(&host, port);
+        let netloc = crate::host::make_netloc(&host, Some(port));
         return Ok(ChefTargetSeed {
             kind: ChefTargetKind::TcpEndpoint,
             data: netloc,
@@ -310,14 +310,6 @@ fn url_host(host: Host<&str>) -> String {
         Host::Domain(domain) => domain.to_owned(),
         Host::Ipv4(address) => address.to_string(),
         Host::Ipv6(address) => address.to_string(),
-    }
-}
-
-fn format_netloc(host: &str, port: u16) -> String {
-    if host.contains(':') {
-        format!("[{host}]:{port}")
-    } else {
-        format!("{host}:{port}")
     }
 }
 
