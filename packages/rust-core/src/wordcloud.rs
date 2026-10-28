@@ -120,6 +120,38 @@ const DEVOPS_MODIFIERS: &[&str] = &[
 ];
 
 const MODIFIER_NUMBER_SUFFIXES: [&str; 3] = ["0", "1", "2"];
+const COMMON_DNS_LABELS: [&str; 24] = [
+    "www",
+    "api",
+    "admin",
+    "mail",
+    "app",
+    "dev",
+    "staging",
+    "prod",
+    "test",
+    "login",
+    "portal",
+    "cdn",
+    "web",
+    "static",
+    "secure",
+    "vpn",
+    "support",
+    "blog",
+    "shop",
+    "service",
+    "mobile",
+    "assets",
+    "cloud",
+    "production",
+];
+
+/// Vocabulario local para sugerir nombres comunes bajo raíces DNS observadas.
+/// Omite entradas de un carácter y números que aportan poco a una vista CHEF.
+pub(crate) fn common_dns_labels() -> impl Iterator<Item = &'static str> {
+    COMMON_DNS_LABELS.into_iter()
+}
 
 /// Produce bounded source-label, number and prefix/suffix modifier variants.
 pub(crate) fn mutations(base: &str) -> BTreeMap<String, BTreeSet<DnsMutationReason>> {

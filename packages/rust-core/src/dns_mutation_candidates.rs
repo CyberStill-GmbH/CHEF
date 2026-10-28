@@ -9,7 +9,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use crate::{BbotEvent, ChefResult, identity};
 
 const RULE_ID: &str = "dns.offline_mutation";
-const RULE_VERSION: &str = "3";
+const RULE_VERSION: &str = "4";
 const MAX_INPUT_EVENTS: usize = 10_000;
 const MAX_ROOTS: usize = 50;
 const MAX_CANDIDATES: usize = 10_000;
@@ -47,6 +47,8 @@ pub enum DnsMutationReason {
     WordCloudModifier,
     /// La etiqueta base se conservó como posible mutación local.
     WordCloudBase,
+    /// Nombre de servicio o entorno propuesto desde el vocabulario estático local.
+    StaticWordlist,
 }
 
 /// Nombre propuesto por una regla CHEF; no representa una resolución DNS.
@@ -82,6 +84,13 @@ struct CandidateAccumulator {
     reasons: BTreeSet<DnsMutationReason>,
     root_source_id: Option<String>,
     mutation_source_id: Option<String>,
+    static_wordlist: bool,
+}
+
+#[derive(Default)]
+struct RootObservations {
+    event_ids: BTreeSet<String>,
+    labels: BTreeMap<String, BTreeSet<String>>,
 }
 
 struct ProposalEvidence<'a> {
@@ -104,20 +113,15 @@ pub fn generate_dns_mutation_candidates(
         ));
     }
 
-    // raíz registrable ICANN -> primera etiqueta -> IDs; observed evita repetir activos.
-    let mut roots: BTreeMap<String, BTreeMap<String, BTreeSet<String>>> = BTreeMap::new();
+    // Raíz registrable ICANN -> evidencia y primera etiqueta -> IDs.
+    // observed evita proponer de nuevo activos ya importados.
+    let mut roots: BTreeMap<String, RootObservations> = BTreeMap::new();
     let mut observed = BTreeSet::new();
     let mut numeric_sources_skipped = 0;
 
     for event in events.iter().filter(|event| event.event_type == "DNS_NAME") {
         let value = event.host.as_deref().or_else(|| event.data.as_str());
         let Some(host) = value.and_then(crate::host::canonical_domain) else {
-            continue;
-        };
-        if !crate::host::is_subdomain(&host) {
-            continue;
-        }
-        let Some((label, _)) = host.split_once('.') else {
             continue;
         };
         let Some(root) = crate::host::domain_parent_candidates(&host, false)
@@ -127,19 +131,28 @@ pub fn generate_dns_mutation_candidates(
             continue;
         };
         observed.insert(host.clone());
-        if event_is_ptr(event) || has_excessive_digits(label) {
-            numeric_sources_skipped += 1;
-            continue;
-        }
-
         let source_id = if event.id.is_empty() {
             crate::event_engine::event_id(event)?
         } else {
             event.id.clone()
         };
-        roots
-            .entry(root)
-            .or_default()
+        let root_observations = roots.entry(root.clone()).or_default();
+        root_observations.event_ids.insert(source_id.clone());
+        if host == root {
+            continue;
+        }
+        let Some(label) = host
+            .strip_suffix(&format!(".{root}"))
+            .and_then(|prefix| prefix.split('.').next())
+        else {
+            continue;
+        };
+        if event_is_ptr(event) || has_excessive_digits(label) {
+            numeric_sources_skipped += 1;
+            continue;
+        }
+        root_observations
+            .labels
             .entry(label.to_owned())
             .or_default()
             .insert(source_id);
@@ -147,8 +160,8 @@ pub fn generate_dns_mutation_candidates(
 
     let mut ranked_roots = roots.keys().cloned().collect::<Vec<_>>();
     ranked_roots.sort_by(|left, right| {
-        let left_count = roots[left].len();
-        let right_count = roots[right].len();
+        let left_count = roots[left].labels.len();
+        let right_count = roots[right].labels.len();
         right_count.cmp(&left_count).then_with(|| left.cmp(right))
     });
 
@@ -164,7 +177,7 @@ pub fn generate_dns_mutation_candidates(
 
     for root in &eligible_roots {
         let root_sources = &roots[root];
-        let Some(root_source_id) = root_sources.values().flat_map(BTreeSet::iter).min() else {
+        let Some(root_source_id) = root_sources.event_ids.iter().next() else {
             continue;
         };
         let mut proposals: BTreeMap<String, CandidateAccumulator> = BTreeMap::new();
@@ -174,7 +187,7 @@ pub fn generate_dns_mutation_candidates(
             if donor_root == root {
                 continue;
             }
-            for (label, source_ids) in &roots[donor_root] {
+            for (label, source_ids) in &roots[donor_root].labels {
                 if has_excessive_digits(label) {
                     continue;
                 }
@@ -211,7 +224,7 @@ pub fn generate_dns_mutation_candidates(
         }
 
         // Adapta mutaciones locales de números, letras y modificadores.
-        for (label, source_ids) in root_sources {
+        for (label, source_ids) in &root_sources.labels {
             let Some(source_id) = source_ids.iter().next() else {
                 continue;
             };
@@ -233,9 +246,35 @@ pub fn generate_dns_mutation_candidates(
             }
         }
 
+        // Propone etiquetas habituales desde el vocabulario local de DevOps;
+        // una raíz apex importada basta como evidencia. No se consultan.
+        for label in crate::wordcloud::common_dns_labels() {
+            duplicates_suppressed += usize::from(add_proposal(
+                &mut proposals,
+                label,
+                root,
+                DnsMutationReason::StaticWordlist,
+                ProposalEvidence {
+                    root_source_id: Some(root_source_id),
+                    mutation_source_id: root_source_id,
+                },
+                MAX_PROPOSALS_PER_ROOT,
+                &mut truncated,
+            ));
+        }
+
         let per_root_limit = options.max_candidates_per_root.min(MAX_CANDIDATES_PER_ROOT);
-        for (name, accumulator) in proposals {
+        let mut ranked_proposals = proposals.into_iter().collect::<Vec<_>>();
+        ranked_proposals.sort_by(|(left_name, left), (right_name, right)| {
+            right
+                .static_wordlist
+                .cmp(&left.static_wordlist)
+                .then_with(|| left_name.cmp(right_name))
+        });
+        let mut root_candidate_count = 0;
+        for (name, accumulator) in ranked_proposals {
             if root_sources
+                .labels
                 .keys()
                 .any(|label| format!("{label}.{root}") == name)
                 || observed.contains(&name)
@@ -246,18 +285,15 @@ pub fn generate_dns_mutation_candidates(
                 truncated = true;
                 break;
             }
-            if all_candidates
-                .keys()
-                .filter(|(candidate_root, _)| candidate_root == root)
-                .count()
-                >= per_root_limit
-            {
+            if root_candidate_count >= per_root_limit {
                 truncated = true;
                 break;
             }
             let key = (root.clone(), name);
             if all_candidates.insert(key, accumulator).is_some() {
                 duplicates_suppressed += 1;
+            } else {
+                root_candidate_count += 1;
             }
         }
     }
@@ -402,6 +438,7 @@ pub(crate) fn is_generated_dns_mutation_hint(event: &BbotEvent) -> bool {
                     | "number_adjustment"
                     | "wordcloud_modifier"
                     | "wordcloud_base"
+                    | "static_wordlist"
             )
         })
         && reason_names.iter().all(|reason| {
@@ -438,16 +475,28 @@ fn add_proposal(
     let duplicate = proposals.contains_key(&name);
     if !duplicate && proposals.len() >= max_proposals {
         *truncated = true;
-        if proposals
-            .last_key_value()
-            .is_some_and(|(largest, _)| name.as_str() >= largest.as_str())
-        {
+        let Some((worst_name, worst)) =
+            proposals
+                .iter()
+                .max_by(|(left_name, left), (right_name, right)| {
+                    (!left.static_wordlist)
+                        .cmp(&(!right.static_wordlist))
+                        .then_with(|| left_name.cmp(right_name))
+                })
+        else {
+            return false;
+        };
+        let candidate_priority = u8::from(reason != DnsMutationReason::StaticWordlist);
+        let worst_priority = u8::from(!worst.static_wordlist);
+        if (candidate_priority, name.as_str()) >= (worst_priority, worst_name.as_str()) {
             return false;
         }
-        proposals.pop_last();
+        let worst_name = worst_name.clone();
+        proposals.remove(&worst_name);
     }
     let accumulator = proposals.entry(name).or_default();
     accumulator.reasons.insert(reason);
+    accumulator.static_wordlist |= reason == DnsMutationReason::StaticWordlist;
     if let Some(source_id) = evidence.root_source_id {
         retain_lexicographically_first(&mut accumulator.root_source_id, source_id);
     }

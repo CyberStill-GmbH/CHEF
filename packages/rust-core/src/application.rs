@@ -357,6 +357,7 @@ fn append_dns_mutation_hints(
                 crate::DnsMutationReason::NumberAdjustment => "number_adjustment",
                 crate::DnsMutationReason::WordCloudModifier => "wordcloud_modifier",
                 crate::DnsMutationReason::WordCloudBase => "wordcloud_base",
+                crate::DnsMutationReason::StaticWordlist => "static_wordlist",
             })
             .collect::<Vec<_>>();
         let mut tags = vec!["chef:derived-dns-mutation-hint".to_owned()];
