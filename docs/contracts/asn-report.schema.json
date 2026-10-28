@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://chef.invalid/contracts/asn-report.schema.json",
+  "title": "Informe local de eventos ASN CHEF",
+  "description": "Resumen de pares IP_ADDRESS–ASN y metadatos presentes en eventos ya importados; no consulta proveedores ni informa prefijos no contenidos en la evidencia.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "runId", "rows"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "runId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "rows": {
+      "type": "array",
+      "maxItems": 1024,
+      "items": { "$ref": "#/$defs/row" }
+    }
+  },
+  "$defs": {
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ip",
+        "ipEventId",
+        "ipLocator",
+        "ipObservedAt",
+        "asnEventId",
+        "asnLocator",
+        "asnObservedAt",
+        "asnModule"
+      ],
+      "properties": {
+        "ip": { "type": "string", "minLength": 1, "maxLength": 45 },
+        "ipEventId": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "ipLocator": { "type": "string", "minLength": 1, "maxLength": 4096 },
+        "ipObservedAt": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "asnEventId": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "asnLocator": { "type": "string", "minLength": 1, "maxLength": 4096 },
+        "asnObservedAt": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "asnModule": { "type": ["string", "null"], "maxLength": 128 }
+      }
+    },
+    "row": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "asn",
+        "ips",
+        "names",
+        "descriptions",
+        "countries",
+        "preservedSubnetCounts",
+        "evidence"
+      ],
+      "properties": {
+        "asn": { "type": "integer", "minimum": 1, "maximum": 4294967295 },
+        "ips": {
+          "type": "array",
+          "maxItems": 10000,
+          "items": { "type": "string", "minLength": 1, "maxLength": 45 }
+        },
+        "names": { "$ref": "#/$defs/metadata" },
+        "descriptions": { "$ref": "#/$defs/metadata" },
+        "countries": { "$ref": "#/$defs/metadata" },
+        "preservedSubnetCounts": {
+          "type": "array",
+          "maxItems": 512,
+          "items": { "type": "integer", "minimum": 0, "maximum": 4096 }
+        },
+        "evidence": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 10000,
+          "items": { "$ref": "#/$defs/evidence" }
+        }
+      }
+    },
+    "metadata": {
+      "type": "array",
+      "maxItems": 512,
+      "items": { "type": "string", "minLength": 1, "maxLength": 1024 }
+    }
+  }
+}

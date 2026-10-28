@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "1.0.0",
+  "runId": "run:asn-report-example",
+  "rows": [
+    {
+      "asn": 64500,
+      "ips": ["93.184.216.34"],
+      "names": ["Nombre informado por el evento"],
+      "descriptions": ["Descripción sintética del fixture"],
+      "countries": ["ZZ"],
+      "preservedSubnetCounts": [1],
+      "evidence": [
+        {
+          "ip": "93.184.216.34",
+          "ipEventId": "event-ip-report-example",
+          "ipLocator": "/events/2",
+          "ipObservedAt": "2026-10-28T12:00:00.000Z",
+          "asnEventId": "event-asn-report-example",
+          "asnLocator": "/events/3",
+          "asnObservedAt": "2026-10-28T12:00:00.000Z",
+          "asnModule": "fixture"
+        }
+      ]
+    }
+  ]
+}

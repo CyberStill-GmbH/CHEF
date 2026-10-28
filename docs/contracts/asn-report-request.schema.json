@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://chef.invalid/contracts/asn-report-request.schema.json",
+  "title": "Solicitud local de informe ASN CHEF",
+  "description": "Solicitud IPC de solo lectura para resumir eventos IP_ADDRESS y ASN ya importados en una ejecución local.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "runId"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "runId": { "type": "string", "minLength": 1, "maxLength": 128 }
+  }
+}

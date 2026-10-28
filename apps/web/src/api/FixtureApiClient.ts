@@ -8,6 +8,8 @@ import { decodeReconGraph } from '../contracts/decodeReconGraph';
 import { decodeScanLog } from '../contracts/decodeScanLog';
 import { decodeChefConfig } from '../contracts/decodeChefConfig';
 import { decodeEventStatistics } from '../contracts/decodeEventStatistics';
+import { decodeAsnReport } from '../contracts/decodeAsnReport';
+import { decodeAsnReportRequest } from '../contracts/decodeAsnReportRequest';
 import { decodeWebEvidenceReportExport } from '../contracts/decodeWebEvidenceReportExport';
 import type { ApiClient } from './ApiClient';
 
@@ -101,5 +103,15 @@ export class FixtureApiClient implements ApiClient {
   ) {
     options?.signal?.throwIfAborted();
     return decodeEventStatistics(eventStatistics);
+  }
+
+  async loadAsnReport(runId: string, options?: { signal?: AbortSignal }) {
+    options?.signal?.throwIfAborted();
+    const request = decodeAsnReportRequest({ schemaVersion: '1.0.0', runId });
+    return decodeAsnReport({
+      schemaVersion: '1.0.0',
+      runId: request.runId,
+      rows: [],
+    });
   }
 }
