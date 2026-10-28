@@ -42,7 +42,7 @@ chef-engine/core/helpers/regex.py,113,Motor/escáner,Aplicación Rust/Tokio y pu
 chef-engine/core/helpers/regexes.py,224,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
 chef-engine/core/helpers/simhash.py,116,Motor/escáner,Aplicación Rust/Tokio y puertos; cada capacidad de red detrás de scope,Pendiente
 chef-engine/core/helpers/url.py,235,Motor/escáner,"url_tools.rs canonicaliza HTTP(S) para objetivos/activos; url_policy.rs porta profundidad de ruta y validación de FQDN/IP; utilidades de parámetros y fingerprint pendientes",Parcial
-chef-engine/core/helpers/validators.py,363,Motor/escáner,"host.rs y url_policy.rs validan/canonicalizan IDNA, FQDN e IP para scope, importación y grafo; correo y otros validadores siguen pendientes",Parcial
+chef-engine/core/helpers/validators.py,363,Motor/escáner,"host.rs y url_policy.rs validan/canonicalizan IDNA, FQDN e IP para scope, importación y grafo; target_seed.rs valida/canonicaliza el correo explícito necesario para clasificar EMAIL_ADDRESS; los demás validadores y la equivalencia completa de validate_email siguen pendientes",Parcial
 chef-engine/core/helpers/web/__init__.py,1,Helper HTTP,Puerto/adaptador HTTP Rust; ejecución desactivada sin scope autorizado,Pendiente
 chef-engine/core/helpers/web/envelopes.py,382,Helper HTTP,Puerto/adaptador HTTP Rust; ejecución desactivada sin scope autorizado,Pendiente
 chef-engine/core/helpers/web/response_event.py,96,Helper HTTP,Puerto/adaptador HTTP Rust; ejecución desactivada sin scope autorizado,Pendiente
