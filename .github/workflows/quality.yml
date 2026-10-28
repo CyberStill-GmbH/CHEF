@@ -12,7 +12,7 @@ jobs:
   quality:
     name: Quality
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -21,6 +21,13 @@ jobs:
         with:
           node-version: '24'
           cache: npm
+      - name: Set up Rust
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+          rustup component add rustfmt clippy
+      - name: Install native dependencies for embedded SurrealDB/RocksDB
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y nasm libclang-dev cmake
       - run: npm ci
       - run: npm run check
       - run: npm audit --audit-level=high
