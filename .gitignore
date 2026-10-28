@@ -10,7 +10,10 @@ artifacts/
 *.jar
 *.class
 target/
+/apps/web/public/LICENSE
+/apps/web/public/THIRD_PARTY_NOTICES.md
 *.sqlite*
 *.tsbuildinfo
 .DS_Store
 Thumbs.db
+apps/desktop/src-tauri/gen/schemas/

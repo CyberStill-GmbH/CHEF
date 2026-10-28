@@ -1,0 +1,16 @@
+[package]
+name = "chef-storage"
+version = "0.1.0"
+edition = "2024"
+publish = false
+license = "AGPL-3.0-only"
+
+[dependencies]
+chef-core = { path = "../rust-core" }
+surrealdb = { version = "=3.3.4", default-features = false, features = ["kv-rocksdb", "parse"] }
+serde_json = "1"
+thiserror = "2"
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+
+[dev-dependencies]
+tempfile = "3"
