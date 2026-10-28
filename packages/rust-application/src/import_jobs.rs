@@ -6,7 +6,7 @@ use std::sync::{
     Arc,
     atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering},
 };
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use tokio::{
     sync::mpsc,
@@ -18,6 +18,8 @@ use chef_core::{
     ErrorCode, FixedClock, ImportBbotEvidence, ImportEvidence, ScopePolicy, Snapshot,
     deterministic_id, digest_bytes,
 };
+
+use crate::{ImportEventRateCounter, ImportEventRateSnapshot};
 
 const DEFAULT_EVENT_CAPACITY: usize = 16;
 static NEXT_JOB_SEQUENCE: AtomicU64 = AtomicU64::new(1);
@@ -91,6 +93,9 @@ pub enum ImportJobEvent {
     BbotEvent {
         job_id: String,
         event: Box<BbotEvent>,
+        /// Velocidad de publicación offline medida dentro del worker, nunca
+        /// velocidad de reconocimiento de red.
+        rate: ImportEventRateSnapshot,
     },
     Completed {
         job_id: String,
@@ -271,6 +276,8 @@ async fn spawn_import_job_inner(
         let blocking_job_id = job_id.clone();
         let result = tokio::task::spawn_blocking(move || {
             let clock = FixedClock(imported_at);
+            let monotonic_origin = Instant::now();
+            let mut event_rate = ImportEventRateCounter::default();
             match format {
                 ImportFormat::NmapXml => {
                     ImportEvidence::execute(&bytes, &policy, &clock, Some(blocking_cancel.as_ref()))
@@ -285,9 +292,19 @@ async fn spawn_import_job_inner(
                             ));
                         }
                         if stream_bbot_events {
+                            let rate =
+                                event_rate
+                                    .observe(monotonic_origin.elapsed())
+                                    .map_err(|_| {
+                                        ChefError::new(
+                                            ErrorCode::WorkerFailed,
+                                            "No se pudo medir la actividad de importación CHEF",
+                                        )
+                                    })?;
                             let mut message = ImportJobEvent::BbotEvent {
                                 job_id: blocking_job_id.clone(),
                                 event: Box::new(event.clone()),
+                                rate,
                             };
                             loop {
                                 if blocking_cancel.load(Ordering::SeqCst) {
