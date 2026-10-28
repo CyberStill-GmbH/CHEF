@@ -89,6 +89,10 @@ pub fn parse_censys_dns_certificate_page(
     let mut candidates = BTreeSet::new();
     let mut name_count = 0;
     for hit in hits {
+        let hit = hit.as_object().ok_or(ChefError::new(
+            ErrorCode::InvalidInput,
+            "La lista Censys contiene un certificado con formato inválido",
+        ))?;
         let Some(names) = hit.get("names") else {
             continue;
         };
@@ -105,9 +109,10 @@ pub fn parse_censys_dns_certificate_page(
         }
 
         for name in names {
-            let Some(name) = name.as_str() else {
-                continue;
-            };
+            let name = name.as_str().ok_or(ChefError::new(
+                ErrorCode::InvalidInput,
+                "La lista Censys contiene un nombre SAN que no es texto",
+            ))?;
             let name = name.trim();
             let name = name.strip_prefix("*.").unwrap_or(name);
             let Some(candidate) = crate::host::canonical_domain(name) else {
