@@ -41,6 +41,39 @@ pub(crate) fn canonical_domain(value: &str) -> Option<String> {
     host.parse::<IpAddr>().is_err().then_some(host)
 }
 
+/// Devuelve los dominios padre de un host dentro de una raíz registrable
+/// ICANN. Se adapta a `domain_parents` de las utilidades de origen, con la
+/// política CHEF de no expandir sufijos privados o desconocidos. El resultado
+/// es solo contexto local; no implica propiedad ni autorización de red.
+pub(crate) fn domain_parent_candidates(value: &str, include_self: bool) -> Vec<String> {
+    let Some(host) = canonical_domain(value) else {
+        return Vec::new();
+    };
+    let Some(registrable) = psl::domain(host.as_bytes()) else {
+        return Vec::new();
+    };
+    if registrable.suffix().typ() != Some(psl::Type::Icann) {
+        return Vec::new();
+    }
+
+    let registrable = String::from_utf8_lossy(registrable.as_bytes()).into_owned();
+    if host == registrable {
+        return Vec::new();
+    }
+
+    let root_depth = registrable.split('.').count();
+    let mut labels = host.split('.').collect::<Vec<_>>();
+    let mut parents = Vec::new();
+    if include_self {
+        parents.push(host.clone());
+    }
+    while labels.len() > root_depth {
+        labels.remove(0);
+        parents.push(labels.join("."));
+    }
+    parents
+}
+
 pub(crate) fn hosts_match(host: &str, allowed: &str) -> bool {
     let (Some(host), Some(allowed)) = (canonical_host(host), canonical_host(allowed)) else {
         return false;

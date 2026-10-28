@@ -120,26 +120,7 @@ impl BbotModule for ChefUrlAttributeHints {
 /// candidatos sin resolución DNS. Solo usa la sección ICANN de la lista PSL
 /// integrada; dominios de sufijos privados o desconocidos no se expanden.
 pub(crate) fn derive_dns_parent_hints(value: &str) -> Vec<String> {
-    let Some(host) = crate::host::canonical_domain(value) else {
-        return Vec::new();
-    };
-    let Some(domain) = psl::domain(host.as_bytes()) else {
-        return Vec::new();
-    };
-    if domain.suffix().typ() != Some(psl::Type::Icann) {
-        return Vec::new();
-    }
-    let registrable = String::from_utf8_lossy(domain.as_bytes()).into_owned();
-    if host == registrable {
-        return Vec::new();
-    }
-    let mut labels = host.split('.').collect::<Vec<_>>();
-    let mut parents = Vec::new();
-    while labels.len() > registrable.split('.').count() {
-        labels.remove(0);
-        parents.push(labels.join("."));
-    }
-    parents
+    crate::host::domain_parent_candidates(value, false)
 }
 
 impl BbotModule for ChefDnsParentHints {
