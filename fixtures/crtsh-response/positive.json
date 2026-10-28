@@ -1,0 +1,13 @@
+{
+  "queryDomain": "example.com",
+  "response": [
+    { "id": 1, "name_value": "www.example.com\napi.example.com" },
+    { "id": 2, "name_value": "api.example.com.\n*.example.com\noutside.example.net" },
+    { "id": 3, "name_value": "other.example.com" }
+  ],
+  "expectedCandidates": [
+    "api.example.com",
+    "other.example.com",
+    "www.example.com"
+  ]
+}

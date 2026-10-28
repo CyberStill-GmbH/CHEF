@@ -11,6 +11,7 @@ mod caa;
 mod config;
 mod config_merge;
 mod contracts;
+mod crtsh;
 mod dns_cache;
 mod dns_format;
 mod dns_mutation_candidates;
@@ -58,6 +59,7 @@ pub use config_merge::{
     deep_merge_toml, dotted_get, dotted_set, iter_dotted_paths, parse_layered_toml,
 };
 pub use contracts::{ScopePolicy, Snapshot};
+pub use crtsh::{CrtShSubdomainPage, parse_crtsh_subdomains};
 pub use dns_cache::DnsCache;
 pub use dns_format::format_dns_rdata;
 pub use dns_mutation_candidates::{
