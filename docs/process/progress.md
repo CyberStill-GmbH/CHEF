@@ -233,3 +233,7 @@ Se adapta parcialmente `modules/output/asset_inventory.py` mediante `export_chef
 ## 28-10-2026 — Decisión sobre la salida genérica TXT
 
 Se clasifica `modules/output/txt.py` como excluido. El módulo escribe en disco una representación humana libre de cada evento; CHEF ya conserva los eventos fuente saneados y exporta formatos estructurados con contratos explícitos. `scan-log` solo informa las fases de importación con mensajes tipados; no se describe como un transcript equivalente. No se añadió otro escritor ni una copia textual sin esquema. La decisión queda reflejada en el inventario y el plan de migración; la fuente permanece intacta.
+
+## 28-10-2026 — Exclusión de extracción local de archivos
+
+Se clasifican `modules/internal/unarchive.py`, `internal/base.py` y `internal/__init__.py` como excluidos. La extracción de archivos invoca `7z`/`tar`, lee rutas transportadas en eventos `FILESYSTEM` y escribe árboles locales; CHEF trata ese evento como evidencia no confiable y no interpreta sus rutas como autorización de filesystem. La base e inicializador Python son infraestructura de plugins, no capacidades de reconocimiento independientes; CHEF compone módulos Rust estáticos. No se ejecutan pruebas de extracción porque no se implementa ese comportamiento. Las decisiones quedan en el inventario, el plan y el alcance; la fuente permanece intacta.
