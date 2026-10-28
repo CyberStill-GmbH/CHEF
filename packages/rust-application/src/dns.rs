@@ -190,11 +190,49 @@ pub enum DnsAuthorizationFailure {
     InvalidReceipt,
 }
 
+#[derive(Debug, Default)]
+struct DnsAuthorizationState {
+    revoked: AtomicBool,
+    notify: Notify,
+}
+
+/// Control compartido para revocar autorizaciones y detener consultas activas.
+#[derive(Debug, Clone, Default)]
+pub struct DnsAuthorizationControl(Arc<DnsAuthorizationState>);
+
+impl DnsAuthorizationControl {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn revoke(&self) {
+        self.0.revoked.store(true, Ordering::Release);
+        self.0.notify.notify_waiters();
+    }
+
+    pub fn is_revoked(&self) -> bool {
+        self.0.revoked.load(Ordering::Acquire)
+    }
+
+    async fn revoked(&self) {
+        loop {
+            let notified = self.0.notify.notified();
+            tokio::pin!(notified);
+            notified.as_mut().enable();
+            if self.is_revoked() {
+                return;
+            }
+            notified.await;
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct DnsAuthorizationReceipt {
     authorization_id: String,
     scope_digest: String,
     expires_at: Instant,
+    control: DnsAuthorizationControl,
 }
 
 impl DnsAuthorizationReceipt {
@@ -204,11 +242,26 @@ impl DnsAuthorizationReceipt {
         scope_digest: String,
         expires_at: Instant,
     ) -> Result<Self, DnsAuthorizationFailure> {
+        Self::new_with_control(
+            authorization_id,
+            scope_digest,
+            expires_at,
+            DnsAuthorizationControl::new(),
+        )
+    }
+
+    pub fn new_with_control(
+        authorization_id: String,
+        scope_digest: String,
+        expires_at: Instant,
+        control: DnsAuthorizationControl,
+    ) -> Result<Self, DnsAuthorizationFailure> {
         if authorization_id.is_empty()
             || authorization_id.len() > MAX_AUTHORIZATION_ID_BYTES
             || scope_digest.len() != 64
             || !scope_digest.bytes().all(|byte| byte.is_ascii_hexdigit())
             || expires_at <= Instant::now()
+            || control.is_revoked()
         {
             return Err(DnsAuthorizationFailure::InvalidReceipt);
         }
@@ -216,6 +269,7 @@ impl DnsAuthorizationReceipt {
             authorization_id,
             scope_digest: scope_digest.to_ascii_lowercase(),
             expires_at,
+            control,
         })
     }
 
@@ -228,11 +282,15 @@ impl DnsAuthorizationReceipt {
     }
 
     pub fn is_valid_at(&self, now: Instant) -> bool {
-        now < self.expires_at
+        now < self.expires_at && !self.control.is_revoked()
     }
 
     fn expires_at(&self) -> Instant {
         self.expires_at
+    }
+
+    async fn revoked(&self) {
+        self.control.revoked().await;
     }
 }
 
@@ -293,6 +351,7 @@ pub enum DnsResolutionError {
     NotAuthorized,
     InvalidAuthorization,
     AuthorizationExpired,
+    AuthorizationRevoked,
     Cancelled,
 }
 
@@ -306,6 +365,7 @@ impl fmt::Display for DnsResolutionError {
             Self::AuthorizationExpired => {
                 "La autorización DNS expiró antes de completar la consulta"
             }
+            Self::AuthorizationRevoked => "La autorización DNS se revocó durante la consulta",
             Self::Cancelled => "La consulta DNS fue cancelada",
         })
     }
@@ -372,10 +432,18 @@ where
         if cancellation.is_cancelled() {
             return Err(DnsResolutionError::Cancelled);
         }
-        let receipt = self
-            .authorization
-            .authorize_query(&request)
-            .map_err(|_| DnsResolutionError::NotAuthorized)?;
+        let receipt =
+            self.authorization
+                .authorize_query(&request)
+                .map_err(|failure| match failure {
+                    DnsAuthorizationFailure::NotAuthorized => DnsResolutionError::NotAuthorized,
+                    DnsAuthorizationFailure::InvalidReceipt => {
+                        DnsResolutionError::InvalidAuthorization
+                    }
+                })?;
+        if receipt.control.is_revoked() {
+            return Err(DnsResolutionError::AuthorizationRevoked);
+        }
         if !receipt.is_valid_at(Instant::now()) {
             return Err(DnsResolutionError::InvalidAuthorization);
         }
@@ -383,6 +451,7 @@ where
         let expires_at = tokio::time::Instant::from_std(receipt.expires_at());
         let lookup = tokio::select! {
             _ = cancellation.cancelled() => return Err(DnsResolutionError::Cancelled),
+            _ = receipt.revoked() => return Err(DnsResolutionError::AuthorizationRevoked),
             _ = tokio::time::sleep_until(expires_at) => {
                 return Err(DnsResolutionError::AuthorizationExpired);
             },
@@ -390,6 +459,9 @@ where
         };
         if cancellation.is_cancelled() {
             return Err(DnsResolutionError::Cancelled);
+        }
+        if receipt.control.is_revoked() {
+            return Err(DnsResolutionError::AuthorizationRevoked);
         }
         if !receipt.is_valid_at(Instant::now()) {
             return Err(DnsResolutionError::AuthorizationExpired);
@@ -429,6 +501,9 @@ where
 
         if cancellation.is_cancelled() {
             return Err(DnsResolutionError::Cancelled);
+        }
+        if receipt.control.is_revoked() {
+            return Err(DnsResolutionError::AuthorizationRevoked);
         }
         if !receipt.is_valid_at(Instant::now()) {
             return Err(DnsResolutionError::AuthorizationExpired);

@@ -180,6 +180,7 @@ fn parse_record_type(value: &str) -> Option<RecordType> {
     match value.to_ascii_uppercase().as_str() {
         "A" => Some(RecordType::A),
         "AAAA" => Some(RecordType::AAAA),
+        "CAA" => Some(RecordType::CAA),
         "CNAME" => Some(RecordType::CNAME),
         "MX" => Some(RecordType::MX),
         "NS" => Some(RecordType::NS),
