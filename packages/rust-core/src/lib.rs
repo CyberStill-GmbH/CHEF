@@ -8,6 +8,7 @@ mod asn;
 mod asset_inventory_export;
 mod bimi;
 mod caa;
+mod censys_dns;
 mod certspotter;
 mod config;
 mod config_merge;
@@ -58,6 +59,7 @@ pub use asn::{
     AsnEnrichmentCircuitBreaker, AsnRecord, AsnTargetRetryPolicy, normalize_asn_response,
 };
 pub use asset_inventory_export::{ChefAssetInventoryExport, export_asset_inventory_csv};
+pub use censys_dns::{CensysDnsCertificatePage, parse_censys_dns_certificate_page};
 pub use certspotter::{CertSpotterSubdomainPage, parse_certspotter_subdomains};
 pub use config::{ChefConfig, DefectDojoSettings, RuntimeSettings, ScopeSettings, SourceSettings};
 pub use config_merge::{

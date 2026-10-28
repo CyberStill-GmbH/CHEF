@@ -1,0 +1,16 @@
+{
+  "queryDomain": "example.com",
+  "response": {
+    "code": 200,
+    "status": "OK",
+    "result": {
+      "hits": [
+        { "names": ["api.example.com", "*.wild.example.com", "EXAMPLE.COM"] },
+        { "names": ["api.example.com", "mail.other.net"] }
+      ],
+      "links": { "next": "synthetic-cursor-01" }
+    }
+  },
+  "expectedCandidates": ["api.example.com", "wild.example.com"],
+  "expectedNextCursor": "synthetic-cursor-01"
+}

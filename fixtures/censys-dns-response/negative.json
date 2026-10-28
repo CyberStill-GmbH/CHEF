@@ -1,0 +1,16 @@
+{
+  "queryDomain": "example.com",
+  "response": {
+    "code": 200,
+    "status": "OK",
+    "result": {
+      "hits": [
+        { "names": ["example.com", "*.outside.example.net", "mail.other.net"] },
+        { "names": ["bad_label.example.com", "https://api.example.com/path"] }
+      ],
+      "links": { "next": "" }
+    }
+  },
+  "expectedCandidates": [],
+  "expectedNextCursor": null
+}
