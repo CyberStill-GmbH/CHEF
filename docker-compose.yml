@@ -26,10 +26,13 @@ services:
       GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:?define GITHUB_CLIENT_SECRET en .env}
       GITHUB_REDIRECT_URI: ${GITHUB_REDIRECT_URI:-http://127.0.0.1:8787/auth/github/callback}
       PORT: '8787'
+      # Escucha en todas las interfaces del contenedor; el puerto publicado se
+      # acota a 127.0.0.1 del host para no exponerlo en la red.
+      HOST: 0.0.0.0
       CHEF_SCOPE: fixtures/scope/lab.json
       DATABASE_URL: postgresql://chef:${POSTGRES_PASSWORD:-chef-dev-only}@db:5432/chef?schema=public
     ports:
-      - '8787:8787'
+      - '127.0.0.1:8787:8787'
     depends_on:
       db:
         condition: service_healthy

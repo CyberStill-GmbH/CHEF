@@ -5,6 +5,11 @@
 
 FROM node:24-bookworm-slim AS build
 WORKDIR /app
+# Prisma necesita openssl para elegir el motor de consulta correcto (la imagen
+# slim no lo trae).
+RUN apt-get update -y \
+  && apt-get install -y --no-install-recommends openssl ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY tsconfig.json ./
@@ -22,6 +27,10 @@ RUN npx prisma generate --schema apps/api/prisma/schema.prisma
 FROM node:24-bookworm-slim AS runtime
 ENV NODE_ENV=production
 WORKDIR /app
+# openssl en runtime para que el motor Prisma cargue libssl correctamente.
+RUN apt-get update -y \
+  && apt-get install -y --no-install-recommends openssl ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 COPY --from=build /app/dist ./dist

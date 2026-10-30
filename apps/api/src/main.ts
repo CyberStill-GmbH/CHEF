@@ -31,6 +31,9 @@ import { createChefApi } from './server.js';
 
 const SCOPE_PATH = process.env['CHEF_SCOPE'] ?? 'fixtures/scope/lab.json';
 const PORT = Number(process.env['PORT'] ?? '8787');
+// Por defecto solo loopback; en contenedor se pone 0.0.0.0 para que el puerto
+// publicado (acotado a 127.0.0.1 del host en compose) sea alcanzable.
+const HOST = process.env['HOST'] ?? '127.0.0.1';
 
 function required(name: string): string {
   const value = process.env[name];
@@ -113,9 +116,9 @@ async function main(): Promise<void> {
     scopePolicy,
   });
 
-  api.listen(PORT, '127.0.0.1', () => {
+  api.listen(PORT, HOST, () => {
     // No secrets, tokens or scope contents are printed on purpose.
-    console.log(`CHEF API listening on http://127.0.0.1:${PORT}`);
+    console.log(`CHEF API listening on http://${HOST}:${PORT}`);
   });
 
   for (const signal of ['SIGINT', 'SIGTERM'] as const)
