@@ -9,6 +9,11 @@ import {
   InMemorySnapshotStore,
 } from '../../../packages/adapters/src/memory-projects.js';
 import { NmapXmlParser } from '../../../packages/adapters/src/nmap.js';
+import {
+  PrismaProjectRepository,
+  PrismaSnapshotStore,
+  type PrismaLikeClient,
+} from '../../../packages/adapters/src/prisma-projects.js';
 import { ExactScopeGuard } from '../../../packages/adapters/src/scope.js';
 import { SessionTokenService } from '../../../packages/adapters/src/session-token.js';
 import { CreateProject } from '../../../packages/application/src/create-project.js';
@@ -18,7 +23,9 @@ import { ListProjects } from '../../../packages/application/src/list-projects.js
 import { ReadProjectSnapshot } from '../../../packages/application/src/read-project-snapshot.js';
 import type {
   ClockPort,
+  ProjectRepository,
   RandomPort,
+  SnapshotStore,
 } from '../../../packages/domain/src/ports.js';
 import { createChefApi } from './server.js';
 
@@ -37,47 +44,89 @@ const random: RandomPort = {
   token: (bytes) => randomBytes(bytes).toString('base64url'),
 };
 
-const contracts = loadContracts('docs/contracts/snapshot.schema.json');
-const scopePolicy = contracts.scope(
-  JSON.parse(readFileSync(SCOPE_PATH, 'utf8')),
-);
+interface Persistence {
+  projects: ProjectRepository;
+  snapshots: SnapshotStore;
+  /** Libera recursos (p. ej. conexiones de base de datos) al apagar. */
+  dispose: () => Promise<void>;
+}
 
-const projects = new InMemoryProjectRepository();
-const snapshots = new InMemorySnapshotStore();
-const identity = new Sha256Identity();
+/**
+ * Elige la persistencia según el entorno, sin que el dominio sepa cuál es.
+ * Sin DATABASE_URL la API corre en memoria (demo offline y pruebas); con
+ * DATABASE_URL compone el adaptador Prisma contra PostgreSQL. El cliente Prisma
+ * se importa de forma diferida para no exigir `prisma generate` cuando no hay
+ * base de datos configurada.
+ */
+async function createPersistence(): Promise<Persistence> {
+  const databaseUrl = process.env['DATABASE_URL'];
+  if (databaseUrl === undefined || databaseUrl.trim() === '')
+    return {
+      projects: new InMemoryProjectRepository(),
+      snapshots: new InMemorySnapshotStore(),
+      dispose: () => Promise.resolve(),
+    };
 
-const api = createChefApi({
-  createProject: new CreateProject(projects, identity, clock, random),
-  listProjects: new ListProjects(projects),
-  importIntoProject: new ImportIntoProject(
-    projects,
-    snapshots,
-    new ImportEvidence(
-      new NmapXmlParser(),
-      new ExactScopeGuard(),
-      identity,
-      clock,
+  const { PrismaClient } = await import('@prisma/client');
+  const client = new PrismaClient();
+  // El cliente real satisface estructuralmente el puerto mínimo del adaptador.
+  const likeClient = client as unknown as PrismaLikeClient;
+  return {
+    projects: new PrismaProjectRepository(likeClient),
+    snapshots: new PrismaSnapshotStore(likeClient, clock),
+    dispose: () => client.$disconnect(),
+  };
+}
+
+async function main(): Promise<void> {
+  const contracts = loadContracts('docs/contracts/snapshot.schema.json');
+  const scopePolicy = contracts.scope(
+    JSON.parse(readFileSync(SCOPE_PATH, 'utf8')),
+  );
+
+  const { projects, snapshots, dispose } = await createPersistence();
+  const identity = new Sha256Identity();
+
+  const api = createChefApi({
+    createProject: new CreateProject(projects, identity, clock, random),
+    listProjects: new ListProjects(projects),
+    importIntoProject: new ImportIntoProject(
+      projects,
+      snapshots,
+      new ImportEvidence(
+        new NmapXmlParser(),
+        new ExactScopeGuard(),
+        identity,
+        clock,
+      ),
     ),
-  ),
-  readSnapshot: new ReadProjectSnapshot(projects, snapshots),
-  sessions: new SessionTokenService({
-    secret: required('CHEF_SESSION_SECRET'),
-    nowMs: () => Date.now(),
-  }),
-  oauth: new GitHubOAuth({
-    clientId: required('GITHUB_CLIENT_ID'),
-    clientSecret: required('GITHUB_CLIENT_SECRET'),
-    redirectUri: required('GITHUB_REDIRECT_URI'),
-  }),
-  scopePolicy,
-});
-
-api.listen(PORT, '127.0.0.1', () => {
-  // No secrets, tokens or scope contents are printed on purpose.
-  console.log(`CHEF API listening on http://127.0.0.1:${PORT}`);
-});
-
-for (const signal of ['SIGINT', 'SIGTERM'] as const)
-  process.on(signal, () => {
-    api.close(() => process.exit(0));
+    readSnapshot: new ReadProjectSnapshot(projects, snapshots),
+    sessions: new SessionTokenService({
+      secret: required('CHEF_SESSION_SECRET'),
+      nowMs: () => Date.now(),
+    }),
+    oauth: new GitHubOAuth({
+      clientId: required('GITHUB_CLIENT_ID'),
+      clientSecret: required('GITHUB_CLIENT_SECRET'),
+      redirectUri: required('GITHUB_REDIRECT_URI'),
+    }),
+    scopePolicy,
   });
+
+  api.listen(PORT, '127.0.0.1', () => {
+    // No secrets, tokens or scope contents are printed on purpose.
+    console.log(`CHEF API listening on http://127.0.0.1:${PORT}`);
+  });
+
+  for (const signal of ['SIGINT', 'SIGTERM'] as const)
+    process.on(signal, () => {
+      api.close(() => {
+        void dispose().finally(() => process.exit(0));
+      });
+    });
+}
+
+main().catch((error: unknown) => {
+  console.error(error);
+  process.exit(1);
+});
