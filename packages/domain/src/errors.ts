@@ -1,5 +1,14 @@
 export type ErrorCode =
-  'INVALID_INPUT' | 'LIMIT_EXCEEDED' | 'OUT_OF_SCOPE' | 'CANCELLED';
+  | 'INVALID_INPUT'
+  | 'LIMIT_EXCEEDED'
+  | 'OUT_OF_SCOPE'
+  | 'CANCELLED'
+  | 'UPSTREAM_ERROR'
+  | 'UPSTREAM_UNAVAILABLE'
+  | 'UNAUTHORIZED'
+  | 'FORBIDDEN'
+  | 'NOT_FOUND'
+  | 'CONFLICT';
 export class ChefError extends Error {
   constructor(
     public readonly code: ErrorCode,

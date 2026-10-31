@@ -18,10 +18,39 @@ function text(value: unknown): string {
   return value;
 }
 
+export interface NmapParseStats {
+  hostRecords: number;
+  upHosts: number;
+  skippedDownHosts: number;
+  portRecords: number;
+  openKept: number;
+  skippedClosed: number;
+  skippedFiltered: number;
+  skippedOpenFiltered: number;
+  skippedOtherState: number;
+}
+
+export interface NmapParseResult {
+  inputs: ServiceInput[];
+  stats: NmapParseStats;
+}
+
 export class NmapXmlParser implements ImportParser {
   readonly source = 'nmap-xml' as const;
   readonly version = '1.0.0';
   parse(bytes: Uint8Array, maxObservations: number): ServiceInput[] {
+    return this.parseInternal(bytes, maxObservations).inputs;
+  }
+
+  /** Same validation as parse, plus off-wire skip counts by port state. */
+  parseWithStats(bytes: Uint8Array, maxObservations: number): NmapParseResult {
+    return this.parseInternal(bytes, maxObservations);
+  }
+
+  private parseInternal(
+    bytes: Uint8Array,
+    maxObservations: number,
+  ): NmapParseResult {
     let xml: string;
     try {
       xml = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
@@ -65,10 +94,25 @@ export class NmapXmlParser implements ImportParser {
     const hosts = list(root.host);
     if (hosts.length > maxObservations)
       throw new ChefError('LIMIT_EXCEEDED', 'Too many host records');
+    const stats: NmapParseStats = {
+      hostRecords: hosts.length,
+      upHosts: 0,
+      skippedDownHosts: 0,
+      portRecords: 0,
+      openKept: 0,
+      skippedClosed: 0,
+      skippedFiltered: 0,
+      skippedOpenFiltered: 0,
+      skippedOtherState: 0,
+    };
     let recordCount = 0;
     for (const [hostIndex, rawHost] of hosts.entries()) {
       const host = object(rawHost);
-      if (object(host.status).state !== 'up') continue;
+      if (object(host.status).state !== 'up') {
+        stats.skippedDownHosts += 1;
+        continue;
+      }
+      stats.upHosts += 1;
       const addresses = list(host.address)
         .map(object)
         .filter((item) => item.addrtype === 'ipv4' || item.addrtype === 'ipv6');
@@ -83,6 +127,7 @@ export class NmapXmlParser implements ImportParser {
       for (const [portIndex, rawPort] of ports.entries()) {
         if (++recordCount > maxObservations)
           throw new ChefError('LIMIT_EXCEEDED', 'Too many port records');
+        stats.portRecords += 1;
         const port = object(rawPort);
         const rawNumber = text(port.portid);
         if (!/^\d{1,5}$/.test(rawNumber))
@@ -99,7 +144,15 @@ export class NmapXmlParser implements ImportParser {
             'INVALID_INPUT',
             'Only TCP and UDP are supported',
           );
-        if (object(port.state).state !== 'open') continue;
+        const portState = object(port.state).state;
+        if (portState !== 'open') {
+          if (portState === 'closed') stats.skippedClosed += 1;
+          else if (portState === 'filtered') stats.skippedFiltered += 1;
+          else if (portState === 'open|filtered')
+            stats.skippedOpenFiltered += 1;
+          else stats.skippedOtherState += 1;
+          continue;
+        }
         inputs.push({
           address,
           port: number,
@@ -109,6 +162,7 @@ export class NmapXmlParser implements ImportParser {
         });
       }
     }
-    return inputs;
+    stats.openKept = inputs.length;
+    return { inputs, stats };
   }
 }

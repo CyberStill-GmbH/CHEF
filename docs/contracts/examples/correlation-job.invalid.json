@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "correlation-job/v0",
+  "ruleSetVersion": "v0",
+  "asOf": "2026-09-29T00:00:00.000Z",
+  "projectScope": {
+    "id": "lab-offline-v1",
+    "digest": "bfe5a6a0e0070b41c45b41cd788748ce32502147da62f8928093fa1e33ef9c85",
+    "allowedAddresses": ["127.0.0.1"],
+    "excludedAddresses": [],
+    "allowedPorts": [8080],
+    "allowedProtocols": ["tcp"]
+  },
+  "evidence": [
+    {
+      "id": "evidence:3e88e4c3523b65df50b3438307d5186b8be15315dea5972cf5fd485a15bd59bb",
+      "sha256": "2a5544e6f3e02a35ee57e204812ddf2ccdeeb511378669ff2886546ba989d983",
+      "source": "nmap-xml",
+      "locator": "/nmaprun",
+      "importedAt": "2026-09-29T00:00:00.000Z"
+    }
+  ],
+  "observations": [
+    {
+      "id": "observation:7159742ae182053416a4c963af4e74a08163a659ddd0d5f5bdc725de67a70a24",
+      "address": "127.0.0.1",
+      "protocol": "tcp",
+      "port": 8080,
+      "observedAt": "2026-09-29T00:00:00.000Z",
+      "locator": "/nmaprun/host[0]/ports/port[1]",
+      "evidenceId": "evidence:3e88e4c3523b65df50b3438307d5186b8be15315dea5972cf5fd485a15bd59bb",
+      "runId": "run:39805e6cacad839063818cc0a3cf7f8b27855ae4ca62162c919f258beb026bdb",
+      "source": "nmap-xml",
+      "fact": "open-port",
+      "confidence": 1.5
+    }
+  ]
+}

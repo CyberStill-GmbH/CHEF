@@ -1,0 +1,13 @@
+# Rate-limited fixture: documents expected behavior when upstream returns 429
+# This fixture is used for testing the backoff/retry logic in the parser
+# The actual 429 handling is tested via integration tests with a mock server
+
+# Expected behavior:
+# 1. First request returns 429 with Retry-After: 1
+# 2. Client waits 1s, retries
+# 3. Second request returns 200 with valid CDX data
+# 4. Parser processes the CDX data normally
+
+# Simulated CDX data that would be returned after successful retry:
+{"urlkey":"org,example,www)/","timestamp":"20241115120000","original":"http://www.example.com/","mimetype":"text/html","status":"200","digest":"sha256:abc123","length":"1234","offset":"5678","filename":"CC-MAIN-20241115120000-00000.warc.gz"}
+{"urlkey":"org,example,api)/v1/health","timestamp":"20241115120001","original":"https://api.example.com/v1/health","mimetype":"application/json","status":"200","digest":"sha256:def456","length":"567","offset":"9012","filename":"CC-MAIN-20241115120000-00000.warc.gz"}

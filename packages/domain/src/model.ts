@@ -1,5 +1,6 @@
 export const SCHEMA_VERSION = '1.0.0' as const;
 export type Protocol = 'tcp' | 'udp';
+export type Source = 'nmap-xml' | 'common-crawl-index';
 
 export interface ScopePolicy {
   schemaVersion: typeof SCHEMA_VERSION;
@@ -32,7 +33,7 @@ export interface Asset {
 export interface Evidence {
   id: string;
   sha256: string;
-  source: 'nmap-xml';
+  source: Source;
   parserVersion: string;
   runId: string;
   locator: string;
@@ -43,8 +44,8 @@ export interface Observation extends ServiceInput {
   id: string;
   evidenceId: string;
   runId: string;
-  source: 'nmap-xml';
-  fact: 'open-port';
+  source: Source;
+  fact: 'open-port' | 'passive-signal';
   confidence: number;
 }
 
@@ -88,3 +89,12 @@ export interface Snapshot {
   relationships: Relationship[];
   paths: ExposurePath[];
 }
+
+export type PreparedImport = Omit<
+  Snapshot,
+  'assets' | 'relationships' | 'paths'
+>;
+export type CorrelationGraph = Pick<
+  Snapshot,
+  'assets' | 'relationships' | 'paths'
+>;

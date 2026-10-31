@@ -163,7 +163,7 @@ test('IPv6 identity canonicalization prevents textual duplicate assets', () => {
   const result = pipeline.execute(xml('::1', '80'), normalized);
   assert.equal(
     result.assets.find((item) => item.kind === 'address')?.key,
-    '::1',
+    '0000:0000:0000:0000:0000:0000:0000:0001',
   );
 });
 

@@ -1,0 +1,115 @@
+{
+  "schemaVersion": "correlation-result/v0",
+  "ruleSetVersion": "v0",
+  "asOf": "2026-09-29T00:00:00.000Z",
+  "assets": [
+    {
+      "id": "asset:3c41485077b4b9c3b5cf073a9612c69c0465ade5ec939f00885733c088455daf",
+      "kind": "service",
+      "key": "127.0.0.2|tcp|8080",
+      "firstSeen": "2026-09-29T00:00:00.000Z",
+      "lastSeen": "2026-09-29T00:00:00.000Z",
+      "observationIds": [
+        "observation:f680b1959834483683e62871bd3793c1b9c885b27e862de838caddbaf036abf6"
+      ]
+    },
+    {
+      "id": "asset:585d047e936bf8e2ce95fbeada3c65782029231c9cfd97f2c1f4ada12090c0ba",
+      "kind": "service",
+      "key": "127.0.0.1|tcp|8080",
+      "firstSeen": "2026-09-29T00:00:00.000Z",
+      "lastSeen": "2026-09-29T00:00:00.000Z",
+      "observationIds": [
+        "observation:7159742ae182053416a4c963af4e74a08163a659ddd0d5f5bdc725de67a70a24",
+        "observation:8de568b54a3ac9835d3e70a9501c6e04310213268642b26cb7e3fcb605908d46"
+      ]
+    },
+    {
+      "id": "asset:b5a3dd9dc948bc986bc3a40013a1d6d34f043ff82dbb2cd2be57fe5f5e926cb2",
+      "kind": "address",
+      "key": "127.0.0.1",
+      "firstSeen": "2026-09-29T00:00:00.000Z",
+      "lastSeen": "2026-09-29T00:00:00.000Z",
+      "observationIds": [
+        "observation:7159742ae182053416a4c963af4e74a08163a659ddd0d5f5bdc725de67a70a24",
+        "observation:8de568b54a3ac9835d3e70a9501c6e04310213268642b26cb7e3fcb605908d46"
+      ]
+    },
+    {
+      "id": "asset:cc222bae38d64a9cb13fbadf187653668b04568419d76b27de70bd37718cf0da",
+      "kind": "address",
+      "key": "127.0.0.2",
+      "firstSeen": "2026-09-29T00:00:00.000Z",
+      "lastSeen": "2026-09-29T00:00:00.000Z",
+      "observationIds": [
+        "observation:f680b1959834483683e62871bd3793c1b9c885b27e862de838caddbaf036abf6"
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "relationship:5f62147f50dc4abe5261d9ad87580d02cebb31744effb7df0a920948ff834fbb",
+      "from": "asset:b5a3dd9dc948bc986bc3a40013a1d6d34f043ff82dbb2cd2be57fe5f5e926cb2",
+      "to": "asset:585d047e936bf8e2ce95fbeada3c65782029231c9cfd97f2c1f4ada12090c0ba",
+      "kind": "exposes",
+      "status": "observed",
+      "observationIds": [
+        "observation:7159742ae182053416a4c963af4e74a08163a659ddd0d5f5bdc725de67a70a24",
+        "observation:8de568b54a3ac9835d3e70a9501c6e04310213268642b26cb7e3fcb605908d46"
+      ],
+      "confidence": 1
+    },
+    {
+      "id": "relationship:98bf0c9e52192bb2d8e774c34c307bf9b3ae09fc4a3d14325db317d0a09cb759",
+      "from": "asset:cc222bae38d64a9cb13fbadf187653668b04568419d76b27de70bd37718cf0da",
+      "to": "asset:3c41485077b4b9c3b5cf073a9612c69c0465ade5ec939f00885733c088455daf",
+      "kind": "exposes",
+      "status": "observed",
+      "observationIds": [
+        "observation:f680b1959834483683e62871bd3793c1b9c885b27e862de838caddbaf036abf6"
+      ],
+      "confidence": 1
+    }
+  ],
+  "paths": [
+    {
+      "id": "path:4760c9dd67ff0aaa7b4423fbf709077fe8ed958519060b151d267e3e02952d6c",
+      "assetIds": [
+        "asset:b5a3dd9dc948bc986bc3a40013a1d6d34f043ff82dbb2cd2be57fe5f5e926cb2",
+        "asset:585d047e936bf8e2ce95fbeada3c65782029231c9cfd97f2c1f4ada12090c0ba"
+      ],
+      "relationshipIds": [
+        "relationship:5f62147f50dc4abe5261d9ad87580d02cebb31744effb7df0a920948ff834fbb"
+      ],
+      "ruleId": "open-service/v1",
+      "ruleVersion": "v1",
+      "status": "inferred",
+      "explanation": "An imported observation reports an open service. Reachability now and exploitability have not been confirmed.",
+      "confidence": 1,
+      "isConfirmedVulnerability": false
+    },
+    {
+      "id": "path:9b12d524581a29f22c6f9293656345eca768a6eb31a49e507e913e0e454e9568",
+      "assetIds": [
+        "asset:cc222bae38d64a9cb13fbadf187653668b04568419d76b27de70bd37718cf0da",
+        "asset:3c41485077b4b9c3b5cf073a9612c69c0465ade5ec939f00885733c088455daf"
+      ],
+      "relationshipIds": [
+        "relationship:98bf0c9e52192bb2d8e774c34c307bf9b3ae09fc4a3d14325db317d0a09cb759"
+      ],
+      "ruleId": "open-service/v1",
+      "ruleVersion": "v1",
+      "status": "inferred",
+      "explanation": "An imported observation reports an open service. Reachability now and exploitability have not been confirmed.",
+      "confidence": 1,
+      "isConfirmedVulnerability": false
+    }
+  ],
+  "metrics": {
+    "observationsIn": 3,
+    "assetsOut": 4,
+    "relationshipsOut": 2,
+    "pathsOut": 2,
+    "duplicateObservations": 1
+  }
+}
