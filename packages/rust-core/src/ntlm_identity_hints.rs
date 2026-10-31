@@ -160,7 +160,7 @@ fn decode_base64(token: &str) -> ChefResult<Vec<u8>> {
         ));
     }
     let mut output = Vec::with_capacity(token.len() / 4 * 3);
-    let chunks = token.as_bytes().chunks_exact(4);
+    let chunks = token.as_bytes().chunks(4);
     let chunk_count = chunks.len();
     for (index, chunk) in chunks.enumerate() {
         let final_chunk = index + 1 == chunk_count;
@@ -249,7 +249,7 @@ fn decode_utf16_attribute(bytes: &[u8]) -> ChefResult<Option<String>> {
         return Ok(None);
     }
     let units = bytes
-        .chunks_exact(2)
+        .chunks(2)
         .map(|pair| u16::from_le_bytes([pair[0], pair[1]]))
         .collect::<Vec<_>>();
     let value = String::from_utf16(&units).map_err(|_| {

@@ -79,7 +79,7 @@ fn decode_cfemail(encoded: &str) -> Option<String> {
     }
     let key = u8::from_str_radix(&encoded[..2], 16).ok()?;
     let mut decoded = Vec::with_capacity((encoded.len() - 2) / 2);
-    for pair in encoded.as_bytes()[2..].chunks_exact(2) {
+    for pair in encoded.as_bytes()[2..].chunks(2) {
         let pair = std::str::from_utf8(pair).ok()?;
         decoded.push(u8::from_str_radix(pair, 16).ok()? ^ key);
     }
