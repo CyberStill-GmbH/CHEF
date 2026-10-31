@@ -41,6 +41,14 @@ export class ImportEvidence {
       this.parser.version,
     ]);
     const evidenceId = this.identity.id('evidence', [runId, sha256]);
+    // A passive index never proves a port is open: the fact is derived from the
+    // source, not asserted by the caller.
+    const evidenceLocator =
+      this.parser.source === 'nmap-xml' ? '/nmaprun' : '/cdx/search';
+    const fact =
+      this.parser.source === 'nmap-xml'
+        ? ('open-port' as const)
+        : ('passive-signal' as const);
     // Build only after validation of all records: failed imports cannot publish partial graphs.
     for (const input of parsed) {
       checkCancellation();
@@ -53,7 +61,7 @@ export class ImportEvidence {
         evidenceId,
         runId,
         source: this.parser.source,
-        fact: 'open-port' as const,
+        fact,
         confidence: 1,
       }))
       .sort((a, b) => a.id.localeCompare(b.id));
@@ -77,7 +85,7 @@ export class ImportEvidence {
           source: this.parser.source,
           parserVersion: this.parser.version,
           runId,
-          locator: '/nmaprun',
+          locator: evidenceLocator,
           importedAt: startedAt,
         },
       ],

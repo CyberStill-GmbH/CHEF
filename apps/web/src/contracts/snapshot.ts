@@ -24,7 +24,7 @@ export interface ScanRunDto {
 export interface EvidenceDto {
   id: string;
   sha256: string;
-  source: 'nmap-xml';
+  source: 'nmap-xml' | 'common-crawl-index';
   parserVersion: SnapshotSchemaVersion;
   runId: string;
   locator: string;
@@ -40,8 +40,8 @@ export interface ObservationDto {
   locator: string;
   evidenceId: string;
   runId: string;
-  source: 'nmap-xml';
-  fact: 'open-port';
+  source: 'nmap-xml' | 'common-crawl-index';
+  fact: 'open-port' | 'passive-signal';
   confidence: number;
 }
 
