@@ -1,12 +1,12 @@
-# Arquitectura propuesta de escritorio: Tauri y Rust
+# Arquitectura de escritorio: Tauri y Rust
 
-Actualizado 18-10-2026. **Dirección aceptada: escritorio Tauri/Rust con SurrealDB embebida.** Implementado parcialmente: shell Tauri v2, importación offline del fixture o de un JSONL de origen seleccionado por el usuario junto con una política CHEF de scope, persistencia en SurrealDB/RocksDB, grafo y descarga JSON. Los trabajos Tokio emiten `scan-log` estructurado durante el procesamiento; React valida contratos y los presenta en texto con xterm.js y transcripción accesible. `cargo check`, `cargo build --locked` y los bundles MSI/NSIS de Tauri pasan con toolchain nativo local; las rutas de salida están en `apps/desktop/src-tauri/target/release/bundle`. Falta completar módulos y validar recuperación/arranque en WebView. El [ADR 0012](../adr/0012-escritorio-tauri-rust.md) registra la decisión y sus gates.
+Actualizado 31-10-2026. **Dirección aceptada: escritorio Tauri/Rust con SurrealDB embebida.** Implementado parcialmente: shell Tauri v2, importación offline del fixture y JSONL con política CHEF de scope, importaciones archivadas de Censys/urlscan, persistencia SurrealDB/RocksDB, grafo y descarga JSON. Los trabajos Tokio emiten `scan-log` estructurado y React valida los contratos. La web de producción y sus 37 pruebas pasan. El build Windows generó NSIS y MSI; el NSIS se instaló y el proceso presentó una ventana `CHEF` que respondía. El renderizado React, el recorrido interactivo de importación y el control negativo todavía no se validaron manualmente. Falta completar el inventario de módulos y probar recuperación multiplataforma. El [ADR 0012](../adr/0012-escritorio-tauri-rust.md) registra la decisión y sus gates.
 
 ## Corte implementado
 
-`apps/desktop/src-tauri` compone el núcleo y el adaptador de almacenamiento. La ventana solo tiene el permiso `core:default`; `load_offline_demo_snapshot` consume datos sintéticos loopback y el comando de importación JSONL recibe texto JSONL acotado y una `ScopePolicy` explícita. Ambos cargan la configuración local acotada, usan el parser Rust y guardan snapshot, eventos fuente/derivados y proyección CHEF en el directorio local que entrega Tauri. Las ramas CHEF de transformación offline requieren activación explícita en `config.toml` y vienen apagadas por defecto. Este flujo no ejecuta módulos de red ni convierte el scope importado en autorización de tráfico.
+`apps/desktop/src-tauri` compone el núcleo y el adaptador de almacenamiento. La ventana solo tiene el permiso `core:default`; `load_offline_demo_snapshot` consume datos sintéticos loopback y el comando JSONL recibe contenido acotado y una `ScopePolicy` explícita. Los comandos de Censys Hosts/urlscan reciben respuestas JSON archivadas. El primer flujo guarda Snapshot y sus eventos/proyección; los proveedores se guardan por separado en `provider_imports` con hash, ID determinista y linaje. Las ramas CHEF de transformación offline vienen apagadas por defecto. Ningún flujo actual ejecuta módulos de red ni convierte scope de importación en autorización de tráfico.
 
-La importación de fixture y JSONL local, el scope explícito y la terminal local están conectados. Los normalizadores puros para respuestas archivadas de VirusTotal, DNSDumpster, RapidDNS y crt.sh existen en Rust, pero no hacen red ni están compuestos como fuentes en Tauri. Proveedores remotos, descubrimiento activo y DefectDojo siguen desactivados.
+La importación de fixture, JSONL y respuestas archivadas Censys/urlscan, el scope explícito, la persistencia local, el explorador y la terminal están conectados. Otros normalizadores puros para VirusTotal, DNSDumpster, RapidDNS y crt.sh existen en Rust, pero no hacen red ni están compuestos como fuentes en Tauri. Proveedores remotos, descubrimiento activo y DefectDojo siguen desactivados.
 
 El crate `packages/rust-application` define `DnsQueryPlan`: para una IP planifica PTR; para un nombre planifica A/AAAA/CNAME primero y SRV/MX/NS/SOA/TXT después solo cuando el modo no es mínimo y la distancia del objetivo está bajo el límite de búsqueda. `ExecuteDnsPlan` recorre las consultas en orden, vuelve a exigir autorización para cada una, conserva resultados parciales y se detiene ante cancelación, revocación, autorización inválida o expiración. `ResolveDns` aplica límites de respuesta y clasifica resultados que podrían alimentar seguimiento frente a evidencia que solo debe conservarse. `DnsWildcardAssessment` compara resultados DNS ya entregados con muestras por zona/tipo y retorna clasificaciones trazables más una sugerencia de nombre; no genera consultas ni muta activos. `packages/adapters/rust` implementa el puerto con Hickory, upstreams configurados por IP literal y timeout acotado; desactiva la configuración DNS del sistema y lectura del archivo hosts. `DnsAuthorizationRegistry` almacena concesiones efímeras por objetivo exacto, tipos de registro, cuota de intentos y expiración; un intento cuenta aunque falle o se cancele. Revocarlas detiene las consultas en curso y las respuestas solo quedan como evidencia. La aplicación que registre una concesión debe comprobar consentimiento y scope vigente. Estos componentes aún no están compuestos por Tauri: no se expone un comando de escaneo ni se ejecutan consultas desde la aplicación. El flujo de importación y demo sigue offline.
 
@@ -64,6 +64,24 @@ Los eventos de Tauri son asíncronos y su sistema no ofrece seguridad de tipos e
 
 El simulador offline usa exclusivamente fixtures, muestra “Simulación” en la UI y no resuelve DNS, abre sockets ni consulta proveedores. Una futura tarea activa requerirá aprobación escrita del objetivo, allowlist resuelta, protocolo/puertos, cuotas, cancelación comprobada, registro de auditoría y entorno de laboratorio. Un botón de interfaz no equivale a autorización.
 
+## Interfaz de escritorio CHEF
+
+La interfaz usa una navegación lateral para reconocimiento, evidencia, importaciones y ajustes; el área central presenta el snapshot validado, los activos y su grafo; la actividad local aparece en una terminal xterm.js con transcripción accesible. El tema carbón/verde identifica estados locales sin presentar una consulta de red. Los importadores Censys y urlscan aceptan respuestas archivadas de hasta 2 MiB, las normalizan en Rust, las guardan en `provider_imports` con SHA-256, ID determinista y linaje, y muestran la proyección CHEF como pistas históricas. Snapshot continúa reservado para la evidencia de servicios observados.
+
+```mermaid
+flowchart LR
+  Analyst["Analista"] --> UI["React: espacio local"]
+  UI -->|"JSON archivado + dominio/IP"| IPC["Comandos IPC Tauri"]
+  IPC --> App["chef-application: worker Tokio"]
+  App --> Core["chef-core: límites, parser, IDs y grafo"]
+  Core --> Store["chef-storage: provider_imports / SurrealDB"]
+  Store --> IPC
+  IPC -->|"resumen y grafo"| UI
+  App -->|"scan-log versionado"| UI
+```
+
+El trabajo del parser se mueve fuera del hilo asíncrono mediante `spawn_blocking`; la interfaz solo muestra datos validados. Este flujo es una importación local offline: no usa claves, no realiza solicitudes y no demuestra resolución DNS actual. El reconocimiento activo y el transporte remoto permanecen sujetos a autorización y controles separados.
+
 ## Persistencia local y grafo
 
 SurrealDB embebida con RocksDB es la base elegida para el escritorio; no requiere un servicio externo y permite persistir documentos y relaciones del grafo en el mismo almacén local. El adaptador Rust guarda el snapshot completo, los eventos de origen originales ya saneados y la adaptación CHEF tipada (activos, evidencias, relaciones y tipos no mapeados) en un registro por `runId`. Todavía faltan consultas de producto e índices. Los IDs persistidos se derivan de los IDs CHEF deterministas; nunca usar IDs aleatorios de la base como identidad de producto. Una consulta del grafo no convierte una relación en evidencia por sí misma.
@@ -95,6 +113,8 @@ El IPC comienza con DTO internos versionados por `schemaVersion`. Toda publicaci
 Orden recomendado: núcleo Rust de lectura/conformidad; persistencia SurrealDB del snapshot actual; comandos/eventos para simulación offline; envoltorio Tauri del frontend; modelado explícito del grafo y búsqueda vectorial solo con caso de uso medido; port de capacidades de origen útiles para CHEF; conectores pasivos permitidos; sincronización DefectDojo; y, tras un gate separado, escaneo activo. Cada etapa conserva CLI y fixtures.
 
 ## Entrega y verificación
+
+GitHub Actions verifica la suite de producto y la capa `chef-application`; un trabajo de escritorio en Ubuntu genera `web/dist` y compila los comandos Tauri con WebKitGTK/RocksDB. Sus paquetes del sistema siguen los [prerrequisitos oficiales de Tauri v2](https://v2.tauri.app/start/prerequisites/) (consultados el 31-10-2026). El instalador Windows se valida por separado en el equipo de desarrollo y el CI no afirma que se haya instalado o probado manualmente. La matriz no reemplaza la prueba del MSI/NSIS ni el recorrido real de WebView.
 
 El artefacto empaquetado se compila por sistema operativo y usa el WebView nativo disponible; no se promete un único binario universal. El pipeline deberá cubrir `cargo fmt --check`, `cargo clippy -- -D warnings`, `cargo test`, `npm run check`, esquema/golden, build Tauri y revisión de capacidades por ventana. El equipo registra por separado compilación, pruebas automáticas, prueba manual en navegador/WebView y pruebas de instalación/actualización.
 

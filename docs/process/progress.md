@@ -2,7 +2,7 @@
 
 ## 31-10-2026 — Parser offline de urlscan
 
-Se añadió `parse_urlscan_subdomains` para normalizar respuestas JSON archivadas. Recorre `task.domain`, `task.url`, `page.domain` y `page.url`, convierte los hosts HTTP(S) en candidatos DNS y `URL_HINT` con solo el origen; rechaza rutas externas, wildcard e información con credenciales y nunca conserva path, query o fragmento. Requiere raíz registrable ICANN y limita 2 MiB/2 048 resultados/8 192 campos/512 candidatos. Incluye fixtures sintéticos positivos/negativos y pruebas de forma y límites. No consulta urlscan ni DNS ni emite observaciones actuales; faltan transporte autorizado, eventos con linaje e integración Tauri.
+Se añadió `parse_urlscan_subdomains` para normalizar respuestas JSON archivadas. Recorre `task.domain`, `task.url`, `page.domain` y `page.url`, convierte hosts HTTP(S) en candidatos DNS y `URL_HINT` con solo el origen; rechaza hosts externos, wildcard y credenciales. `import_urlscan_snapshot` crea un evento raíz con hash de respuesta y derivados `DNS_NAME_HINT`/`URL_HINT`, con IDs deterministas, evidencia fuente y calificación temporal desconocida; la proyección los mantiene como pistas. Los límites son 2 MiB/2 048 resultados/8 192 campos/512 candidatos. Hay fixtures positivos/negativos y pruebas del importador. No consulta urlscan ni DNS. Persistencia SurrealDB, composición Tauri y transporte autorizado permanecen pendientes.
 
 ## 31-10-2026 — Parsers offline de LeakIX y BufferOverrun
 

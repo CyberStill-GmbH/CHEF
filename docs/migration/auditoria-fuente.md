@@ -2,7 +2,74 @@
 
 ## Parsers offline añadidos
 
-Las filas de `modules/leakix.py`, `modules/bufferoverrun.py` y `modules/urlscan.py` tienen adaptación Rust parcial. Se consumen respuestas archivadas: el campo `subdomain` de LeakIX, la quinta columna de `Results` de BufferOverrun y los dominios/hosts URL de `task` y `page` en urlscan. urlscan genera `URL_HINT` limitado al origen. CHEF limita tamaño, entradas y candidatos, valida la raíz ICANN y descarta nombres externos, inválidos, wildcard y URL con credenciales. No se ejecutan solicitudes ni se usan claves; integrar conectores con autorización, términos, linaje y transporte sigue pendiente.
+`modules/builtwith.py` tiene una adaptación parcial en `parse_builtwith_subdomains`: procesa offline `Results[].Result.Paths[]` y las listas `Inbound`/`Outbound`; conserva hasta 512 nombres bajo la raíz ICANN y limita bytes, registros y campos. Fixtures positivos/negativos reemplazan la validación de red; los nombres se conservan como pistas históricas. La fuente y sus pruebas de transporte siguen en el inventario, sin copiar la implementación.
+
+`modules/emailformat.py` cuenta con un parser Rust parcial en `email_format.rs`: `parse_archived_cfemail_html` decodifica atributos `data-cfemail` desde HTML ya archivado, valida que el correo pertenezca al dominio consultado o a un subdominio con límite de etiqueta, y limita el HTML a 1 MiB y 4 096 atributos. Los resultados son correos candidatos históricos; no se recupera HTML, no se resuelve el dominio y no se afirma vigencia del contacto. Hay tres pruebas unitarias escritas, aún no ejecutadas; la prueba Python de origen sigue pendiente de reconstrucción equivalente.
+
+`modules/robots.py` cuenta con un parser Rust parcial en `robots_hints.rs`: `parse_archived_robots_hints` extrae `Allow`, `Disallow` y `Sitemap` de texto archivado, con límites de 1 MiB, 4 096 pistas y 4 096 bytes por valor. Solo convierte referencias del mismo origen en `URL_HINT`; conserva patrones con comodines como texto sin resolverlos. Una directiva `Disallow` no demuestra que una ruta exista, y ninguna ruta se visita. El módulo está registrado y exportado por `rust-core`; sus tres pruebas unitarias están escritas pero no ejecutadas y la prueba Python de origen continúa pendiente.
+
+`modules/pgp.py` se adapta parcialmente en `pgp_emails.rs`: extrae candidatos de correo desde texto PGP archivado, con límites de 1 MiB, 16 384 signos `@` y 512 correos, y conserva solo la raíz consultada o subdominios con frontera de etiqueta. No consulta servidores de claves ni verifica vigencia, control o propiedad de los correos. Hay tres pruebas unitarias inline escritas pero no ejecutadas; la prueba Python fuente permanece pendiente.
+
+`modules/securitytxt.py` se adapta parcialmente en `security_contact_hints.rs`: interpreta un documento `security.txt` ya archivado y deriva hasta 512 pistas de correo/URL dentro del dominio, a partir de documentos que incluyen `Contact` o `Expires`. El parser limita el documento a 1 MiB, los campos a 4 096 y cada valor a 16 KiB. No descarga el documento ni valida que el contacto siga activo. Tres pruebas inline están escritas pero no ejecutadas; la prueba Python fuente no se ha reconstruido.
+
+`modules/fingerprintx.py` se adapta parcialmente en `service_fingerprint_hints.rs`: interpreta JSONL archivado con hasta 1 MiB/1 024 registros y limita banners a 4 096 bytes/1 024 caracteres, escapando controles para mostrar texto no confiable. Host, protocolo, puerto, banner y posibles URL HTTP(S) son pistas de los datos importados; no se abren puertos, no se sondea el host ni se declaran observaciones actuales. Tres pruebas inline están escritas pero no ejecutadas; la prueba Python fuente sigue pendiente.
+
+`modules/report/affiliates.py` se adapta parcialmente en `affiliate_summary.rs`: agrupa dominios registrables externos a las raíces declaradas a partir de eventos archivados, con un límite de 10 000 eventos, 32 raíces y 512 dominios. El puntaje sirve para ordenar revisión local, no mide confianza ni propiedad. Tiene tres pruebas inline escritas pero no ejecutadas; no consulta fuentes, no cambia el scope ni crea autorización de escaneo.
+
+`modules/anubisdb.py` se adapta parcialmente en `anubisdb_subdomains.rs`: filtra una lista JSON archivada de subdominios bajo una raíz ICANN registrable, con límites de 1 MiB/4 096 entradas/1 000 resultados y cinco etiquetas DNS como máximo. Descarta la raíz, nombres ajenos y candidatos PTR; ordena y deduplica la salida. Tiene tres pruebas inline escritas pero no ejecutadas. No consulta AnubisDB ni verifica resolución actual.
+
+`modules/ip2location.py` se adapta parcialmente en `ip_geolocation_hints.rs`: valida una respuesta JSON archivada para una IP literal, limita el documento a 64 KiB/64 campos y los textos a 256 caracteres, valida rangos de coordenadas y rechaza si la IP devuelta no coincide con la consultada. País, región, ciudad y coordenadas son contexto histórico, no ubicación actual afirmada. Tres pruebas inline están escritas pero no ejecutadas; no se consulta ningún proveedor IP.
+
+`modules/sslcert.py` se adapta parcialmente en `tls_certificate_hints.rs`: normaliza `common_name`, SAN y correos de metadatos de certificado TLS archivados bajo raíces de scope explícitas. Limita entrada a 512 KiB, objetos a 64 campos, SAN a 4 096, correos a 1 024 y pistas a 512; excluye el host del endpoint y valores fuera de las raíces. Los datos solo producen pistas históricas; no se conecta por TLS ni se valida confianza, vigencia o control actual. Tres pruebas inline están escritas pero no ejecutadas.
+
+`modules/viewdns.py` se adapta parcialmente en `reverse_whois_hints.rs`: procesa HTML archivado con límite de 1 MiB/4 096 filas/512 dominios candidatos y celdas de hasta 4 096 bytes. Solo acepta filas con dos celdas y una fecha `YYYY-MM-DD` válida, y excluye el dominio consultado. Las relaciones son referencias históricas de un proveedor; no demuestran propiedad, control o afiliación. Tres pruebas inline están escritas pero no ejecutadas; no se consulta ViewDNS.
+
+`modules/bevigil.py` se adapta parcialmente en `mobile_osint_hints.rs`: procesa campos JSON archivados `subdomains` y `urls` bajo una raíz registrable ICANN, con límites de 1 MiB/64 campos/4 096 entradas por lista/512 pistas por categoría. Rechaza credenciales, esquemas distintos de HTTP(S) y hosts externos; elimina query y fragmento de URL. Las salidas son candidatos y referencias históricas, no disponibilidad ni atribución. Tres pruebas inline están escritas pero no ejecutadas; no se utiliza API key ni red.
+
+`modules/azure_tenant.py` se adapta parcialmente en `cloud_tenant_hints.rs`: normaliza JSON archivado de hasta 256 KiB/64 campos/4 096 dominios y 512 pistas; los nombres de tenant se limitan a 256 caracteres. Los subdominios bajo la raíz consultada quedan como candidatos; un dominio `onmicrosoft.com` se mantiene aparte como contexto externo. Un GUID o coincidencia de dominio no prueba identidad, control o autoridad organizacional. Tres pruebas inline están escritas pero no ejecutadas; no se consulta Microsoft ni se resuelve DNS.
+
+### Lote auditado de 34 adaptaciones offline
+
+Se verificó que los 34 módulos Rust están declarados en `packages/rust-core/src/lib.rs` y que cada adaptación se corresponde con la fuente indicada en `C:\projects\CHEF\chef-engine\modules`. Las filas de origen pasan a **Parcial** porque existe una transformación CHEF local; esto no declara portado el transporte, la consulta activa ni la equivalencia completa del módulo fuente. Los límites y controles negativos se describen junto a cada fila del inventario; cada módulo enumera pruebas inline escritas, todavía no ejecutadas.
+
+- `modules/ajaxpro.py` → `ajaxpro_response_hints.rs`: rutas sugeridas extraídas de HTML archivado, 1 MiB/4 096 etiquetas script/128 pistas; no confirma instalación ni vulnerabilidad ni ejecuta payloads.
+- `modules/apkpure.py` → `apk_attachment_hints.rs`: clasifica formato de cabecera archivada, 8 KiB/256 bytes; descarta nombre y cuerpo, no descarga ni abre APK.
+- `modules/aspnet_bin_exposure.py` → `aspnet_binary_response_hints.rs`: clasifica `Content-Type` archivado, 8 KiB/255 bytes por media type; no valida el cuerpo ni prueba bypass.
+- `modules/c99.py` → `c99_subdomain_hints.rs`: filtra JSON archivado, 1 MiB/4 096 entradas; valida raíz ICANN y nombres, sin API key, consulta ni resolución actual.
+- `modules/portfilter.py` → `cdn_port_filter.rs`: evalúa tags con límites 4 KiB/64 tags/128 bytes; entrega explicación sin suprimir evidencia ni inferir CDN real.
+- `modules/dockerhub.py` → `container_repository_hints.rs`: hasta 1 MiB/4 096 referencias/500 resultados; referencias no prueban control. Se excluyen `docker_pull.py`, descargas y filesystem.
+- `modules/dotnetnuke.py` → `dotnetnuke_response_hints.rs`: marcadores descriptivos desde headers/cuerpo archivados, 64 KiB/1 MiB/128 coincidencias; sin OAST, consulta ni hallazgo.
+- `modules/newsletters.py` → `email_form_hints.rs`: cuenta controles email con placeholder, 1 MiB/8 192 tags/512 controles; solo conserva el recuento, sin scraping ni datos del placeholder.
+- `modules/github_codesearch.py` → `github_code_search_hints.rs`: enlaces archivados, 1 MiB/2 048 elementos/512 enlaces; no descarga ni analiza código o secretos.
+- `modules/github_usersearch.py` → `github_profile_hints.rs`: logins/URLs archivados, 1 MiB/4 096 edges/512 perfiles; omite correos y no atribuye identidad o empleo.
+- `modules/github_org.py` → `github_repository_hints.rs`: referencias de repositorio, 1 MiB/4 096 entradas/500 resultados; no demuestra propiedad, acceso ni relación organizacional.
+- `modules/github_workflows.py` → `github_workflow_hints.rs`: metadatos, 1 MiB/2 048 workflows/512 pistas; no accede a ejecuciones, logs ni artefactos.
+- `modules/gitlab_onprem.py` → `gitlab_instance_project_hints.rs`: proyectos archivados, 1 MiB/4 096 entradas/512 pistas; restringe URLs al origin dado, no consulta ni atribuye instancia.
+- `modules/gitlab_com.py` → `gitlab_project_hints.rs`: normaliza URLs de proyectos archivadas, 1 MiB/4 096 entradas/512 pistas; no acredita control ni grupo propietario.
+- `modules/graphql_introspection.py` → `graphql_schema_hints.rs`: resume esquemas archivados, 1 MiB/2 048 tipos/8 192 campos; no hace introspección de red ni genera hallazgos.
+- `modules/hunterio.py` → `hunter_source_hints.rs`: conserva dominios/orígenes de JSON, 1 MiB/4 096 entradas/8 192 orígenes/512 pistas; descarta correos y afiliación inferida.
+- `modules/ipneighbor.py` → `ip_neighbor_candidates.rs`: deriva hasta 255 candidatos desde expansión de máximo 8 bits y scope explícito; no envía ping, DNS ni sockets, y no amplía autorización.
+- `modules/retirejs.py` → `javascript_component_hints.rs`: inventario archivado, 1 MiB/1 024 resultados/2 048 registros/1 024 pistas; ignora CVE/severidad y no crea hallazgos.
+- `modules/google_playstore.py` → `mobile_app_hints.rs`: extrae IDs de enlaces archivados, 1 MiB/4 096 marcadores/512 IDs; no confirma publicación ni atribución.
+- `modules/myssl.py` → `myssl_subdomain_hints.rs`: JSON archivado, 1 MiB/4 096 entradas/512 candidatos; valida nombres bajo raíz, sin API ni DNS actual.
+- `modules/ntlm.py` → `ntlm_identity_hints.rs`: interpreta desafío archivado, header 16 KiB/token 12 KiB/64 pares AV; no autentica ni valida identidad.
+- `modules/oauth.py` → `oidc_config_hints.rs`: lee `token_endpoint` archivado, 512 KiB/4 KiB por endpoint; no hace discovery, OAuth ni solicitudes.
+- `modules/postman.py` → `postman_collection_hints.rs`: inspecciona solo URLs de colección archivada, 1 MiB/profundidad 32/8 192 items/4 KiB por URL; excluye auth, headers, variables y cuerpos.
+- `modules/code_repository.py` → `repository_link_hints.rs`: normaliza enlaces en texto/URL archivados, 1 MiB/4 096 coincidencias/512 repositorios; excluye el módulo activo `git`, clone y descarga.
+- `modules/filedownload.py` → `resource_file_hints.rs`: clasifica URL/tipo de contenido con límites 4 KiB/256 bytes; no crea rutas, descarga, escribe ni abre archivos.
+- `modules/shodan_enterprise.py` → `shodan_host_hints.rs`: JSON archivado, 1 MiB/1 024 servicios/512 puertos/2 048 tecnologías; ignora `vulns`, sin API ni puertos actuales.
+- `modules/shodan_idb.py` → `shodan_internetdb_hints.rs`: JSON archivado, 512 KiB/2 048 elementos por campo/1 024 pistas; ignora `vulns` y no consulta IP/API.
+- `modules/skymem.py` → `skymem_domain_hints.rs`: HTML archivado, 1 MiB/16 384 marcadores/512 dominios; descarta la parte local del correo y no infiere buzones o afiliación.
+- `modules/social.py` → `social_profile_hints.rs`: enlaces perfil archivados, 8 KiB por URL/128 caracteres por perfil; no visita webs ni atribuye cuenta/persona.
+- `modules/subdomainradar.py` → `subdomainradar_hints.rs`: JSON archivado, 1 MiB/4 096 entradas/512 candidatos; no crea tareas, sondea ni resuelve nombres.
+- `modules/telerik.py` → `telerik_response_hints.rs`: busca marcadores en cuerpo archivado, 1 MiB/128 ocurrencias; no valida componente o CVE ni sondea endpoints.
+- `modules/trickest.py` → `trickest_subdomain_hints.rs`: JSON archivado, 1 MiB/4 096 resultados/512 candidatos; filtra nombres, sin credenciales, consulta o DNS.
+- `modules/wayback.py` → `wayback_cdx_hints.rs`: filas CDX archivadas, 2 MiB/4 096 filas/512 URLs/4 096 caracteres; URLs históricas, sin consulta ni verificación de vida.
+- `modules/paramminer_getparams.py` → `web_parameter_hints.rs`: nombres ya presentes en una URL, 8 KiB/128 pares/128 caracteres por parámetro; no muta, fuzzifica ni envía payloads.
+
+En todos los casos, las salidas se conservan como pistas contextuales o candidatos con controles de entrada; no son observaciones actuales, hallazgos confirmados, atribución o permiso de red. Las pruebas inline cubren casos positivos y negativos, pero su estado es solo **escritas; no ejecutadas**; las pruebas de origen tampoco se consideran reconstruidas.
+
+Las filas de `modules/leakix.py`, `modules/bufferoverrun.py` y `modules/urlscan.py` tienen adaptación Rust parcial. Se consumen respuestas archivadas: el campo `subdomain` de LeakIX, la quinta columna de `Results` de BufferOverrun y los dominios/hosts URL de `task` y `page` en urlscan. urlscan genera `DNS_NAME_HINT` y `URL_HINT` con origen limitado dentro de un grafo con hash de respuesta, temporalidad desconocida y linaje determinista. CHEF limita tamaño, entradas y candidatos, valida la raíz ICANN y descarta nombres externos, inválidos, wildcard y URL con credenciales. No se ejecutan solicitudes ni se usan claves; integración Tauri/SurrealDB y conectores autorizados siguen pendientes.
 
 Actualizado 28-10-2026. Esta auditoría revisa la carpeta indicada por el propietario: `C:\projects\CHEF`. La copia fuente se mantiene intacta. El inventario reproducible está en [inventario-migracion.csv](inventario-migracion.csv).
 
@@ -17,6 +84,58 @@ Las adaptaciones internas CHEF incluyen el resumen offline derivado de `modules/
 La salida de eventos del motor fuente se adapta mediante la tarea de importación local: tras validar JSONL en un worker Tokio, emite eventos fuente y derivados por un canal acotado y marca `Completed` solo después del último evento. El comando Tauri recibe un archivo local acotado y una `ScopePolicy` explícita; el puente `scan-log` a xterm.js presenta la actividad sin datos crudos de host o URL. Cancelar durante la transmisión devuelve `Failed(Cancelled)` y evita persistir un resultado parcial. Las transformaciones locales opcionales no hacen reconocimiento de red y el scope importado no concede autorización de tráfico.
 
 ## Adaptación al producto CHEF
+
+### BuiltWith: normalización archivada (parcial)
+
+La fuente `chef-engine/modules/builtwith.py` ofrece dos extracciones: dominios de `Results[].Result.Paths[]` (combina `SubDomain` y `Domain`) y hosts de `Inbound[]`/`Outbound[]`. CHEF implementa únicamente el parseo local de JSON archivado en `parse_builtwith_subdomains`; valida raíz ICANN y etiqueta ASCII, descarta wildcard y hosts ajenos, ordena y deduplica hasta 512 candidatos. El parser acota la entrada a 1 MiB, las listas a 2 048 elementos y los campos a 8 192. Las solicitudes HTTP, credenciales y etiquetas de afiliación del proveedor no se migran en este incremento; toda salida conserva semántica de pista histórica, nunca observación DNS actual. Los fixtures sintéticos y las pruebas Rust se documentan como adaptación parcial de `test_module_builtwith.py`.
+
+### Formato de correo archivado: `data-cfemail` (parcial)
+
+`chef-engine/modules/emailformat.py` ofusca direcciones presentes en páginas que utilizan `data-cfemail`. La adaptación `packages/rust-core/src/email_format.rs::parse_archived_cfemail_html` solo decodifica HTML suministrado por el llamador, limita tamaño y cantidad de atributos y acepta la raíz consultada o subdominios con frontera de etiqueta. No realiza HTTP, DNS ni extracción de páginas; no establece que un correo siga vigente. Sus tres pruebas unitarias están escritas, pero aún no se ejecutaron. La fila de la prueba Python de origen permanece pendiente.
+
+### Pistas de `robots.txt` archivado (parcial)
+
+`packages/rust-core/src/robots_hints.rs::parse_archived_robots_hints` interpreta `Allow`, `Disallow` y `Sitemap` de texto entregado localmente y limita el resultado a 1 MiB/4 096 pistas. Las referencias se conservan como pistas; las URL concretas solo se forman para el mismo origen y los patrones con comodines no se resuelven. `Disallow` no demuestra existencia o acceso. El módulo está registrado y exportado en `rust-core`; no consulta ni visita rutas y sus tres pruebas unitarias están escritas pero no ejecutadas. La prueba Python fuente sigue pendiente de reconstrucción.
+
+### Correos PGP archivados (parcial)
+
+`packages/rust-core/src/pgp_emails.rs::parse_archived_pgp_emails` procesa texto archivado, limita tamaño y cantidad de candidatos, y devuelve solo correos cuya raíz sea la consultada o un subdominio con frontera de etiqueta. El resultado señala una cadena histórica; no demuestra que el correo esté vigente ni que su titular controle el objetivo. El módulo está registrado en el core y tiene tres pruebas inline escritas, aún no ejecutadas. No consulta servidores de claves ni hace transporte.
+
+### Contactos de `security.txt` archivado (parcial)
+
+`packages/rust-core/src/security_contact_hints.rs::parse_archived_security_contacts` obtiene pistas de correo y URL de contenido que cumple la forma mínima de `security.txt` y descarta contactos fuera del dominio raíz y la URL canónica del propio documento. El módulo está registrado en el core y tiene tres pruebas inline escritas, aún no ejecutadas. No descarga el documento ni valida contactos actuales.
+
+### Huellas de servicios JSONL archivadas (parcial)
+
+`packages/rust-core/src/service_fingerprint_hints.rs::parse_archived_service_fingerprints` valida registros JSONL archivados y genera pistas de host, protocolo, puerto, banner saneado y URL HTTP(S) candidata. El módulo está registrado en el core y tiene tres pruebas inline escritas, aún no ejecutadas. No crea sockets, lanza sondas ni convierte los datos importados en observaciones actuales.
+
+### Resumen local de dominios relacionados (parcial)
+
+`packages/rust-core/src/affiliate_summary.rs::summarize_affiliate_domains` resume eventos ya importados por dominio registrable ICANN fuera de las raíces declaradas. Limita el agregado a 10 000 eventos/32 raíces/512 dominios; pondera por distancia y etiqueta `affiliate`, de modo determinista. El resultado es una pista para revisión local, no una atribución de propiedad, confianza, alcance ni permiso. Está registrado en el core y tiene tres pruebas inline escritas pero no ejecutadas; no utiliza red.
+
+### Candidatos archivados de AnubisDB (parcial)
+
+`packages/rust-core/src/anubisdb_subdomains.rs::parse_archived_subdomain_candidates` procesa una lista JSON archivada bajo una raíz registrable ICANN, limita la respuesta a 1 MiB/4 096 entradas y la salida solicitada a 1 000 candidatos, conserva solo subdominios estrictos con hasta cinco etiquetas DNS y excluye nombres PTR. La salida queda ordenada y deduplicada como candidatos; no se consulta AnubisDB ni se verifica DNS actual. El módulo está registrado en el core y tiene tres pruebas inline escritas pero no ejecutadas.
+
+### Geolocalización IP archivada (parcial)
+
+`packages/rust-core/src/ip_geolocation_hints.rs::parse_archived_ip_geolocation` normaliza una respuesta JSON archivada asociada a una IP consultada. Límite: 64 KiB/64 campos; los campos de texto admiten hasta 256 caracteres y latitud/longitud deben estar dentro de rango. Si el payload identifica otra IP, lo rechaza; errores del proveedor o ausencia de datos producen resultado vacío. País, región, ciudad y coordenadas son contexto histórico, no una observación de ubicación actual. El módulo está registrado en el core y tiene tres pruebas inline escritas pero no ejecutadas. No consulta IP2Location ni otro proveedor.
+
+### Metadatos de certificado TLS archivados (parcial)
+
+`packages/rust-core/src/tls_certificate_hints.rs::parse_archived_tls_certificate_hints` normaliza nombres y correos de `common_name`, SAN y `emails` archivados bajo una lista explícita de raíces de scope. Limita a 512 KiB/64 campos/4 096 SAN/1 024 correos/512 pistas; los comodines de certificado se reducen a candidatos y el host del endpoint se excluye. Las salidas son pistas históricas, no certificados vigentes ni validación de confianza o control. El módulo está registrado en el core y tiene tres pruebas inline escritas pero no ejecutadas; no se abre una conexión TLS.
+
+### Referencias reverse-WHOIS archivadas (parcial)
+
+`packages/rust-core/src/reverse_whois_hints.rs::parse_archived_reverse_whois` extrae nombres de dominio desde filas HTML con fecha válida. Limita a 1 MiB/4 096 filas/512 candidatos y a 4 096 bytes por celda; requiere raíz ICANN registrable y ordena/deduplica. La asociación reportada por un proveedor no atribuye propiedad ni afiliación actual. Está registrado en el core y tiene tres pruebas inline escritas pero no ejecutadas; no consulta ViewDNS.
+
+### Respuestas OSINT móvil archivadas (parcial)
+
+`packages/rust-core/src/mobile_osint_hints.rs::parse_archived_mobile_osint_response` procesa listas archivadas de subdominios y URL bajo una raíz ICANN. Limita el JSON a 1 MiB/64 campos, cada lista a 4 096 elementos y cada categoría a 512 pistas; solo admite URL HTTP(S) sin credenciales bajo la raíz y retira query/fragmento. Son candidatos históricos, sin vigencia o atribución afirmadas. Está registrado en el core y tiene tres pruebas inline escritas pero no ejecutadas; no usa API key ni realiza consultas.
+
+### Contexto de tenant cloud archivado (parcial)
+
+`packages/rust-core/src/cloud_tenant_hints.rs::parse_archived_cloud_tenant` procesa JSON archivado hasta 256 KiB/64 campos/4 096 dominios/512 pistas, con nombres de tenant de hasta 256 caracteres. Los subdominios de la raíz quedan como candidatos, mientras que `onmicrosoft.com` se conserva por separado como contexto externo. El GUID/tenant name y los nombres no prueban identidad, control o autoridad; no se consultan endpoints Microsoft ni DNS. El módulo está registrado en el core y tiene tres pruebas inline escritas pero no ejecutadas.
 
 El objetivo es migrar a Rust el conjunto de capacidades útiles para CHEF y adaptarlas al producto. La ejecución de red se separa del núcleo y permanece detrás de autorización; que una capacidad esté apagada en la demo no significa que se omita del inventario. Cada elemento se implementará, sustituirá por una solución CHEF o tendrá una exclusión justificada y documentada. Los conceptos se adaptan así:
 

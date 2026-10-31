@@ -4,18 +4,18 @@
 
 CHEF es un proyecto del **Centro Cultural de Ciberseguridad**. Su objetivo es reducir el trabajo manual de reconocimiento: reunir resultados activos y señales pasivas, quitar duplicados sin perder procedencia y mostrar **por qué** dos observaciones se relacionan. Un servicio abierto es una observación; una relación entre fuentes puede ser una inferencia; ninguno de los dos es por sí mismo una vulnerabilidad confirmada.
 
-La dirección vigente es una aplicación local de escritorio: React/Vite/TypeScript, Tailwind y shadcn/ui en frontend; Tauri v2 con núcleo Rust asíncrono; SurrealDB embebida con RocksDB para persistencia y grafo; xterm.js para logs simulados; y exportación DefectDojo opcional y explícita. La decisión está en el [ADR 0012](docs/adr/0012-escritorio-tauri-rust.md) y el [diseño de persistencia](docs/architecture/persistencia-local.md). **El código actual sigue en migración:** existe un shell Tauri conectado al importador offline y al almacén SurrealDB, además del núcleo/CLI TypeScript y explorador React/Vite que sirven como referencia de conformidad. Faltan capacidades del catálogo, integración y validación manual del ciclo de vida de persistencia. Burp queda como línea posterior.
+La dirección vigente es una aplicación local de escritorio: React/Vite/TypeScript, Tailwind y shadcn/ui en frontend; Tauri v2 con núcleo Rust asíncrono; SurrealDB embebida con RocksDB para persistencia y grafo; xterm.js para actividad local; y exportación DefectDojo opcional y explícita. La decisión está en el [ADR 0012](docs/adr/0012-escritorio-tauri-rust.md) y el [diseño de persistencia](docs/architecture/persistencia-local.md). **El código sigue en migración:** la app Tauri ya conecta importación offline, persistencia local, importadores archivados de Censys/urlscan y exploración React con lista, grafo, inspector y terminal. El núcleo/CLI TypeScript permanece como referencia de conformidad; aún faltan módulos del inventario y validación manual de instalación/recuperación. Burp queda como línea posterior.
 
 ## Estado verificable
 
 - **Funciona hoy:** núcleo TypeScript con dominio aislado, importador Nmap XML offline, scope literal, identidad determinista, deduplicación conservadora, relaciones con evidencia y exportación `Snapshot 1.0.0` mediante CLI. Los tests incluyen un control negativo que impide fusionar hosts por hostname compartido y entradas XML hostiles.
 - **Spike separado:** adaptador Java/Montoya para normalizar requests HTTP seleccionadas. Compila y tiene pruebas de conformidad, pero aún requiere validación manual dentro de Burp y no correlaciona HTTP con Nmap.
 - **Implementado:** core/CLI TypeScript offline con importación Nmap acotada, IDs deterministas, evidencia, `Snapshot 1.0.0` y control negativo; explorador React/Vite local con fixture, lista, panel de evidencia y pruebas.
-- **Portado parcialmente:** `packages/rust-core` procesa Nmap y eventos JSONL de evidencia offline, aplica scope, conserva procedencia y produce snapshots 1.0/1.1. Un coordinador Tokio ejecuta estas importaciones en workers bloqueantes, ofrece cancelación cooperativa y comunica estados por un canal acotado; hay nueve pruebas Rust.
-- **Parcial:** `packages/rust-storage` abre SurrealDB embebida sobre RocksDB y persiste snapshots versionados por `runId`; Tauri ya integra importación, consulta del grafo y exportación local. Quedan pendientes la proyección normalizada, recuperación/backups multiplataforma y validación manual del flujo WebView.
+- **Portado parcialmente:** `packages/rust-core` procesa Nmap, eventos JSONL y varias respuestas archivadas offline; aplica límites y scope donde corresponde, conserva procedencia y produce snapshots versionados. `chef-application` usa workers Tokio para mover parseo síncrono fuera del hilo asíncrono, con canal acotado y cancelación cooperativa.
+- **Integración de escritorio:** Tauri compone importación local, acceso a SurrealDB/RocksDB y comandos del explorador. Las importaciones de Censys y urlscan se guardan en `provider_imports`, separadas de Snapshot, con hash, ID determinista y linaje; la UI presenta pistas históricas sin declararlas observaciones actuales. Faltan pruebas de recuperación/backups multiplataforma y validación manual del WebView/instalador.
 - **Pendiente:** completar las capacidades de reconocimiento compatibles con CHEF y su composición. Rust adapta eventos de evidencia a activos CHEF tipados con evidencia y relaciones; `DnsQueryPlan` y `ExecuteDnsPlan` planifican y coordinan consultas con autorización por solicitud, conservando resultados parciales. El caso de uso y el adaptador Hickory siguen sin conexión a Tauri; la app no lanza consultas. Wildcards, concurrencia por lotes, promoción de scope, deduplicación de hijos y control runaway siguen pendientes. La demo inicial usa exclusivamente fixtures offline.
 
-La demo objetivo sigue siendo el **31 de octubre de 2026**. El [plan Scrum vigente](docs/plan/scrum-actual.md) asigna la primera vertical de escritorio offline a César, Diego y Jhojan. CHEF **no lanza escaneos en esta etapa**: los logs representan una simulación con fixtures. Consultas pasivas, sincronización remota y escaneo activo no se habilitan sin permiso, límites y confirmación del usuario.
+La presentación prevista es el **1 de noviembre de 2026**. El [plan Scrum vigente](docs/plan/scrum-actual.md) asigna la primera vertical de escritorio offline a César, Diego y Jhojan. CHEF **no lanza escaneos en esta etapa**: los logs representan una simulación con fixtures. Consultas pasivas, sincronización remota y escaneo activo no se habilitan sin permiso, límites y confirmación del usuario. La instalación y el recorrido WebView de cada versión se registran en el [runbook de demo](docs/demo/runbook.md); la compilación de un instalador no se considera validación manual.
 
 ## Probar el incremento actual
 
@@ -27,7 +27,7 @@ npm run check
 npm run demo
 ```
 
-`npm run check` verifica TypeScript, Rust, almacenamiento, contratos, pruebas y build web. Los crates Rust pueden ejecutarse por separado con `npm run rust:check`.
+`npm run check` verifica TypeScript, core Rust, almacenamiento, contratos, pruebas y build web. GitHub Actions añade pruebas de `chef-application` y compilación Tauri con WebKitGTK/RocksDB. El build del instalador Windows y su prueba manual se registran por separado.
 
 Para generar un snapshot JSON con la CLI:
 
@@ -55,7 +55,7 @@ La idea diferencial es una **hipótesis comprobable**: un analista debería enco
 ## Navegar el repositorio
 
 - [PRD de escritorio](docs/product/desktop-prd.md) · [requisitos de escritorio](docs/product/desktop-requirements.md) · [alcance](docs/product/scope.md)
-- [Arquitectura actual](docs/architecture/overview.md) · [arquitectura Tauri/Rust propuesta](docs/architecture/desktop-tauri.md) · [ADR 0012](docs/adr/0012-escritorio-tauri-rust.md)
+- [Arquitectura actual](docs/architecture/overview.md) · [arquitectura Tauri/Rust](docs/architecture/desktop-tauri.md) · [ADR 0012](docs/adr/0012-escritorio-tauri-rust.md)
 - [Investigación](docs/research/recon-correlation-2026-09.md) · [OSINT abierta](docs/research/open-osint-selection.md) · [fuentes primarias fechadas](docs/research/sources.json)
 - [Scrum vigente hasta el 31-10](docs/plan/scrum-actual.md) · [backlog de migración](docs/plan/backlog-desktop.md) · [backlog web anterior](docs/plan/backlog.md)
 - [Contribuir y revisar PRs](CONTRIBUTING.md) · [CI y CodeQL](docs/governance/ci-security.md) · [índice documental](docs/README.md) · [skills locales](docs/process/skills-usage.md)
