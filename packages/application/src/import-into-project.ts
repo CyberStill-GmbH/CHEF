@@ -4,6 +4,7 @@ import { canImport, requireMembership } from '../../domain/src/project.js';
 import type {
   ProjectRepository,
   SnapshotStore,
+  CorrelationEngine,
 } from '../../domain/src/ports.js';
 import type { ImportEvidence } from './import-evidence.js';
 
@@ -12,6 +13,7 @@ export interface ImportIntoProjectInput {
   userId: string;
   bytes: Uint8Array;
   policy: ScopePolicy;
+  signal?: AbortSignal;
 }
 
 export class ImportIntoProject {
@@ -19,6 +21,7 @@ export class ImportIntoProject {
     private readonly projects: ProjectRepository,
     private readonly snapshots: SnapshotStore,
     private readonly importer: ImportEvidence,
+    private readonly engine?: CorrelationEngine,
   ) {}
 
   /**
@@ -35,7 +38,22 @@ export class ImportIntoProject {
     const project = await this.projects.findProject(input.projectId);
     if (project === undefined)
       throw new ChefError('NOT_FOUND', 'Project not found');
-    const snapshot = this.importer.execute(input.bytes, input.policy);
+    let snapshot: Snapshot;
+    if (this.engine === undefined) {
+      snapshot = this.importer.execute(input.bytes, input.policy, input.signal);
+    } else {
+      const prepared = this.importer.prepare(
+        input.bytes,
+        input.policy,
+        input.signal,
+      );
+      snapshot = {
+        ...prepared,
+        ...(await this.engine.correlate(prepared, input.signal)),
+      };
+    }
+    if (input.signal?.aborted)
+      throw new ChefError('CANCELLED', 'Import cancelled');
     await this.snapshots.save(input.projectId, snapshot);
     return snapshot;
   }

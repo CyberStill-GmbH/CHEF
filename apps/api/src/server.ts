@@ -66,6 +66,7 @@ function sendJson(
 }
 
 function fail(response: ServerResponse, error: unknown): void {
+  if (response.destroyed || response.writableEnded) return;
   if (error instanceof ChefError) {
     sendJson(response, STATUS[error.code] ?? 500, {
       error: error.code,
@@ -207,11 +208,16 @@ export function createChefApi(dependencies: ApiDependencies) {
           if (!XML_TYPE.test(contentTypeOf(request)))
             throw new ChefError('INVALID_INPUT', 'Import requires an XML body');
           const bytes = await readBody(request, limit);
+          const cancellation = new AbortController();
+          response.once('close', () => {
+            if (!response.writableEnded) cancellation.abort();
+          });
           const snapshot = await dependencies.importIntoProject.execute({
             projectId,
             userId,
             bytes: new Uint8Array(bytes),
             policy: dependencies.scopePolicy,
+            signal: cancellation.signal,
           });
           sendJson(response, 201, {
             runId: snapshot.run.id,

@@ -1,7 +1,11 @@
 # Empaquetado reproducible de la API Node.
 # Genera el cliente Prisma en build y lo copia al runtime, de modo que con
-# DATABASE_URL la API persista en PostgreSQL. El motor Go aún no existe: cuando
-# exista, se suma una etapa de build y se copia el binario estático.
+# DATABASE_URL la API persista en PostgreSQL. Go se ejecuta localmente sin shell.
+
+FROM golang:1.24-bookworm AS engine-build
+WORKDIR /src/engine
+COPY engine ./
+RUN CGO_ENABLED=0 go build -trimpath -o /out/correlate ./cmd/correlate
 
 FROM node:24-bookworm-slim AS build
 WORKDIR /app
@@ -40,6 +44,7 @@ COPY --from=build /app/apps/api/prisma ./apps/api/prisma
 # El cliente generado (y su motor) no lo produce `npm ci`: se trae del build.
 COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=build /app/node_modules/@prisma/client ./node_modules/@prisma/client
+COPY --from=engine-build /out/correlate /app/artifacts/bin/correlate
 USER node
 EXPOSE 8787
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \

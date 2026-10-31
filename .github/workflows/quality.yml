@@ -22,6 +22,11 @@ jobs:
           node-version: '24'
           cache: npm
       - run: npm ci
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+        with:
+          go-version-file: engine/go.mod
+          cache: false
+      - run: npm run engine:build
       - run: npm run check
       - run: npm audit --audit-level=high
       - run: npm run benchmark

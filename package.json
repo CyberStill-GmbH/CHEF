@@ -10,6 +10,9 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "engine:build": "node scripts/build-engine.mjs",
+    "engine:test": "npm run engine:build && npm run build && node --test dist/tests/go-correlation.test.js",
+    "engine:benchmark": "npm run engine:build && npm run build && node scripts/benchmark-go-transport.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint .",
     "format:check": "prettier --check .",

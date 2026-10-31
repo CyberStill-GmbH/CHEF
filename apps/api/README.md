@@ -20,22 +20,23 @@ export CHEF_SESSION_SECRET="<32+ caracteres>"
 export GITHUB_CLIENT_ID="<id>"
 export GITHUB_CLIENT_SECRET="<secreto>"
 export GITHUB_REDIRECT_URI="http://127.0.0.1:8787/auth/github/callback"
+npm run engine:build
 npm run api
 ```
 
-Variables opcionales: `PORT` (8787), `CHEF_SCOPE` (`fixtures/scope/lab.json`).
+Variables opcionales: `PORT` (8787), `CHEF_SCOPE` (`fixtures/scope/lab.json`), `CHEF_GO_BINARY` (binario local confiable; por defecto `artifacts/bin/correlate`, con `.exe` en Windows). El Dockerfile incluye el binario Go. Véase el [transporte Node–Go](../../docs/architecture/go-transport.md) para límites, errores y pruebas. Antes de `npm run check`, compilar el motor con `npm run engine:build`.
 
 Sin `CHEF_SESSION_SECRET` o sin credenciales de GitHub el proceso **no arranca**: no existe modo "sin autenticación".
 
 ## Estado real
 
-| Pieza                       | Estado                                                                            |
-| --------------------------- | --------------------------------------------------------------------------------- |
-| Rutas, sesión y aislamiento | Implementado y probado                                                            |
-| Persistencia                | Adaptador en memoria (`InMemoryProjectRepository`)                                |
-| PostgreSQL/Prisma           | Esquema y migración escritos en `prisma/`, **no ejecutados**                      |
-| OAuth GitHub                | Adaptador real con `fetch`, probado con proveedor falso; no probado contra GitHub |
-| Motor Go                    | No existe; `go` no está instalado en el entorno de entrega                        |
-| Despliegue                  | No realizado                                                                      |
+| Pieza                       | Estado                                                                                                  |
+| --------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Rutas, sesión y aislamiento | Implementado y probado                                                                                  |
+| Persistencia                | Adaptador en memoria (`InMemoryProjectRepository`)                                                      |
+| PostgreSQL/Prisma           | Esquema y migración escritos en `prisma/`, **no ejecutados**                                            |
+| OAuth GitHub                | Adaptador real con `fetch`, probado con proveedor falso; no probado contra GitHub                       |
+| Motor Go                    | Integrado localmente para `open-service/v1`; pruebas con binario real; revisión y despliegue pendientes |
+| Despliegue                  | No realizado                                                                                            |
 
 El adaptador en memoria pierde los datos al reiniciar. Es deliberado: preferimos declararlo antes que presentar una persistencia que nadie ejecutó.

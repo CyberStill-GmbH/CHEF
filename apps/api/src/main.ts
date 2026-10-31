@@ -1,8 +1,10 @@
 import { randomBytes } from 'node:crypto';
 import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 import { loadContracts } from '../../../packages/adapters/src/contracts.js';
 import { GitHubOAuth } from '../../../packages/adapters/src/github-oauth.js';
+import { GoCorrelationEngine } from '../../../packages/adapters/src/go-correlation.js';
 import { Sha256Identity } from '../../../packages/adapters/src/identity.js';
 import {
   InMemoryProjectRepository,
@@ -102,6 +104,12 @@ async function main(): Promise<void> {
         identity,
         clock,
       ),
+      new GoCorrelationEngine({
+        executable: resolve(
+          process.env['CHEF_GO_BINARY'] ??
+            `artifacts/bin/correlate${process.platform === 'win32' ? '.exe' : ''}`,
+        ),
+      }),
     ),
     readSnapshot: new ReadProjectSnapshot(projects, snapshots),
     sessions: new SessionTokenService({

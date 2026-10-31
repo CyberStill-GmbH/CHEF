@@ -89,3 +89,12 @@ export interface Snapshot {
   relationships: Relationship[];
   paths: ExposurePath[];
 }
+
+export type PreparedImport = Omit<
+  Snapshot,
+  'assets' | 'relationships' | 'paths'
+>;
+export type CorrelationGraph = Pick<
+  Snapshot,
+  'assets' | 'relationships' | 'paths'
+>;

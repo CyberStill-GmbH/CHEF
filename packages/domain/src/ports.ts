@@ -1,4 +1,10 @@
-import type { ServiceInput, ScopePolicy, Snapshot } from './model.js';
+import type {
+  ServiceInput,
+  ScopePolicy,
+  Snapshot,
+  PreparedImport,
+  CorrelationGraph,
+} from './model.js';
 import type { Membership, Project, Role } from './project.js';
 
 export interface IdentityPort {
@@ -41,6 +47,13 @@ export interface ProjectRepository {
 export interface SnapshotStore {
   save(projectId: string, snapshot: Snapshot): Promise<void>;
   latest(projectId: string): Promise<Snapshot | undefined>;
+}
+
+export interface CorrelationEngine {
+  correlate(
+    input: PreparedImport,
+    signal?: AbortSignal,
+  ): Promise<CorrelationGraph>;
 }
 
 export interface SessionService {

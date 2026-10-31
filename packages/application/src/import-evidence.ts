@@ -4,6 +4,7 @@ import {
   SCHEMA_VERSION,
   type ScopePolicy,
   type Snapshot,
+  type PreparedImport,
 } from '../../domain/src/model.js';
 import type {
   ClockPort,
@@ -25,6 +26,16 @@ export class ImportEvidence {
     policy: ScopePolicy,
     signal?: AbortSignal,
   ): Snapshot {
+    const prepared = this.prepare(bytes, policy, signal);
+    return { ...prepared, ...correlate(prepared.observations, this.identity) };
+  }
+
+  /** Parse and authorize observations without running the legacy TS rules. */
+  prepare(
+    bytes: Uint8Array,
+    policy: ScopePolicy,
+    signal?: AbortSignal,
+  ): PreparedImport {
     const checkCancellation = () => {
       if (signal?.aborted) throw new ChefError('CANCELLED', 'Import cancelled');
     };
@@ -65,7 +76,6 @@ export class ImportEvidence {
         confidence: 1,
       }))
       .sort((a, b) => a.id.localeCompare(b.id));
-    const graph = correlate(observations, this.identity);
     checkCancellation();
     return {
       schemaVersion: SCHEMA_VERSION,
@@ -90,7 +100,6 @@ export class ImportEvidence {
         },
       ],
       observations,
-      ...graph,
     };
   }
 }
