@@ -94,6 +94,17 @@ assert.ok(
   ),
   'The recon graph example must show parent-domain hints as unverified suggestions.',
 );
+const graphProgressSchema = JSON.parse(
+  readFileSync('docs/contracts/recon-graph-progress.schema.json', 'utf8'),
+);
+const validateGraphProgress = ajv.compile(graphProgressSchema);
+const graphProgressExample = JSON.parse(
+  readFileSync('docs/contracts/examples/recon-graph-progress.json', 'utf8'),
+);
+assert.ok(
+  validateGraphProgress(graphProgressExample),
+  JSON.stringify(validateGraphProgress.errors),
+);
 assert.ok(
   reconGraphExample.assets.some(
     ({ kind, qualification }) => kind === 'domain' && qualification === 'hint',

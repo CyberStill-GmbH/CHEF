@@ -12,6 +12,7 @@ import { decodeWebEvidenceReportExport } from '../contracts/decodeWebEvidenceRep
 import type { ApiClient } from './ApiClient';
 
 export class FixtureApiClient implements ApiClient {
+  readonly runtimeMode = 'demo' as const;
   async loadConfig(options?: { signal?: AbortSignal }) {
     options?.signal?.throwIfAborted();
     return decodeChefConfig(config);

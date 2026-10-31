@@ -64,6 +64,20 @@ struct ScanLogPayload {
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
+struct ReconGraphProgressPayload {
+    schema_version: &'static str,
+    request_id: String,
+    job_id: String,
+    sequence: u64,
+    phase: &'static str,
+    assets: Vec<chef_core::ReconAsset>,
+    evidence: Vec<chef_core::ReconEvidence>,
+    relationships: Vec<chef_core::ReconRelationship>,
+    unmapped_event_types: BTreeMap<String, usize>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 struct CensysIpImportSummaryDto {
     schema_version: &'static str,
     import_id: String,
@@ -574,6 +588,7 @@ async fn import_bbot_payload(
     }
     let imported = import_result.map_err(|error| error.message.to_owned())?;
 
+    let job_id = job_id.ok_or_else(|| "La tarea CHEF no emitió su identificador".to_owned())?;
     let mut slot = state.store.lock().await;
     if slot.is_none() {
         *slot = Some(
@@ -588,7 +603,11 @@ async fn import_bbot_payload(
         .await
         .map_err(|error| error.to_string())?;
 
-    let job_id = job_id.ok_or_else(|| "La tarea CHEF no emitió su identificador".to_owned())?;
+    if let Some(graph) = imported.recon_graph.as_ref() {
+        sequence =
+            emit_recon_graph_progress(&app, request_id.as_str(), job_id.as_str(), sequence, graph)?;
+    }
+
     sequence += 1;
     app.emit(
         "scan-log",
@@ -621,6 +640,88 @@ async fn import_bbot_payload(
     .map_err(|_| "No se pudo enviar el evento de actividad CHEF".to_owned())?;
 
     Ok(imported.snapshot)
+}
+
+fn emit_recon_graph_progress(
+    app: &AppHandle,
+    request_id: &str,
+    job_id: &str,
+    mut sequence: u64,
+    graph: &chef_core::ChefReconGraph,
+) -> Result<u64, String> {
+    const BATCH_SIZE: usize = 100;
+
+    for batch in graph.evidence.chunks(BATCH_SIZE) {
+        sequence += 1;
+        app.emit(
+            "recon-graph-progress",
+            ReconGraphProgressPayload {
+                schema_version: "1.0.0",
+                request_id: request_id.to_owned(),
+                job_id: job_id.to_owned(),
+                sequence,
+                phase: "evidence",
+                assets: Vec::new(),
+                evidence: batch.to_vec(),
+                relationships: Vec::new(),
+                unmapped_event_types: BTreeMap::new(),
+            },
+        )
+        .map_err(|_| "No se pudo emitir el avance del grafo CHEF".to_owned())?;
+    }
+    for batch in graph.assets.chunks(BATCH_SIZE) {
+        sequence += 1;
+        app.emit(
+            "recon-graph-progress",
+            ReconGraphProgressPayload {
+                schema_version: "1.0.0",
+                request_id: request_id.to_owned(),
+                job_id: job_id.to_owned(),
+                sequence,
+                phase: "assets",
+                assets: batch.to_vec(),
+                evidence: Vec::new(),
+                relationships: Vec::new(),
+                unmapped_event_types: BTreeMap::new(),
+            },
+        )
+        .map_err(|_| "No se pudo emitir el avance del grafo CHEF".to_owned())?;
+    }
+    for batch in graph.relationships.chunks(BATCH_SIZE) {
+        sequence += 1;
+        app.emit(
+            "recon-graph-progress",
+            ReconGraphProgressPayload {
+                schema_version: "1.0.0",
+                request_id: request_id.to_owned(),
+                job_id: job_id.to_owned(),
+                sequence,
+                phase: "relationships",
+                assets: Vec::new(),
+                evidence: Vec::new(),
+                relationships: batch.to_vec(),
+                unmapped_event_types: BTreeMap::new(),
+            },
+        )
+        .map_err(|_| "No se pudo emitir el avance del grafo CHEF".to_owned())?;
+    }
+    sequence += 1;
+    app.emit(
+        "recon-graph-progress",
+        ReconGraphProgressPayload {
+            schema_version: "1.0.0",
+            request_id: request_id.to_owned(),
+            job_id: job_id.to_owned(),
+            sequence,
+            phase: "completed",
+            assets: Vec::new(),
+            evidence: Vec::new(),
+            relationships: Vec::new(),
+            unmapped_event_types: graph.unmapped_event_types.clone(),
+        },
+    )
+    .map_err(|_| "No se pudo emitir el avance del grafo CHEF".to_owned())?;
+    Ok(sequence)
 }
 
 #[tauri::command]

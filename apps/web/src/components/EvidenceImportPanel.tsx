@@ -2,13 +2,19 @@ import { useEffect, useRef, useState } from 'react';
 
 import type { ApiClient } from '../api/ApiClient';
 import type { ScopePolicyDto, SnapshotDto } from '../contracts/snapshot';
+import type { ReconGraphProgressDto } from '../contracts/recon-graph-progress';
 
 interface Props {
   client: ApiClient;
   onImported: (snapshot: SnapshotDto) => void;
+  onGraphProgress?: (event: ReconGraphProgressDto) => void;
 }
 
-export function EvidenceImportPanel({ client, onImported }: Props) {
+export function EvidenceImportPanel({
+  client,
+  onImported,
+  onGraphProgress,
+}: Props) {
   const [jsonlFile, setJsonlFile] = useState<File | null>(null);
   const [scopeFile, setScopeFile] = useState<File | null>(null);
   const [presetId, setPresetId] = useState('');
@@ -47,6 +53,9 @@ export function EvidenceImportPanel({ client, onImported }: Props) {
               (phase === 'started' || phase === 'event'),
           );
         },
+        ...(onGraphProgress === undefined
+          ? {}
+          : { onReconGraphProgress: onGraphProgress }),
         ...(presetId ? { presetId } : {}),
       });
       onImported(snapshot);
@@ -94,8 +103,8 @@ export function EvidenceImportPanel({ client, onImported }: Props) {
           }
         />
       </label>
-        <label>
-          Perfil temporal CHEF (no cambia config.toml)
+      <label>
+        Perfil temporal CHEF (no cambia config.toml)
         <select
           value={presetId}
           disabled={busy}

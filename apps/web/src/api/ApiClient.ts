@@ -13,8 +13,10 @@ import type { WebEvidenceReportExportDto } from '../contracts/web-evidence-repor
 import type { ObservedEmailExportDto } from '../contracts/observed-email-export';
 import type { CensysIpImportSummaryDto } from '../contracts/censys-ip-import';
 import type { UrlScanImportSummaryDto } from '../contracts/urlscan-import';
+import type { ReconGraphProgressDto } from '../contracts/recon-graph-progress';
 
 export interface ApiClient {
+  runtimeMode?: 'desktop' | 'demo';
   loadSnapshot(options?: { signal?: AbortSignal }): Promise<SnapshotDto>;
   exportSnapshot?(
     runId: string,
@@ -59,6 +61,7 @@ export interface ApiClient {
       signal?: AbortSignal;
       presetId?: string;
       onPhase?: (phase: ScanLogPhase) => void;
+      onReconGraphProgress?: (event: ReconGraphProgressDto) => void;
     },
   ): Promise<SnapshotDto>;
   importCensysIpResponse?(

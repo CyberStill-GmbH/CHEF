@@ -75,6 +75,7 @@ describe('App snapshot states', () => {
 
     render(<App client={client} />);
     await user.click(await screen.findByRole('button', { name: 'Reintentar' }));
+    await user.click(screen.getByRole('button', { name: 'Evidencia' }));
 
     expect(
       await screen.findByRole('heading', { name: 'Resumen del snapshot' }),
@@ -83,7 +84,9 @@ describe('App snapshot states', () => {
   });
 
   it('shows the minimal success summary using FixtureApiClient', async () => {
+    const user = userEvent.setup();
     render(<App client={new FixtureApiClient()} />);
+    await user.click(screen.getByRole('button', { name: 'Evidencia' }));
 
     expect(
       await screen.findByRole('heading', { name: 'Resumen del snapshot' }),

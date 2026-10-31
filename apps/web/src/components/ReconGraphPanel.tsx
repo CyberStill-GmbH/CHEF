@@ -40,7 +40,9 @@ export function ReconGraphPanel({ graph }: ReconGraphPanelProps) {
     graph.assets[0]?.id ?? null,
   );
   const graphRef = useRef<Core | null>(null);
+  const latestGraphRef = useRef(graph);
   const selectedAssetIdRef = useRef(selectedAssetId);
+  latestGraphRef.current = graph;
 
   useEffect(() => {
     let disposed = false;
@@ -48,38 +50,12 @@ export function ReconGraphPanel({ graph }: ReconGraphPanelProps) {
     const container = document.getElementById('recon-graph-canvas');
     if (container === null) return;
 
-    const elements: ElementDefinition[] = [
-      ...graph.assets.map((asset) => ({
-        data: {
-          id: asset.id,
-          label: `${KIND_LABELS[asset.kind]}\n${asset.key}`,
-          kind: asset.kind,
-        },
-        classes:
-          asset.kind === 'candidate_finding'
-            ? 'candidate'
-            : asset.qualification === 'hint'
-              ? 'hint'
-              : asset.qualification === 'unresolved'
-                ? 'unresolved'
-                : 'observed',
-      })),
-      ...graph.relationships.map((relationship) => ({
-        data: {
-          id: relationship.id,
-          source: relationship.fromAssetId,
-          target: relationship.toAssetId,
-          label: RELATIONSHIP_LABELS[relationship.kind] ?? relationship.kind,
-        },
-        classes: relationship.assertion === 'hint' ? 'hint' : '',
-      })),
-    ];
-
     void import('cytoscape').then(({ default: cytoscape }) => {
       if (disposed) return;
+      const initialGraph = latestGraphRef.current;
       cy = cytoscape({
         container,
-        elements,
+        elements: graphElements(initialGraph),
         layout: { name: 'cose', animate: false, fit: true, padding: 24 },
         minZoom: 0.2,
         maxZoom: 3,
@@ -97,9 +73,9 @@ export function ReconGraphPanel({ graph }: ReconGraphPanelProps) {
               width: 150,
               height: 54,
               shape: 'round-rectangle',
-              'background-color': '#1e293b',
+              'background-color': '#132019',
               'border-width': 2,
-              'border-color': '#38bdf8',
+              'border-color': '#4ac779',
             },
           },
           {
@@ -127,14 +103,14 @@ export function ReconGraphPanel({ graph }: ReconGraphPanelProps) {
             style: {
               label: 'data(label)',
               'font-size': 8,
-              color: '#94a3b8',
-              'text-background-color': '#0f172a',
+              color: '#b8c8bc',
+              'text-background-color': '#0b100d',
               'text-background-opacity': 0.9,
               'text-background-padding': '2px',
               'curve-style': 'bezier',
               'target-arrow-shape': 'triangle',
-              'line-color': '#64748b',
-              'target-arrow-color': '#64748b',
+              'line-color': '#526b59',
+              'target-arrow-color': '#526b59',
               width: 1.5,
             },
           },
@@ -148,7 +124,7 @@ export function ReconGraphPanel({ graph }: ReconGraphPanelProps) {
           },
           {
             selector: 'node:selected',
-            style: { 'border-width': 4, 'border-color': '#a78bfa' },
+            style: { 'border-width': 4, 'border-color': '#c4f5cf' },
           },
         ],
       });
@@ -164,6 +140,46 @@ export function ReconGraphPanel({ graph }: ReconGraphPanelProps) {
       graphRef.current = null;
       cy?.destroy();
     };
+  }, []);
+
+  useEffect(() => {
+    const cy = graphRef.current;
+    if (cy === null) return;
+
+    const missingAssets = graph.assets.filter(({ id }) =>
+      cy.getElementById(id).empty(),
+    );
+    const missingRelationships = graph.relationships.filter(
+      ({ id, fromAssetId, toAssetId }) =>
+        cy.getElementById(id).empty() &&
+        !cy.getElementById(fromAssetId).empty() &&
+        !cy.getElementById(toAssetId).empty(),
+    );
+    if (missingAssets.length === 0 && missingRelationships.length === 0) return;
+
+    const additions: ElementDefinition[] = [
+      ...graphElements({
+        ...graph,
+        assets: missingAssets,
+        relationships: missingRelationships,
+      }),
+    ];
+    const added = cy.add(additions);
+    const reducedMotion = window.matchMedia(
+      '(prefers-reduced-motion: reduce)',
+    ).matches;
+    added.layout({
+      name: 'cose',
+      animate: !reducedMotion,
+      fit: false,
+      randomize: false,
+      animationDuration: 360,
+    });
+    if (!reducedMotion) {
+      const newNodes = added.filter('node');
+      newNodes.style('opacity', 0);
+      newNodes.animate({ style: { opacity: 1 } }, { duration: 320 });
+    }
   }, [graph.assets, graph.relationships]);
 
   useEffect(() => {
@@ -175,7 +191,9 @@ export function ReconGraphPanel({ graph }: ReconGraphPanelProps) {
   }, [selectedAssetId]);
 
   useEffect(() => {
-    if (
+    if (selectedAssetId === null && graph.assets.length > 0) {
+      setSelectedAssetId(graph.assets[0]?.id ?? null);
+    } else if (
       selectedAssetId !== null &&
       !graph.assets.some(({ id }) => id === selectedAssetId)
     ) {
@@ -214,8 +232,9 @@ export function ReconGraphPanel({ graph }: ReconGraphPanelProps) {
         · {graph.evidence.length} evidencias
       </p>
       <p>
-        El ámbar marca hallazgos candidatos. Las relaciones pueden ser pistas
-        sin verificar.
+        Grafo CHEF validado y guardado. La animación ordena datos importados; no
+        representa tráfico de red en vivo. El ámbar marca candidatos y las
+        relaciones pueden ser pistas sin verificar.
       </p>
       <div
         id="recon-graph-canvas"
@@ -353,4 +372,33 @@ export function ReconGraphPanel({ graph }: ReconGraphPanelProps) {
       </div>
     </section>
   );
+}
+
+function graphElements(graph: ReconGraphDto): ElementDefinition[] {
+  return [
+    ...graph.assets.map((asset) => ({
+      data: {
+        id: asset.id,
+        label: `${KIND_LABELS[asset.kind]}\n${asset.key}`,
+        kind: asset.kind,
+      },
+      classes:
+        asset.kind === 'candidate_finding'
+          ? 'candidate'
+          : asset.qualification === 'hint'
+            ? 'hint'
+            : asset.qualification === 'unresolved'
+              ? 'unresolved'
+              : 'observed',
+    })),
+    ...graph.relationships.map((relationship) => ({
+      data: {
+        id: relationship.id,
+        source: relationship.fromAssetId,
+        target: relationship.toAssetId,
+        label: RELATIONSHIP_LABELS[relationship.kind] ?? relationship.kind,
+      },
+      classes: relationship.assertion === 'hint' ? 'hint' : '',
+    })),
+  ];
 }

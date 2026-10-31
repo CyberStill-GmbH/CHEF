@@ -15,11 +15,14 @@ import { decodeWebEvidenceReportExport } from '../contracts/decodeWebEvidenceRep
 import { decodeObservedEmailExport } from '../contracts/decodeObservedEmailExport';
 import { decodeCensysIpImport } from '../contracts/decodeCensysIpImport';
 import { decodeUrlScanImport } from '../contracts/decodeUrlScanImport';
+import { decodeReconGraphProgress } from '../contracts/decodeReconGraphProgress';
 import type { ScanLogDto } from '../contracts/scan-log';
+import type { ReconGraphProgressDto } from '../contracts/recon-graph-progress';
 import type { ScopePolicyDto } from '../contracts/snapshot';
 import type { ApiClient } from './ApiClient';
 
 export class TauriApiClient implements ApiClient {
+  readonly runtimeMode = 'desktop' as const;
   async parseTargetSeed(input: string, options?: { signal?: AbortSignal }) {
     options?.signal?.throwIfAborted();
     const seed = await invoke<unknown>('parse_chef_target_seed', { input });
@@ -34,6 +37,7 @@ export class TauriApiClient implements ApiClient {
       signal?: AbortSignal;
       presetId?: string;
       onPhase?: (phase: ScanLogDto['phase']) => void;
+      onReconGraphProgress?: (event: ReconGraphProgressDto) => void;
     },
   ) {
     options?.signal?.throwIfAborted();
@@ -70,6 +74,23 @@ export class TauriApiClient implements ApiClient {
         // Ignorar mensajes IPC que no cumplan el contrato CHEF.
       }
     });
+    const unlistenGraph = await listen<unknown>(
+      'recon-graph-progress',
+      ({ payload }) => {
+        try {
+          const event = decodeReconGraphProgress(payload);
+          if (
+            event.requestId === requestId &&
+            jobId !== undefined &&
+            event.jobId === jobId
+          ) {
+            options?.onReconGraphProgress?.(event);
+          }
+        } catch {
+          // Ignorar lotes IPC que no cumplan el contrato CHEF.
+        }
+      },
+    );
     const onAbort = () => requestCancellation();
     options?.signal?.addEventListener('abort', onAbort, { once: true });
     try {
@@ -88,6 +109,7 @@ export class TauriApiClient implements ApiClient {
     } finally {
       options?.signal?.removeEventListener('abort', onAbort);
       unlisten();
+      unlistenGraph();
     }
   }
 
