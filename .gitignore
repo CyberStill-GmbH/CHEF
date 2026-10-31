@@ -16,3 +16,4 @@ target/
 Thumbs.db
 .vercel/
 .railway/
+.playwright-cli/

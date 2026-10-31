@@ -28,7 +28,7 @@ Obtener el ID estable de una cuenta con `gh api users/USUARIO --jq .id`. La allo
 4. Desplegar primero el entorno de prueba. La imagen contiene Node, Go y el cliente Prisma 6.19.3. No instala dependencias en el arranque. Si la migración falla, no iniciar la nueva versión de la API.
 5. Probar `/health`, login GitHub real de una cuenta habilitada, rechazo de una cuenta no habilitada, importación con scope, aislamiento entre dos usuarios y persistencia tras reinicio. Verificar backup/restore en una base de recuperación siguiendo [operaciones de PostgreSQL](database-operations.md).
 
-OAuth autentica al usuario y la allowlist restringe la instancia; las membresías siguen autorizando cada proyecto. El endpoint de callback actual devuelve el token en JSON: el frontend todavía no completa ese recorrido.
+OAuth autentica al usuario y la allowlist restringe la instancia; las membresías siguen autorizando cada proyecto. El flujo de navegador utiliza cookies HttpOnly y redirección; el callback JSON se conserva para CLI. Configurar CHEF_WEB_ORIGIN y el proxy /api conforme al contrato de navegador.
 
 ## Vercel: web
 
@@ -36,10 +36,12 @@ OAuth autentica al usuario y la allowlist restringe la instancia; las membresía
 
 Crear primero una preview bajo la cuenta/equipo del proyecto. Activar la protección de despliegues de Vercel y verificar que personas ajenas no puedan abrirla; no asumir privacidad solo por ser preview. No habilitar producción pública por defecto ni introducir secretos de servidor en variables `VITE_*`.
 
-**Límite actual:** React consume un snapshot fixture. No hay todavía login/sesión de navegador, selector de proyectos ni importación contra la API. Alojar esta web no la convierte en el producto integrado. La siguiente vertical necesita conectar el navegador a la API, decidir callback/sesión y orígenes permitidos y probar el recorrido completo. No se añade una URL de API decorativa mientras la UI no la utiliza.
+**Estado del incremento web:** la pantalla inicial consulta la sesión, lista/crea proyectos e importa XML contra la API; la demo sintética es explícita. La integración se valida localmente con PostgreSQL y Go. Antes de alojarla, configurar un proxy HTTPS `/api` desde Vercel hacia Railway y registrar el callback `https://<web>/api/auth/github/callback`; `CHEF_WEB_ORIGIN` debe ser ese origen HTTPS. La configuración estática de Vercel por sí sola no incluye un destino de API: añadirlo cuando se conozca el dominio, sin abrir CORS ni depender de cookies de terceros. El despliegue remoto y OAuth real requieren su validación.
 
 ## Reversión
 
 Conservar la versión anterior de la aplicación y un backup verificado antes de migraciones sobre datos existentes. Las migraciones futuras deben ser compatibles con el rollback del código o tener un procedimiento explícito de recuperación. Un rollback de Railway no revierte automáticamente la base. No ejecutar `docker compose down -v` sobre los datos del equipo.
 
 Fuentes: [configuración de Railway](https://docs.railway.com/config-as-code/reference), [Dockerfiles en Railway](https://docs.railway.com/builds/dockerfiles), [configuración de Vercel](https://vercel.com/docs/project-configuration), [protección de despliegues](https://vercel.com/docs/deployment-protection).
+
+La API requiere `CHEF_WEB_ORIGIN` en producción. Detalles de cookies, compatibilidad y rutas: [contrato de navegador](../contracts/browser-api.md).

@@ -104,6 +104,11 @@ async function main(): Promise<void> {
       'CHEF_ALLOWED_GITHUB_USER_IDS requires at least one user ID',
     );
   const contracts = loadContracts('docs/contracts/snapshot.schema.json');
+  const webOrigin =
+    process.env['CHEF_WEB_ORIGIN'] ??
+    (process.env['NODE_ENV'] === 'production'
+      ? required('CHEF_WEB_ORIGIN')
+      : 'http://127.0.0.1:5173');
   const scopePolicy = contracts.scope(
     JSON.parse(readFileSync(SCOPE_PATH, 'utf8')),
   );
@@ -141,6 +146,7 @@ async function main(): Promise<void> {
       redirectUri: required('GITHUB_REDIRECT_URI'),
     }),
     scopePolicy,
+    webOrigin,
     ...(allowedOAuthUserIds === undefined ? {} : { allowedOAuthUserIds }),
   });
 

@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://chef.cyberstill.dev/contracts/browser-authorize/v0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["authorizeUrl"],
+  "properties": {
+    "authorizeUrl": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https://github\\.com/login/oauth/authorize\\?"
+    }
+  }
+}
