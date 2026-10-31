@@ -2,7 +2,7 @@
 
 ## 31-10-2026 — Clasificador offline de configuración Git expuesta
 
-Se portó a Rust la regla de detección de `modules/git.py` como `classify_archived_git_config`. Clasifica únicamente una respuesta archivada con status 200, ruta `.git/config` derivada de uno de los dos probes del origen, mismo origen, texto UTF-8 hasta 256 KiB y una sección `[core]`; rechaza HTML. Devuelve una pista histórica con la URL del archivo y del directorio `.git/`, sin realizar HTTP ni conservar el cuerpo. El resultado todavía no se asocia a evidencia ni se compone en Tauri, así que el módulo sigue parcial. No se agregaron ni ejecutaron pruebas; la compilación requiere verificación estática en esta máquina. Inventario: 131 parciales, 305 pendientes y 30 excluidos de 466 filas.
+Se portó a Rust la regla de detección de `modules/git.py` como `classify_archived_git_config`. Clasifica únicamente una respuesta archivada con status 200, ruta `.git/config` derivada de uno de los dos probes del origen, mismo origen, URLs HTTP(S) canónicas hasta 8 KiB, texto UTF-8 hasta 256 KiB y una sección `[core]`; rechaza HTML. Devuelve una pista histórica con la URL del archivo y del directorio `.git/`, sin realizar HTTP ni conservar el cuerpo. El resultado todavía no se asocia a evidencia ni se compone en Tauri, así que el módulo sigue parcial. No se agregaron ni ejecutaron pruebas; `cargo fmt --check`, `cargo check --locked --offline` y Clippy pasan. Al reconciliar el inventario, `core/helpers/ntlm.py` pasa a parcial por su parser Rust existente y `core/helpers/git.py` queda excluido porque altera clones locales; estado actual: 132 parciales, 303 pendientes y 31 excluidos de 466 filas.
 
 ### 31-10-2026 — Adaptadores offline de archivos, geolocalización y ASN
 

@@ -6,9 +6,10 @@
 
 use url::Url;
 
-use crate::{ChefError, ChefResult, ErrorCode};
+use crate::{ChefError, ChefResult, ErrorCode, url_tools::canonical_http_url};
 
 const MAX_RESPONSE_BYTES: usize = 256 * 1024;
+const MAX_URL_BYTES: usize = 8 * 1024;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ArchivedGitExposureHint {
@@ -101,19 +102,20 @@ pub fn classify_archived_git_config(
 }
 
 fn parse_http_url(value: &str) -> ChefResult<Url> {
-    let url = Url::parse(value)
-        .map_err(|_| ChefError::new(ErrorCode::InvalidInput, "La URL archivada no es válida"))?;
-    if !matches!(url.scheme(), "http" | "https")
-        || url.host_str().is_none()
-        || !url.username().is_empty()
-        || url.password().is_some()
-    {
+    if value.len() > MAX_URL_BYTES {
         return Err(ChefError::new(
-            ErrorCode::InvalidInput,
-            "La URL debe usar HTTP(S) y no contener credenciales",
+            ErrorCode::LimitExceeded,
+            "La URL archivada supera el límite de bytes",
         ));
     }
-    Ok(url)
+    let canonical = canonical_http_url(value).ok_or_else(|| {
+        ChefError::new(
+            ErrorCode::InvalidInput,
+            "La URL debe ser HTTP(S) válida y no contener credenciales",
+        )
+    })?;
+    Url::parse(&canonical)
+        .map_err(|_| ChefError::new(ErrorCode::InvalidInput, "La URL archivada no es válida"))
 }
 
 fn starts_with_html_document(value: &str) -> bool {
