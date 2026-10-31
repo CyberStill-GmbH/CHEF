@@ -1,6 +1,7 @@
 # Borrador de frontera API para CHEF web
 
 Fecha 29-09-2026. **Diseño para discusión; ninguna ruta existe ni es contrato publicado.** El [Snapshot 1.0.0](README.md) sigue siendo el único wire validado. Antes de implementar se aprobará OpenAPI/schema, ejemplos, prueba positiva/negativa y nota de compatibilidad. Este borrador reemplazaría la [API loopback histórica](api.md) para el producto web.
+**Estado 30-10-2026:** existe un prototipo en `apps/api` con `/health`, `/auth/github/start`, `/auth/github/callback`, `GET|POST /projects`, `POST /projects/{id}/imports` (XML crudo) y `GET /projects/{id}/snapshot`. **No es el contrato `/v1` de este borrador**: no hay `/me`, paginación, export, versionado de ruta ni jobs, y la persistencia es en memoria. Se documenta como prototipo, no como contrato publicado; ver [README de la API](../../apps/api/README.md).
 
 ## Principios
 

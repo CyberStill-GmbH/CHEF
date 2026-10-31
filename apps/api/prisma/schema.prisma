@@ -1,0 +1,54 @@
+// Propuesta de WB05. No ejecutada: no hay PostgreSQL ni Docker activos en el
+// entorno de entrega. El puerto ProjectRepository ya existe y la suite de tests
+// lo cubre con el adaptador en memoria; este esquema es el destino del adaptador
+// Prisma cuando exista base de datos.
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  owner
+  member
+}
+
+model Project {
+  id          String       @id
+  name        String
+  ownerId     String       @map("owner_id")
+  createdAt   DateTime     @map("created_at")
+  memberships Membership[]
+  snapshots   Snapshot[]
+
+  @@index([ownerId])
+  @@map("projects")
+}
+
+model Membership {
+  projectId String @map("project_id")
+  userId    String @map("user_id")
+  role      Role
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@id([projectId, userId])
+  @@index([userId])
+  @@map("memberships")
+}
+
+model Snapshot {
+  id        String   @id @default(uuid())
+  projectId String   @map("project_id")
+  runId     String   @map("run_id")
+  payload   Json
+  createdAt DateTime @map("created_at")
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, createdAt])
+  @@map("snapshots")
+}
