@@ -1,5 +1,9 @@
 # Registro de trabajo
 
+## 30-10-2026 — Portado offline de SecurityTrails y Subdomain Center
+
+Se añadieron al core Rust dos parsers de respuestas archivadas que estaban pendientes en el inventario: `parse_securitytrails_subdomains` combina `subdomains[]` con la raíz consultada; `parse_subdomaincenter_subdomains` filtra una lista JSON de FQDN por esa raíz. Ambos exigen dominio registrable ICANN, procesan como máximo 1 MiB, 2 048 entradas y 512 candidatos, canonicalizan y deduplican con orden estable. Entradas JSON malformadas o fuera de forma se rechazan completas; entradas inválidas o externas no se convierten en candidatos. No se consultan APIs, no se leen credenciales ni se afirma resolución DNS actual. Se ejecutaron tres pruebas Rust nuevas para normalización, filtro de raíz, forma, dominio inválido y límite de entradas; pasan junto con las 10 pruebas actuales de `rust-core`. El transporte, términos, autorización por proyecto y persistencia de linaje permanecen pendientes. La fuente local en `C:\projects\CHEF` no se modificó. El inventario ahora registra 67 elementos parciales, 369 pendientes y 30 exclusiones justificadas (466 en total).
+
 ## 29-09-2026 — Preparación de CHEF
 
 Inventario: checkout main vacío con .git, sin código ni trabajo ajeno. Cuenta GitHub CyberStill-GmbH verificada. gh CLI ausente; git credential manager disponible. Node24 y Python disponibles; JRE8 no permite compilar Montoya.

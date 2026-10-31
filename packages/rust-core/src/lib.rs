@@ -107,8 +107,9 @@ pub use port_spec::parse_port_string;
 pub use presets::{ChefPreset, PresetCatalog, ResolvedPreset};
 pub use provider_subdomains::{
     DnsDumpsterSubdomainPage, HackerTargetSubdomainPage, ProviderSubdomainPage,
-    RapidDnsSubdomainPage, parse_dnsdumpster_subdomains, parse_hackertarget_subdomains,
-    parse_provider_subdomains, parse_rapiddns_subdomains,
+    RapidDnsSubdomainPage, SecurityTrailsSubdomainPage, SubdomainCenterPage,
+    parse_dnsdumpster_subdomains, parse_hackertarget_subdomains, parse_provider_subdomains,
+    parse_rapiddns_subdomains, parse_securitytrails_subdomains, parse_subdomaincenter_subdomains,
 };
 pub use rate_limit::RateLimiter;
 pub use recon::{

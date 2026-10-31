@@ -1,6 +1,9 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 
-use crate::{ChefError, ErrorCode, FixedClock, ImportBbotEvidence, ImportEvidence, ScopePolicy};
+use crate::{
+    ChefError, ErrorCode, FixedClock, ImportBbotEvidence, ImportEvidence, ScopePolicy,
+    parse_securitytrails_subdomains, parse_subdomaincenter_subdomains,
+};
 
 const NMAP: &[u8] = include_bytes!("../../../fixtures/nmap/lab.xml");
 const SCOPE: &str = include_str!("../../../fixtures/scope/lab.json");
@@ -227,4 +230,67 @@ fn bbot_jsonl_rejects_malformed_and_out_of_scope_open_port_events() {
     )
     .unwrap_err();
     assert_eq!(error.code, ErrorCode::OutOfScope);
+}
+
+#[test]
+fn securitytrails_archived_prefixes_become_sorted_scoped_candidates() {
+    let page = parse_securitytrails_subdomains(
+        "Example.COM.",
+        br#"{"subdomains":["www","api","www","*.ignored","outside.example.net","bad..label"]}"#,
+    )
+    .expect("valid archived SecurityTrails response");
+
+    assert_eq!(page.query_domain, "example.com");
+    assert_eq!(
+        page.candidates
+            .iter()
+            .map(String::as_str)
+            .collect::<Vec<_>>(),
+        [
+            "api.example.com",
+            "outside.example.net.example.com",
+            "www.example.com"
+        ]
+    );
+}
+
+#[test]
+fn subdomaincenter_archived_names_filter_external_and_invalid_candidates() {
+    let page = parse_subdomaincenter_subdomains(
+        "example.com",
+        br#"["WWW.EXAMPLE.COM.","api.example.com","example.com","evil-example.com","*.wild.example.com",42]"#,
+    )
+    .expect("valid archived Subdomain Center response");
+
+    assert_eq!(
+        page.candidates
+            .iter()
+            .map(String::as_str)
+            .collect::<Vec<_>>(),
+        ["api.example.com", "www.example.com"]
+    );
+}
+
+#[test]
+fn archived_subdomain_parsers_reject_bad_shapes_roots_and_entry_limits() {
+    assert_eq!(
+        parse_securitytrails_subdomains("example.com", br#"{"subdomains":"www"}"#)
+            .unwrap_err()
+            .code,
+        ErrorCode::InvalidInput
+    );
+    assert_eq!(
+        parse_subdomaincenter_subdomains("com", b"[]")
+            .unwrap_err()
+            .code,
+        ErrorCode::InvalidInput
+    );
+
+    let oversized = format!("{{\"subdomains\":[{}]}}", vec!["\"x\""; 2_049].join(","));
+    assert_eq!(
+        parse_securitytrails_subdomains("example.com", oversized.as_bytes())
+            .unwrap_err()
+            .code,
+        ErrorCode::LimitExceeded
+    );
 }
