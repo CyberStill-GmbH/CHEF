@@ -72,8 +72,7 @@ export function EvidenceImportPanel({ client, onImported }: Props) {
     <section aria-labelledby="evidence-import-title">
       <h2 id="evidence-import-title">Importar evidencia JSONL</h2>
       <p>
-        Importa un JSONL ya generado y una política CHEF explícita. La operación
-        solo procesa datos locales; no inicia reconocimiento de red.
+        Procesa archivos locales; no genera tráfico ni inicia reconocimiento.
       </p>
       <label>
         Archivo de eventos (.jsonl o .ndjson)
@@ -95,8 +94,8 @@ export function EvidenceImportPanel({ client, onImported }: Props) {
           }
         />
       </label>
-      <label>
-        Perfil CHEF para esta importación
+        <label>
+          Perfil temporal CHEF (no cambia config.toml)
         <select
           value={presetId}
           disabled={busy}
@@ -108,11 +107,6 @@ export function EvidenceImportPanel({ client, onImported }: Props) {
           <option value="offline_hints">Importación con pistas offline</option>
         </select>
       </label>
-      <p>
-        El perfil se aplica solo a este trabajo y no modifica config.toml. Las
-        pistas offline se derivan del archivo importado y no hacen consultas de
-        red.
-      </p>
       <button
         type="button"
         disabled={busy || !jsonlFile || !scopeFile}

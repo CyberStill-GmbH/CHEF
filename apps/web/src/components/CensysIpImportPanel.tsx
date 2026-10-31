@@ -68,8 +68,8 @@ export function CensysIpImportPanel({ client, onImported }: Props) {
     <section aria-labelledby="censys-import-title">
       <h2 id="censys-import-title">Importar respuesta Censys archivada</h2>
       <p>
-        Procesa un JSON local de Hosts por IP. CHEF no consulta Censys ni hace
-        DNS o escaneo activo; los resultados se muestran como pistas históricas.
+        Sin Censys, DNS ni escaneo; son pistas históricas y su fecha de origen
+        no se verifica.
       </p>
       <label>
         IP consultada
@@ -93,10 +93,6 @@ export function CensysIpImportPanel({ client, onImported }: Props) {
           }
         />
       </label>
-      <p>
-        El timestamp registra cuándo se importó el archivo; la respuesta no
-        aporta una fecha fuente fiable. La UI conserva el SHA-256 y el linaje.
-      </p>
       <button
         type="button"
         disabled={busy || responseFile === null || !targetIp.trim()}

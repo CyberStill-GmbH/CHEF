@@ -14,6 +14,7 @@ import { decodeAssetInventoryExport } from '../contracts/decodeAssetInventoryExp
 import { decodeWebEvidenceReportExport } from '../contracts/decodeWebEvidenceReportExport';
 import { decodeObservedEmailExport } from '../contracts/decodeObservedEmailExport';
 import { decodeCensysIpImport } from '../contracts/decodeCensysIpImport';
+import { decodeUrlScanImport } from '../contracts/decodeUrlScanImport';
 import type { ScanLogDto } from '../contracts/scan-log';
 import type { ScopePolicyDto } from '../contracts/snapshot';
 import type { ApiClient } from './ApiClient';
@@ -124,6 +125,45 @@ export class TauriApiClient implements ApiClient {
   ) {
     options?.signal?.throwIfAborted();
     const graph = await invoke<unknown>('load_censys_ip_recon_graph', {
+      importId,
+    });
+    options?.signal?.throwIfAborted();
+    return decodeReconGraph(graph);
+  }
+
+  async importUrlScanResponse(
+    queryDomain: string,
+    responseJson: string,
+    options?: { onPhase?: (phase: ScanLogDto['phase']) => void },
+  ) {
+    const requestId = crypto.randomUUID();
+    const unlisten = await listen<unknown>('scan-log', ({ payload }) => {
+      try {
+        const event = decodeScanLog(payload);
+        if (event.requestId === requestId) options?.onPhase?.(event.phase);
+      } catch {
+        // Ignorar mensajes IPC que no cumplan el contrato CHEF.
+      }
+    });
+    try {
+      return decodeUrlScanImport(
+        await invoke<unknown>('import_urlscan_response', {
+          requestId,
+          queryDomain,
+          responseJson,
+        }),
+      );
+    } finally {
+      unlisten();
+    }
+  }
+
+  async loadUrlScanReconGraph(
+    importId: string,
+    options?: { signal?: AbortSignal },
+  ) {
+    options?.signal?.throwIfAborted();
+    const graph = await invoke<unknown>('load_urlscan_recon_graph', {
       importId,
     });
     options?.signal?.throwIfAborted();

@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -89,15 +89,18 @@ describe('App snapshot states', () => {
       await screen.findByRole('heading', { name: 'Resumen del snapshot' }),
     ).toBeInTheDocument();
     expect(screen.getByText('1.0.0')).toBeInTheDocument();
-    expect(screen.getByText('Assets').nextElementSibling).toHaveTextContent(
-      '4',
-    );
+    const summary = screen.getByRole('region', {
+      name: 'Resumen del snapshot',
+    });
     expect(
-      screen.getByText('Observations').nextElementSibling,
+      within(summary).getByText('Activos').nextElementSibling,
+    ).toHaveTextContent('4');
+    expect(
+      within(summary).getByText('Observaciones').nextElementSibling,
     ).toHaveTextContent('3');
-    expect(screen.getByText('Evidence').nextElementSibling).toHaveTextContent(
-      '1',
-    );
+    expect(
+      within(summary).getByText('Evidencias').nextElementSibling,
+    ).toHaveTextContent('1');
   });
 
   it('aborts on unmount and ignores a later resolution', async () => {

@@ -12,6 +12,7 @@ import type { AssetInventoryExportDto } from '../contracts/asset-inventory-expor
 import type { WebEvidenceReportExportDto } from '../contracts/web-evidence-report-export';
 import type { ObservedEmailExportDto } from '../contracts/observed-email-export';
 import type { CensysIpImportSummaryDto } from '../contracts/censys-ip-import';
+import type { UrlScanImportSummaryDto } from '../contracts/urlscan-import';
 
 export interface ApiClient {
   loadSnapshot(options?: { signal?: AbortSignal }): Promise<SnapshotDto>;
@@ -66,6 +67,15 @@ export interface ApiClient {
     options?: { onPhase?: (phase: ScanLogPhase) => void },
   ): Promise<CensysIpImportSummaryDto>;
   loadCensysIpReconGraph?(
+    importId: string,
+    options?: { signal?: AbortSignal },
+  ): Promise<ReconGraphDto>;
+  importUrlScanResponse?(
+    queryDomain: string,
+    responseJson: string,
+    options?: { onPhase?: (phase: ScanLogPhase) => void },
+  ): Promise<UrlScanImportSummaryDto>;
+  loadUrlScanReconGraph?(
     importId: string,
     options?: { signal?: AbortSignal },
   ): Promise<ReconGraphDto>;
