@@ -339,6 +339,18 @@ assert.ok(
   ),
   JSON.stringify(validateEventStatistics.errors),
 );
+const censysIpImportSchema = JSON.parse(
+  readFileSync('docs/contracts/censys-ip-import.schema.json', 'utf8'),
+);
+const validateCensysIpImport = ajv.compile(censysIpImportSchema);
+assert.ok(
+  validateCensysIpImport(
+    JSON.parse(
+      readFileSync('docs/contracts/examples/censys-ip-import.json', 'utf8'),
+    ),
+  ),
+  JSON.stringify(validateCensysIpImport.errors),
+);
 const sources = JSON.parse(readFileSync('docs/research/sources.json', 'utf8'));
 assert.equal(new Set(sources.map((item) => item.id)).size, sources.length);
 for (const source of sources) {

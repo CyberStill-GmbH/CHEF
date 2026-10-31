@@ -1,7 +1,13 @@
-use std::{collections::HashMap, path::PathBuf};
+use std::{
+    collections::{BTreeMap, HashMap},
+    path::PathBuf,
+};
 
-use chef_application::{ImportCancellation, ImportJobEvent, spawn_bbot_import_job_with_config};
-use chef_core::{Clock, ScopePolicy, Snapshot, SystemClock};
+use chef_application::{
+    ImportCancellation, ImportJobEvent, import_censys_ip_response,
+    spawn_bbot_import_job_with_config,
+};
+use chef_core::{Clock, ScopePolicy, Snapshot, SystemClock, deterministic_id, digest_bytes};
 use chef_storage::LocalSnapshotStore;
 use serde::Serialize;
 use tauri::{AppHandle, Emitter, Manager, State};
@@ -54,6 +60,20 @@ struct ScanLogPayload {
     event_type: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     observed_at: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct CensysIpImportSummaryDto {
+    schema_version: &'static str,
+    import_id: String,
+    target_ip: String,
+    response_sha256: String,
+    imported_at: String,
+    event_count: usize,
+    asset_count: usize,
+    relationship_count: usize,
+    unprojected_event_types: BTreeMap<String, usize>,
 }
 
 #[tauri::command]
@@ -109,6 +129,140 @@ async fn import_bbot_jsonl(
         request_id,
     )
     .await
+}
+
+#[tauri::command]
+async fn import_censys_host_response(
+    app: AppHandle,
+    state: State<'_, StoreSlot>,
+    request_id: String,
+    target_ip: String,
+    response_json: String,
+) -> Result<CensysIpImportSummaryDto, String> {
+    validate_request_id(&request_id)?;
+    let bytes = response_json.into_bytes();
+    if bytes.len() > 2 * 1024 * 1024 {
+        return Err("La respuesta Censys supera el máximo de 2 MiB CHEF".to_owned());
+    }
+    let job_id = deterministic_id(
+        "job",
+        &["censys-hosts-ip", &request_id, &digest_bytes(&bytes)],
+    );
+    let mut sequence = 1;
+    app.emit(
+        "scan-log",
+        ScanLogPayload {
+            schema_version: "1.2.0",
+            job_id: job_id.clone(),
+            request_id: request_id.clone(),
+            sequence,
+            phase: "started",
+            message: "Importación local de respuesta Censys iniciada.".to_owned(),
+            event_type: None,
+            observed_at: None,
+        },
+    )
+    .map_err(|_| "No se pudo enviar el evento de actividad CHEF".to_owned())?;
+
+    let imported = match import_censys_ip_response(target_ip, bytes, SystemClock.now()).await {
+        Ok(imported) => imported,
+        Err(error) => {
+            sequence += 1;
+            let _ = app.emit(
+                "scan-log",
+                ScanLogPayload {
+                    schema_version: "1.2.0",
+                    job_id,
+                    request_id,
+                    sequence,
+                    phase: "failed",
+                    message: "La respuesta archivada no pudo validarse.".to_owned(),
+                    event_type: None,
+                    observed_at: None,
+                },
+            );
+            return Err(error.message.to_owned());
+        }
+    };
+    sequence += 1;
+    app.emit(
+        "scan-log",
+        ScanLogPayload {
+            schema_version: "1.2.0",
+            job_id: job_id.clone(),
+            request_id: request_id.clone(),
+            sequence,
+            phase: "validated",
+            message: "Respuesta archivada normalizada como pistas históricas.".to_owned(),
+            event_type: None,
+            observed_at: None,
+        },
+    )
+    .map_err(|_| "No se pudo enviar el evento de actividad CHEF".to_owned())?;
+
+    let mut slot = state.store.lock().await;
+    if slot.is_none() {
+        *slot = Some(
+            LocalSnapshotStore::open(&state.database_path)
+                .await
+                .map_err(|error| error.to_string())?,
+        );
+    }
+    let store = slot.as_ref().expect("el almacén se abrió arriba");
+    let import_id = store
+        .save_censys_ip_import(&imported)
+        .await
+        .map_err(|error| error.to_string())?;
+    drop(slot);
+
+    sequence += 1;
+    app.emit(
+        "scan-log",
+        ScanLogPayload {
+            schema_version: "1.2.0",
+            job_id: job_id.clone(),
+            request_id: request_id.clone(),
+            sequence,
+            phase: "stored",
+            message: "Evidencia Censys guardada en SurrealDB local.".to_owned(),
+            event_type: None,
+            observed_at: None,
+        },
+    )
+    .map_err(|_| "No se pudo enviar el evento de actividad CHEF".to_owned())?;
+    sequence += 1;
+    app.emit(
+        "scan-log",
+        ScanLogPayload {
+            schema_version: "1.2.0",
+            job_id,
+            request_id,
+            sequence,
+            phase: "completed",
+            message: "Importación offline de Censys finalizada.".to_owned(),
+            event_type: None,
+            observed_at: None,
+        },
+    )
+    .map_err(|_| "No se pudo enviar el evento de actividad CHEF".to_owned())?;
+
+    let imported_at = imported
+        .event_graph
+        .events
+        .first()
+        .map(|event| event.timestamp.clone())
+        .unwrap_or_default();
+    Ok(CensysIpImportSummaryDto {
+        schema_version: "1.0.0",
+        import_id,
+        target_ip: imported.target_ip,
+        response_sha256: imported.response_sha256,
+        imported_at,
+        event_count: imported.event_graph.events.len(),
+        asset_count: imported.recon_graph.assets.len(),
+        relationship_count: imported.recon_graph.relationships.len(),
+        unprojected_event_types: imported.recon_graph.unmapped_event_types,
+    })
 }
 
 async fn import_bbot_payload(
@@ -391,6 +545,28 @@ async fn load_chef_recon_graph(
 }
 
 #[tauri::command]
+async fn load_censys_ip_recon_graph(
+    import_id: String,
+    state: State<'_, StoreSlot>,
+) -> Result<chef_core::ChefReconGraph, String> {
+    let mut slot = state.store.lock().await;
+    if slot.is_none() {
+        *slot = Some(
+            LocalSnapshotStore::open(&state.database_path)
+                .await
+                .map_err(|error| error.to_string())?,
+        );
+    }
+    slot.as_ref()
+        .expect("el almacén se abrió arriba")
+        .load_censys_ip_import(&import_id)
+        .await
+        .map_err(|error| error.to_string())?
+        .map(|result| result.recon_graph)
+        .ok_or_else(|| "No existe una importación Censys para ese identificador".to_owned())
+}
+
+#[tauri::command]
 async fn load_chef_event_statistics(
     run_id: String,
     state: State<'_, StoreSlot>,
@@ -642,8 +818,10 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             load_offline_demo_snapshot,
             import_bbot_jsonl,
+            import_censys_host_response,
             cancel_import_job,
             load_chef_recon_graph,
+            load_censys_ip_recon_graph,
             load_chef_event_statistics,
             export_chef_snapshot,
             export_chef_observed_domains,

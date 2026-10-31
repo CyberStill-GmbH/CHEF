@@ -7,7 +7,10 @@ use chef_application::{
     IMPORT_HISTORY_MAX_PAGE_SIZE, ImportHistoryError, ImportHistoryPort, ImportOutput,
     ImportRunSummary,
 };
-use chef_core::{BbotEventGraph, BbotImportResult, ChefReconGraph, Snapshot};
+use chef_core::{
+    BbotEventGraph, BbotImportResult, CensysIpImportResult, ChefReconGraph, Snapshot,
+    deterministic_id,
+};
 use serde_json::{Value, json};
 use surrealdb::{
     Surreal,
@@ -19,6 +22,8 @@ const SUPPORTED_SNAPSHOT_VERSIONS: &[&str] = &["1.0.0", "1.1.0"];
 const NAMESPACE: &str = "chef";
 const DATABASE: &str = "local";
 const TABLE: &str = "snapshots";
+const PROVIDER_IMPORT_TABLE: &str = "provider_imports";
+const PROVIDER_IMPORT_SCHEMA_VERSION: &str = "1.0.0";
 
 #[derive(Debug, Error)]
 pub enum StorageError {
@@ -54,9 +59,18 @@ impl LocalSnapshotStore {
             "DEFINE TABLE IF NOT EXISTS snapshots SCHEMAFULL;
              DEFINE FIELD IF NOT EXISTS run_id ON snapshots TYPE string;
              DEFINE FIELD IF NOT EXISTS schema_version ON snapshots TYPE string;
-             DEFINE FIELD IF NOT EXISTS snapshot ON snapshots TYPE object;
+             DEFINE FIELD OVERWRITE snapshot ON snapshots TYPE object FLEXIBLE;
              DEFINE FIELD IF NOT EXISTS event_graph ON snapshots TYPE any;
-             DEFINE FIELD IF NOT EXISTS chef_recon_graph ON snapshots TYPE any;",
+             DEFINE FIELD IF NOT EXISTS chef_recon_graph ON snapshots TYPE any;
+             DEFINE TABLE IF NOT EXISTS provider_imports SCHEMAFULL;
+             DEFINE FIELD IF NOT EXISTS import_id ON provider_imports TYPE string;
+             DEFINE FIELD IF NOT EXISTS schema_version ON provider_imports TYPE string;
+             DEFINE FIELD IF NOT EXISTS provider ON provider_imports TYPE string;
+             DEFINE FIELD IF NOT EXISTS target_ip ON provider_imports TYPE string;
+             DEFINE FIELD IF NOT EXISTS response_sha256 ON provider_imports TYPE string;
+             DEFINE FIELD IF NOT EXISTS imported_at ON provider_imports TYPE string;
+             DEFINE FIELD IF NOT EXISTS event_graph ON provider_imports TYPE any;
+             DEFINE FIELD IF NOT EXISTS chef_recon_graph ON provider_imports TYPE any;",
         )
         .await?
         .check()?;
@@ -137,6 +151,80 @@ impl LocalSnapshotStore {
             .content(payload)
             .await?;
         Ok(())
+    }
+
+    /// Guarda una importación Censys archivada sin forzarla al contrato Snapshot,
+    /// que representa observaciones de puertos abiertos y no pistas históricas.
+    pub async fn save_censys_ip_import(
+        &self,
+        result: &CensysIpImportResult,
+    ) -> Result<String, StorageError> {
+        validate_censys_ip_import(result)?;
+        let import_id = censys_import_id(result);
+        let imported_at = result
+            .event_graph
+            .events
+            .first()
+            .map(|event| event.timestamp.as_str())
+            .ok_or(StorageError::InvalidRecord)?;
+        let payload = json!({
+            "import_id": import_id,
+            "schema_version": PROVIDER_IMPORT_SCHEMA_VERSION,
+            "provider": "censys-hosts-ip",
+            "target_ip": result.target_ip,
+            "response_sha256": result.response_sha256,
+            "imported_at": imported_at,
+            "event_graph": result.event_graph,
+            "chef_recon_graph": result.recon_graph,
+        });
+        let _: Option<Value> = self
+            .db
+            .upsert((PROVIDER_IMPORT_TABLE, import_id.as_str()))
+            .content(payload)
+            .await?;
+        Ok(import_id)
+    }
+
+    /// Recupera la importación y vuelve a validar su identidad y grafos.
+    pub async fn load_censys_ip_import(
+        &self,
+        import_id: &str,
+    ) -> Result<Option<CensysIpImportResult>, StorageError> {
+        if !valid_provider_import_id(import_id) {
+            return Err(StorageError::InvalidRecord);
+        }
+        let Some(record) = self
+            .db
+            .select::<Option<Value>>((PROVIDER_IMPORT_TABLE, import_id))
+            .await?
+        else {
+            return Ok(None);
+        };
+        if record.get("import_id").and_then(Value::as_str) != Some(import_id)
+            || record.get("schema_version").and_then(Value::as_str)
+                != Some(PROVIDER_IMPORT_SCHEMA_VERSION)
+            || record.get("provider").and_then(Value::as_str) != Some("censys-hosts-ip")
+        {
+            return Err(StorageError::InvalidRecord);
+        }
+        let result: CensysIpImportResult = serde_json::from_value(json!({
+            "target_ip": record.get("target_ip").cloned().ok_or(StorageError::InvalidRecord)?,
+            "response_sha256": record.get("response_sha256").cloned().ok_or(StorageError::InvalidRecord)?,
+            "event_graph": record.get("event_graph").cloned().ok_or(StorageError::InvalidRecord)?,
+            "recon_graph": record.get("chef_recon_graph").cloned().ok_or(StorageError::InvalidRecord)?,
+        }))?;
+        validate_censys_ip_import(&result)?;
+        if censys_import_id(&result) != import_id
+            || record.get("imported_at").and_then(Value::as_str)
+                != result
+                    .event_graph
+                    .events
+                    .first()
+                    .map(|event| event.timestamp.as_str())
+        {
+            return Err(StorageError::InvalidRecord);
+        }
+        Ok(Some(result))
     }
 
     /// Recupera el grafo tipado conservado con una importación BBOT.
@@ -250,6 +338,68 @@ impl ImportHistoryPort for LocalSnapshotStore {
     }
 }
 
+fn validate_censys_ip_import(result: &CensysIpImportResult) -> Result<(), StorageError> {
+    let target_ip = result
+        .target_ip
+        .parse::<std::net::IpAddr>()
+        .map_err(|_| StorageError::InvalidRecord)?
+        .to_string();
+    let root = result
+        .event_graph
+        .events
+        .first()
+        .ok_or(StorageError::InvalidRecord)?;
+    if target_ip != result.target_ip
+        || result.response_sha256.len() != 64
+        || !result
+            .response_sha256
+            .bytes()
+            .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
+        || root.event_type != "CENSYS_HOST_RESPONSE"
+        || root.data.get("targetIp").and_then(Value::as_str) != Some(result.target_ip.as_str())
+        || root.data.get("responseSha256").and_then(Value::as_str)
+            != Some(result.response_sha256.as_str())
+        || root.metadata.get("responseSha256").and_then(Value::as_str)
+            != Some(result.response_sha256.as_str())
+        || root.timestamp.is_empty()
+        || result
+            .event_graph
+            .events
+            .iter()
+            .any(|event| event.timestamp != root.timestamp)
+    {
+        return Err(StorageError::InvalidRecord);
+    }
+    chef_core::validate_bbot_event_graph(&result.event_graph)
+        .map_err(|_| StorageError::InvalidRecord)?;
+    chef_core::validate_chef_recon_graph(&result.recon_graph)
+        .map_err(|_| StorageError::InvalidRecord)?;
+    let expected = chef_core::adapt_bbot_to_chef(&result.event_graph)
+        .map_err(|_| StorageError::InvalidRecord)?;
+    if expected != result.recon_graph {
+        return Err(StorageError::InvalidRecord);
+    }
+    Ok(())
+}
+
+fn censys_import_id(result: &CensysIpImportResult) -> String {
+    deterministic_id(
+        "censys-import",
+        &[&result.target_ip, &result.response_sha256],
+    )
+}
+
+fn valid_provider_import_id(import_id: &str) -> bool {
+    import_id
+        .strip_prefix("censys-import:")
+        .is_some_and(|digest| {
+            digest.len() == 64
+                && digest
+                    .bytes()
+                    .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
+        })
+}
+
 fn parse_import_history_row(value: Value) -> Result<ImportRunSummary, ImportHistoryError> {
     let run_id = value
         .get("run_id")
@@ -305,6 +455,7 @@ fn validate_snapshot_key(snapshot: &Snapshot, run_id: &str) -> Result<(), Storag
 mod tests {
     use super::*;
     use chef_core::{FixedClock, ImportBbotEvidence, ImportEvidence, ScopePolicy};
+    use std::process::Command;
 
     fn fixture_snapshot() -> Snapshot {
         let xml = include_bytes!("../../../fixtures/nmap/lab.xml");
@@ -322,18 +473,42 @@ mod tests {
     #[tokio::test]
     async fn persists_and_recovers_the_same_snapshot_across_reopen() {
         let directory = tempfile::tempdir().unwrap();
-        let path = directory.path().join("nested").join("chef-surreal");
-        let snapshot = fixture_snapshot();
-        let run_id = snapshot.run.id.clone();
-
-        {
+        let path = std::env::var_os("CHEF_STORAGE_REOPEN_PATH")
+            .map(std::path::PathBuf::from)
+            .unwrap_or_else(|| directory.path().join("nested").join("chef-surreal"));
+        let phase = std::env::var("CHEF_STORAGE_REOPEN_PHASE").ok();
+        if let Some(phase) = phase {
+            let snapshot = fixture_snapshot();
             let store = LocalSnapshotStore::open(&path).await.unwrap();
-            store.save(&snapshot).await.unwrap();
-            assert_eq!(store.load(&run_id).await.unwrap(), Some(snapshot.clone()));
+            match phase.as_str() {
+                "write" => {
+                    store.save(&snapshot).await.unwrap();
+                    assert_eq!(store.load(&snapshot.run.id).await.unwrap(), Some(snapshot));
+                }
+                "read" => {
+                    assert_eq!(store.load(&snapshot.run.id).await.unwrap(), Some(snapshot));
+                }
+                _ => panic!("fase de persistencia de prueba no válida"),
+            }
+            return;
         }
 
-        let reopened = LocalSnapshotStore::open(&path).await.unwrap();
-        assert_eq!(reopened.load(&run_id).await.unwrap(), Some(snapshot));
+        let test_binary = std::env::current_exe().unwrap();
+        for phase in ["write", "read"] {
+            let output = Command::new(&test_binary)
+                .arg("--exact")
+                .arg("tests::persists_and_recovers_the_same_snapshot_across_reopen")
+                .env("CHEF_STORAGE_REOPEN_PHASE", phase)
+                .env("CHEF_STORAGE_REOPEN_PATH", &path)
+                .output()
+                .unwrap();
+            assert!(
+                output.status.success(),
+                "fase {phase} de persistencia falló: {}{}",
+                String::from_utf8_lossy(&output.stdout),
+                String::from_utf8_lossy(&output.stderr)
+            );
+        }
     }
 
     #[tokio::test]
@@ -371,5 +546,30 @@ mod tests {
             .unwrap();
         store.save(&imported.snapshot).await.unwrap();
         assert_eq!(store.load(&run_id).await.unwrap(), Some(imported.snapshot));
+    }
+
+    #[tokio::test]
+    async fn persists_archived_censys_import_separately_from_snapshot() {
+        let directory = tempfile::tempdir().unwrap();
+        let body = include_bytes!("../../../fixtures/censys-ip-response/positive.json");
+        let imported = chef_core::import_censys_ip_snapshot(
+            "1.2.3.4",
+            body,
+            &FixedClock("2026-10-28T00:00:00.000Z".into()),
+        )
+        .unwrap();
+        let store = LocalSnapshotStore::open(directory.path().join("chef-surreal"))
+            .await
+            .unwrap();
+
+        let import_id = store.save_censys_ip_import(&imported).await.unwrap();
+        assert_eq!(
+            store.load_censys_ip_import(&import_id).await.unwrap(),
+            Some(imported)
+        );
+        assert!(matches!(
+            store.load_censys_ip_import("censys-import:invalid").await,
+            Err(StorageError::InvalidRecord)
+        ));
     }
 }
