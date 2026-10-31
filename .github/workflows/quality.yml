@@ -12,7 +12,7 @@ jobs:
   quality:
     name: Quality
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -26,6 +26,17 @@ jobs:
           rustup toolchain install stable --profile minimal
           rustup default stable
           rustup component add rustfmt clippy
+      - name: Cache Rust build artifacts
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: |
+            ~/.cargo/registry/cache
+            ~/.cargo/registry/src
+            packages/rust-core/target
+            packages/rust-storage/target
+          key: ${{ runner.os }}-rust-check-${{ hashFiles('**/Cargo.lock') }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-rust-check-${{ hashFiles('**/Cargo.lock') }}-
       - name: Install native dependencies for embedded SurrealDB/RocksDB
         run: sudo apt-get update && sudo apt-get install --no-install-recommends -y nasm libclang-dev cmake
       - run: npm ci
