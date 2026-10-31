@@ -1,0 +1,41 @@
+.scan-log-terminal {
+  width: 100%;
+  height: min(58vh, 520px);
+  min-height: 320px;
+  overflow: hidden;
+  background: #0c110e;
+}
+
+.scan-log-terminal .xterm {
+  height: 100%;
+  padding: 8px 10px 4px;
+}
+
+.scan-log-terminal .xterm-viewport {
+  background: #0c110e !important;
+  scrollbar-color: #3a4b3e #0c110e;
+  scrollbar-width: thin;
+}
+
+.scan-log-terminal .xterm-screen {
+  width: 100% !important;
+}
+
+.terminal-announcement {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  clip-path: inset(50%);
+  border: 0;
+}
+
+@media (max-width: 720px) {
+  .scan-log-terminal {
+    height: 250px;
+    min-height: 230px;
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://chef.invalid/contracts/censys-ip-import.schema.json",
+  "title": "Resumen de importación offline Censys Hosts por IP",
+  "description": "Resultado local de normalizar una respuesta archivada; no hace consultas ni afirma observaciones actuales.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "importId",
+    "targetIp",
+    "responseSha256",
+    "importedAt",
+    "eventCount",
+    "assetCount",
+    "relationshipCount",
+    "unprojectedEventTypes"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "importId": {
+      "type": "string",
+      "pattern": "^censys-import:[a-f0-9]{64}$"
+    },
+    "targetIp": {
+      "type": "string",
+      "anyOf": [{ "format": "ipv4" }, { "format": "ipv6" }],
+      "minLength": 3,
+      "maxLength": 45
+    },
+    "responseSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "importedAt": {
+      "type": "string",
+      "format": "date-time",
+      "maxLength": 40
+    },
+    "eventCount": { "type": "integer", "minimum": 1, "maximum": 10000 },
+    "assetCount": { "type": "integer", "minimum": 0, "maximum": 20000 },
+    "relationshipCount": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 40000
+    },
+    "unprojectedEventTypes": {
+      "type": "object",
+      "maxProperties": 512,
+      "propertyNames": { "pattern": "^[A-Z0-9_]{1,64}$" },
+      "additionalProperties": { "type": "integer", "minimum": 1 }
+    }
+  }
+}

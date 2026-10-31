@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "1.0.0",
+  "requestId": "00000000-0000-4000-8000-000000000001",
+  "jobId": "job:offline-import-example",
+  "sequence": 7,
+  "phase": "completed",
+  "assets": [],
+  "evidence": [],
+  "relationships": [],
+  "unmappedEventTypes": {}
+}

@@ -1,0 +1,24 @@
+{
+  "results": [
+    {
+      "task": {
+        "domain": "WWW.EXAMPLE.COM.",
+        "url": "https://www.example.com/path?token=discard"
+      },
+      "page": {
+        "domain": "api.example.com",
+        "url": "https://api.example.com/login"
+      }
+    },
+    {
+      "task": {
+        "domain": "outside.example.net",
+        "url": "https://outside.example.net/"
+      },
+      "page": {
+        "domain": "*.wild.example.com",
+        "url": "https://*.wild.example.com/"
+      }
+    }
+  ]
+}

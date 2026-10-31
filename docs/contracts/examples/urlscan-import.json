@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "1.0.0",
+  "importId": "urlscan-import:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "queryDomain": "example.com",
+  "responseSha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "importedAt": "2026-10-31T00:00:00.000Z",
+  "eventCount": 5,
+  "assetCount": 2,
+  "relationshipCount": 1,
+  "unprojectedEventTypes": {}
+}

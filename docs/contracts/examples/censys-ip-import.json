@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1.0.0",
+  "importId": "censys-import:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+  "targetIp": "198.51.100.10",
+  "responseSha256": "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
+  "importedAt": "2026-10-28T21:30:00.000Z",
+  "eventCount": 5,
+  "assetCount": 4,
+  "relationshipCount": 2,
+  "unprojectedEventTypes": {
+    "PROTOCOL_HINT": 1,
+    "TECHNOLOGY_HINT": 1
+  }
+}

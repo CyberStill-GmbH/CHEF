@@ -94,6 +94,17 @@ assert.ok(
   ),
   'The recon graph example must show parent-domain hints as unverified suggestions.',
 );
+const graphProgressSchema = JSON.parse(
+  readFileSync('docs/contracts/recon-graph-progress.schema.json', 'utf8'),
+);
+const validateGraphProgress = ajv.compile(graphProgressSchema);
+const graphProgressExample = JSON.parse(
+  readFileSync('docs/contracts/examples/recon-graph-progress.json', 'utf8'),
+);
+assert.ok(
+  validateGraphProgress(graphProgressExample),
+  JSON.stringify(validateGraphProgress.errors),
+);
 assert.ok(
   reconGraphExample.assets.some(
     ({ kind, qualification }) => kind === 'domain' && qualification === 'hint',
@@ -338,6 +349,30 @@ assert.ok(
     ),
   ),
   JSON.stringify(validateEventStatistics.errors),
+);
+const censysIpImportSchema = JSON.parse(
+  readFileSync('docs/contracts/censys-ip-import.schema.json', 'utf8'),
+);
+const validateCensysIpImport = ajv.compile(censysIpImportSchema);
+assert.ok(
+  validateCensysIpImport(
+    JSON.parse(
+      readFileSync('docs/contracts/examples/censys-ip-import.json', 'utf8'),
+    ),
+  ),
+  JSON.stringify(validateCensysIpImport.errors),
+);
+const urlscanImportSchema = JSON.parse(
+  readFileSync('docs/contracts/urlscan-import.schema.json', 'utf8'),
+);
+const validateUrlScanImport = ajv.compile(urlscanImportSchema);
+assert.ok(
+  validateUrlScanImport(
+    JSON.parse(
+      readFileSync('docs/contracts/examples/urlscan-import.json', 'utf8'),
+    ),
+  ),
+  JSON.stringify(validateUrlScanImport.errors),
 );
 const sources = JSON.parse(readFileSync('docs/research/sources.json', 'utf8'));
 assert.equal(new Set(sources.map((item) => item.id)).size, sources.length);

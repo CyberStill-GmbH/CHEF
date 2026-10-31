@@ -1,0 +1,16 @@
+{
+  "Results": [
+    {
+      "Result": {
+        "Paths": [
+          { "Domain": "example.net", "SubDomain": "outside" },
+          { "Domain": "example.com", "SubDomain": "*.wildcard" },
+          { "Domain": "example.com", "SubDomain": "-invalid" },
+          { "Domain": "example.com", "SubDomain": "" }
+        ]
+      }
+    }
+  ],
+  "Inbound": [{ "Domain": "example.net" }],
+  "Outbound": [{ "Domain": "another.invalid" }]
+}

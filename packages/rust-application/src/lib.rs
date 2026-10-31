@@ -1,5 +1,6 @@
 //! Casos de uso Rust de CHEF. Los adaptadores concretos se componen desde las apps.
 
+mod censys_import;
 mod dns;
 mod dns_plan;
 mod dns_plan_runner;
@@ -12,7 +13,9 @@ mod http_plan;
 mod import_history;
 mod import_jobs;
 mod keyed_lock;
+mod urlscan_import;
 
+pub use censys_import::import_censys_ip_response;
 pub use dns::{
     DnsAnswer, DnsAnswerDisposition, DnsAnswerEvidence, DnsAuthorizationControl,
     DnsAuthorizationFailure, DnsAuthorizationPort, DnsAuthorizationReceipt, DnsCancellation,
@@ -51,6 +54,7 @@ pub use import_jobs::{
     spawn_bbot_import_job, spawn_bbot_import_job_with_config, spawn_import_job,
 };
 pub use keyed_lock::{KeyedLock, KeyedLockGuard};
+pub use urlscan_import::import_urlscan_snapshot;
 
 #[cfg(test)]
 mod tests;

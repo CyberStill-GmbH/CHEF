@@ -93,16 +93,6 @@ pub fn parse_chef_target_seed(input: &str) -> ChefResult<ChefTargetSeed> {
         });
     }
 
-    if value.contains('/') {
-        let network = canonical_network(value).ok_or_else(invalid_target)?;
-        return Ok(ChefTargetSeed {
-            kind: ChefTargetKind::IpRange,
-            data: network.clone(),
-            host: Some(network),
-            port: None,
-        });
-    }
-
     let lowercase = value.to_ascii_lowercase();
     if lowercase.starts_with("http://") || lowercase.starts_with("https://") {
         let data = crate::url_tools::canonical_http_url(value).ok_or_else(invalid_target)?;
@@ -114,6 +104,16 @@ pub fn parse_chef_target_seed(input: &str) -> ChefResult<ChefTargetSeed> {
             data,
             host: Some(host),
             port,
+        });
+    }
+
+    if value.contains('/') {
+        let network = canonical_network(value).ok_or_else(invalid_target)?;
+        return Ok(ChefTargetSeed {
+            kind: ChefTargetKind::IpRange,
+            data: network.clone(),
+            host: Some(network),
+            port: None,
         });
     }
 
@@ -318,4 +318,35 @@ fn invalid_target() -> ChefError {
         ErrorCode::InvalidInput,
         "La semilla CHEF no coincide con un tipo admitido o supera sus límites",
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{ChefTargetKind, parse_chef_target_seed};
+    use crate::ErrorCode;
+
+    #[test]
+    fn parses_http_url_paths_and_strips_query_and_fragment() {
+        let seed =
+            parse_chef_target_seed("https://Example.com/app/login?token=secret#form").unwrap();
+
+        assert_eq!(seed.kind, ChefTargetKind::Url);
+        assert_eq!(seed.data, "https://example.com/app/login");
+        assert_eq!(seed.host.as_deref(), Some("example.com"));
+        assert_eq!(seed.port, Some(443));
+    }
+
+    #[test]
+    fn rejects_url_credentials_and_non_http_schemes() {
+        for input in [
+            "https://user:secret@example.com/path",
+            "ftp://example.com/path",
+        ] {
+            assert_eq!(
+                parse_chef_target_seed(input).unwrap_err().code,
+                ErrorCode::InvalidInput,
+                "debe rechazarse {input}"
+            );
+        }
+    }
 }

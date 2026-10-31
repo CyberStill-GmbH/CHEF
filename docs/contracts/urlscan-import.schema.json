@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://chef.invalid/contracts/urlscan-import.schema.json",
+  "title": "Resumen de importación offline urlscan",
+  "description": "Normalización local de resultados archivados; no realiza solicitudes ni afirma DNS actual.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "importId",
+    "queryDomain",
+    "responseSha256",
+    "importedAt",
+    "eventCount",
+    "assetCount",
+    "relationshipCount",
+    "unprojectedEventTypes"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "importId": {
+      "type": "string",
+      "pattern": "^urlscan-import:[a-f0-9]{64}$"
+    },
+    "queryDomain": { "type": "string", "minLength": 1, "maxLength": 253 },
+    "responseSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "importedAt": { "type": "string", "format": "date-time", "maxLength": 40 },
+    "eventCount": { "type": "integer", "minimum": 1, "maximum": 10000 },
+    "assetCount": { "type": "integer", "minimum": 0, "maximum": 20000 },
+    "relationshipCount": { "type": "integer", "minimum": 0, "maximum": 40000 },
+    "unprojectedEventTypes": {
+      "type": "object",
+      "maxProperties": 512,
+      "propertyNames": { "pattern": "^[A-Z0-9_]{1,64}$" },
+      "additionalProperties": { "type": "integer", "minimum": 1 }
+    }
+  }
+}

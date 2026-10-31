@@ -10,3 +10,4 @@ fixtures/http/golden.json
 .agents/skills/playwright/
 .agents/skills/security-best-practices/
 .agents/skills/vercel-deploy/
+.agents/skills/frontend-design/

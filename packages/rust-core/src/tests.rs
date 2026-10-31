@@ -1,9 +1,26 @@
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::{
+    collections::BTreeMap,
+    sync::atomic::{AtomicBool, Ordering},
+};
 
-use crate::{ChefError, ErrorCode, FixedClock, ImportBbotEvidence, ImportEvidence, ScopePolicy};
+use crate::{
+    ChefConfig, ChefError, ChefPreset, ErrorCode, FixedClock, ImportBbotEvidence, ImportEvidence,
+    ModuleCapabilityState, PresetCatalog, ScopePolicy, import_urlscan_snapshot,
+    module_capabilities, module_capability, parse_bufferoverrun_subdomains,
+    parse_leakix_subdomains, parse_securitytrails_subdomains, parse_subdomaincenter_subdomains,
+    parse_urlscan_subdomains,
+};
 
 const NMAP: &[u8] = include_bytes!("../../../fixtures/nmap/lab.xml");
 const SCOPE: &str = include_str!("../../../fixtures/scope/lab.json");
+const LEAKIX: &[u8] = include_bytes!("../../../fixtures/leakix-response/positive.json");
+const LEAKIX_NEGATIVE: &[u8] = include_bytes!("../../../fixtures/leakix-response/negative.json");
+const BUFFEROVERRUN: &[u8] =
+    include_bytes!("../../../fixtures/bufferoverrun-response/positive.json");
+const BUFFEROVERRUN_NEGATIVE: &[u8] =
+    include_bytes!("../../../fixtures/bufferoverrun-response/negative.json");
+const URLSCAN: &[u8] = include_bytes!("../../../fixtures/urlscan-response/positive.json");
+const URLSCAN_NEGATIVE: &[u8] = include_bytes!("../../../fixtures/urlscan-response/negative.json");
 
 fn policy() -> ScopePolicy {
     serde_json::from_str(SCOPE).expect("fixture scope is valid")
@@ -227,4 +244,326 @@ fn bbot_jsonl_rejects_malformed_and_out_of_scope_open_port_events() {
     )
     .unwrap_err();
     assert_eq!(error.code, ErrorCode::OutOfScope);
+}
+
+#[test]
+fn securitytrails_archived_prefixes_become_sorted_scoped_candidates() {
+    let page = parse_securitytrails_subdomains(
+        "Example.COM.",
+        br#"{"subdomains":["www","api","www","*.ignored","outside.example.net","bad..label"]}"#,
+    )
+    .expect("valid archived SecurityTrails response");
+
+    assert_eq!(page.query_domain, "example.com");
+    assert_eq!(
+        page.candidates
+            .iter()
+            .map(String::as_str)
+            .collect::<Vec<_>>(),
+        [
+            "api.example.com",
+            "outside.example.net.example.com",
+            "www.example.com"
+        ]
+    );
+}
+
+#[test]
+fn subdomaincenter_archived_names_filter_external_and_invalid_candidates() {
+    let page = parse_subdomaincenter_subdomains(
+        "example.com",
+        br#"["WWW.EXAMPLE.COM.","api.example.com","example.com","evil-example.com","*.wild.example.com",42]"#,
+    )
+    .expect("valid archived Subdomain Center response");
+
+    assert_eq!(
+        page.candidates
+            .iter()
+            .map(String::as_str)
+            .collect::<Vec<_>>(),
+        ["api.example.com", "www.example.com"]
+    );
+}
+
+#[test]
+fn archived_subdomain_parsers_reject_bad_shapes_roots_and_entry_limits() {
+    assert_eq!(
+        parse_securitytrails_subdomains("example.com", br#"{"subdomains":"www"}"#)
+            .unwrap_err()
+            .code,
+        ErrorCode::InvalidInput
+    );
+    assert_eq!(
+        parse_subdomaincenter_subdomains("com", b"[]")
+            .unwrap_err()
+            .code,
+        ErrorCode::InvalidInput
+    );
+
+    let oversized = format!("{{\"subdomains\":[{}]}}", vec!["\"x\""; 2_049].join(","));
+    assert_eq!(
+        parse_securitytrails_subdomains("example.com", oversized.as_bytes())
+            .unwrap_err()
+            .code,
+        ErrorCode::LimitExceeded
+    );
+}
+
+#[test]
+fn config_rejects_unknown_or_unimplemented_module_toggles() {
+    let mut config = ChefConfig::default();
+    config
+        .modules
+        .insert("chef_dns_parent_hints".to_owned(), true);
+    assert!(config.validate().is_ok());
+
+    config.modules.insert("import_bbot_events".to_owned(), true);
+    assert_eq!(config.validate().unwrap_err().code, ErrorCode::InvalidInput);
+
+    config.modules.remove("import_bbot_events");
+    config
+        .modules
+        .insert("future_network_scanner".to_owned(), false);
+    assert_eq!(config.validate().unwrap_err().code, ErrorCode::InvalidInput);
+}
+
+#[test]
+fn built_in_presets_only_enable_registered_implemented_capabilities() {
+    let catalog = PresetCatalog::built_in();
+    let resolved = catalog
+        .resolve("offline_hints")
+        .expect("built-in preset resolves");
+    assert_eq!(resolved.modules.len(), module_capabilities().len());
+    assert!(resolved.modules.keys().all(|id| {
+        module_capability(id)
+            .is_some_and(|capability| capability.state == ModuleCapabilityState::Implemented)
+    }));
+
+    let preset = ChefPreset {
+        id: "invalid_module".to_owned(),
+        name: "Preset inválido".to_owned(),
+        description: "No debe habilitar una capacidad inexistente".to_owned(),
+        includes: Vec::new(),
+        modules: BTreeMap::from([("future_network_scanner".to_owned(), true)]),
+        sources: BTreeMap::new(),
+    };
+    assert_eq!(
+        PresetCatalog::new([preset]).unwrap_err().code,
+        ErrorCode::InvalidInput
+    );
+}
+
+#[test]
+fn leakix_archived_names_are_canonicalized_and_filtered_to_the_query_root() {
+    let page = parse_leakix_subdomains("blacklanternsecurity.com", LEAKIX)
+        .expect("valid archived LeakIX response");
+    assert_eq!(page.query_domain, "blacklanternsecurity.com");
+    assert_eq!(
+        page.candidates
+            .iter()
+            .map(String::as_str)
+            .collect::<Vec<_>>(),
+        [
+            "api.blacklanternsecurity.com",
+            "asdf.blacklanternsecurity.com"
+        ]
+    );
+}
+
+#[test]
+fn bufferoverrun_archived_results_use_only_the_hostname_column() {
+    let page = parse_bufferoverrun_subdomains("blacklanternsecurity.com", BUFFEROVERRUN)
+        .expect("valid archived BufferOverrun response");
+    assert_eq!(page.query_domain, "blacklanternsecurity.com");
+    assert_eq!(
+        page.candidates
+            .iter()
+            .map(String::as_str)
+            .collect::<Vec<_>>(),
+        [
+            "api.blacklanternsecurity.com",
+            "sub.blacklanternsecurity.com"
+        ]
+    );
+}
+
+#[test]
+fn archived_leakix_and_bufferoverrun_parsers_reject_invalid_shapes_and_limits() {
+    assert_eq!(
+        parse_leakix_subdomains("example.com", br#"{"subdomain":"www.example.com"}"#)
+            .unwrap_err()
+            .code,
+        ErrorCode::InvalidInput
+    );
+    assert_eq!(
+        parse_bufferoverrun_subdomains("example.com", br#"{"Results":"not-a-list"}"#)
+            .unwrap_err()
+            .code,
+        ErrorCode::InvalidInput
+    );
+
+    let leakix_oversized = format!("[{}]", vec!["{}"; 2_049].join(","));
+    assert_eq!(
+        parse_leakix_subdomains("example.com", leakix_oversized.as_bytes())
+            .unwrap_err()
+            .code,
+        ErrorCode::LimitExceeded
+    );
+    let bufferoverrun_oversized = format!(
+        "{{\"Results\":[{}]}}",
+        vec!["\"1.2.3.4,a,*,*,www.example.com\""; 2_049].join(",")
+    );
+    assert_eq!(
+        parse_bufferoverrun_subdomains("example.com", bufferoverrun_oversized.as_bytes())
+            .unwrap_err()
+            .code,
+        ErrorCode::LimitExceeded
+    );
+}
+
+#[test]
+fn archived_leakix_and_bufferoverrun_negative_fixtures_emit_no_external_or_invalid_hosts() {
+    assert!(
+        parse_leakix_subdomains("example.com", LEAKIX_NEGATIVE)
+            .expect("valid LeakIX negative fixture")
+            .candidates
+            .is_empty()
+    );
+    assert!(
+        parse_bufferoverrun_subdomains("example.com", BUFFEROVERRUN_NEGATIVE)
+            .expect("valid BufferOverrun negative fixture")
+            .candidates
+            .is_empty()
+    );
+}
+
+#[test]
+fn urlscan_archived_domains_and_url_hosts_become_scoped_candidates() {
+    let page =
+        parse_urlscan_subdomains("example.com", URLSCAN).expect("valid archived urlscan response");
+    assert_eq!(page.query_domain, "example.com");
+    assert_eq!(
+        page.candidates
+            .iter()
+            .map(String::as_str)
+            .collect::<Vec<_>>(),
+        ["api.example.com", "www.example.com"]
+    );
+    assert_eq!(
+        page.url_hints
+            .iter()
+            .map(String::as_str)
+            .collect::<Vec<_>>(),
+        ["https://api.example.com", "https://www.example.com"]
+    );
+}
+
+#[test]
+fn urlscan_archived_negative_fixture_drops_external_credentials_and_wildcards() {
+    assert!(
+        parse_urlscan_subdomains("example.com", URLSCAN_NEGATIVE)
+            .expect("valid urlscan negative fixture")
+            .candidates
+            .is_empty()
+    );
+}
+
+#[test]
+fn urlscan_archived_parser_rejects_invalid_shapes_and_too_many_results() {
+    assert_eq!(
+        parse_urlscan_subdomains("example.com", br#"{"results":{}}"#)
+            .unwrap_err()
+            .code,
+        ErrorCode::InvalidInput
+    );
+    let oversized = format!("{{\"results\":[{}]}}", vec!["{}"; 2_049].join(","));
+    assert_eq!(
+        parse_urlscan_subdomains("example.com", oversized.as_bytes())
+            .unwrap_err()
+            .code,
+        ErrorCode::LimitExceeded
+    );
+}
+
+#[test]
+fn urlscan_archive_import_builds_deterministic_lineage_and_hint_only_projection() {
+    let clock = FixedClock("2026-10-31T00:00:00.000Z".to_owned());
+    let first = import_urlscan_snapshot("example.com", URLSCAN, &clock)
+        .expect("urlscan fixture imports offline");
+    let second = import_urlscan_snapshot("example.com", URLSCAN, &clock)
+        .expect("the same urlscan fixture imports deterministically");
+
+    assert_eq!(first, second);
+    assert_eq!(first.response_sha256.len(), 64);
+    assert_eq!(first.event_graph.events.len(), 5);
+    let root = &first.event_graph.events[0];
+    assert_eq!(root.event_type, "URLSCAN_SEARCH_RESPONSE");
+    assert!(first.event_graph.events.iter().skip(1).all(|event| {
+        event.parent_id.as_deref() == Some(root.id.as_str())
+            && event.timestamp == "2026-10-31T00:00:00.000Z"
+            && event.metadata["temporalQualification"] == "source_time_unknown"
+    }));
+    assert_eq!(
+        first
+            .recon_graph
+            .assets
+            .iter()
+            .filter(|asset| asset.qualification.as_deref() == Some("hint"))
+            .count(),
+        4
+    );
+    assert_eq!(
+        first
+            .recon_graph
+            .unmapped_event_types
+            .get("URLSCAN_SEARCH_RESPONSE"),
+        Some(&1)
+    );
+}
+
+#[test]
+fn builtwith_archived_response_extracts_scoped_domains_and_redirect_hosts() {
+    let parsed = crate::parse_builtwith_subdomains(
+        "example.com",
+        include_bytes!("../../../fixtures/builtwith-response/positive.json"),
+    )
+    .expect("valid archived BuiltWith response");
+
+    assert_eq!(parsed.query_domain, "example.com");
+    assert_eq!(
+        parsed.candidates,
+        vec![
+            "api.example.com".to_owned(),
+            "shop.example.com".to_owned(),
+            "www.example.com".to_owned(),
+        ]
+    );
+}
+
+#[test]
+fn builtwith_archived_response_discards_outside_wildcard_and_invalid_hosts() {
+    let parsed = crate::parse_builtwith_subdomains(
+        "example.com",
+        include_bytes!("../../../fixtures/builtwith-response/negative.json"),
+    )
+    .expect("negative rows are safely discarded");
+
+    assert!(parsed.candidates.is_empty());
+}
+
+#[test]
+fn builtwith_archived_response_rejects_invalid_shape_and_limits() {
+    assert_eq!(
+        crate::parse_builtwith_subdomains("example.com", b"not-json")
+            .unwrap_err()
+            .code,
+        crate::ErrorCode::InvalidInput
+    );
+    let oversized = vec![b' '; 1024 * 1024 + 1];
+    assert_eq!(
+        crate::parse_builtwith_subdomains("example.com", &oversized)
+            .unwrap_err()
+            .code,
+        crate::ErrorCode::LimitExceeded
+    );
 }

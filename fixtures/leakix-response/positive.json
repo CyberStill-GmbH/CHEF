@@ -1,0 +1,8 @@
+[
+  { "subdomain": "ASDF.blacklanternsecurity.com.", "distinct_ips": 3 },
+  { "subdomain": "api.blacklanternsecurity.com", "distinct_ips": 1 },
+  { "subdomain": "outside.example.net", "distinct_ips": 1 },
+  { "subdomain": "*.wild.blacklanternsecurity.com", "distinct_ips": 1 },
+  { "subdomain": "blacklanternsecurity.com", "distinct_ips": 1 },
+  { "subdomain": "bad..label.blacklanternsecurity.com", "distinct_ips": 1 }
+]

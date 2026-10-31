@@ -1,8 +1,5 @@
 {
   "queryDomain": "example.com",
   "response": "<tr><td>api.example.com</td></tr><tr><td>www.example.com.</td></tr><tr><td>api.example.com</td></tr>",
-  "expectedCandidates": [
-    "api.example.com",
-    "www.example.com"
-  ]
+  "expectedCandidates": ["api.example.com", "www.example.com"]
 }

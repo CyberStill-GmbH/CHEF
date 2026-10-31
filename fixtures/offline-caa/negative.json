@@ -3,6 +3,9 @@
   "records": [
     { "type": "CAA", "answer": "0 issue \";\"" },
     { "type": "CAA", "answer": "0 unknown \"not-a-caa-target.example\"" },
-    { "type": "CAA", "answer": "0 iodef \"http://insecure.example.net/report\"" }
+    {
+      "type": "CAA",
+      "answer": "0 iodef \"http://insecure.example.net/report\""
+    }
   ]
 }

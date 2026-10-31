@@ -63,11 +63,8 @@ export function TargetSeedPanel({ client }: Props) {
     <section aria-labelledby="target-seed-title" className="target-seed-panel">
       <h2 id="target-seed-title">Clasificar semilla</h2>
       <p>
-        Rust clasifica semillas de red, correo, usuario, ruta, app móvil y
-        patrón. Solo analiza el texto recibido: no accede al disco, descarga
-        apps, evalúa patrones, consulta fuentes ni resuelve hosts. Una
-        organización o un host de correo son candidatos, no prueban propiedad.
-        Ninguna entrada se agrega al scope ni inicia reconocimiento.
+        Clasifica texto localmente: sin red ni disco, no añade al scope ni
+        acredita propiedad.
       </p>
       <form
         onSubmit={(event) => {

@@ -70,6 +70,7 @@ describe('AssetList', () => {
     const user = userEvent.setup();
     const asset = fixtureSnapshot.assets[0]!;
     render(<App client={clientFor(fixtureSnapshot)} />);
+    await user.click(screen.getByRole('button', { name: 'Evidencia' }));
 
     await user.click(await screen.findByText(asset.key));
 
@@ -82,6 +83,7 @@ describe('AssetList', () => {
     const user = userEvent.setup();
     const asset = fixtureSnapshot.assets[0]!;
     render(<App client={clientFor(fixtureSnapshot)} />);
+    await user.click(screen.getByRole('button', { name: 'Evidencia' }));
     await screen.findByText(asset.key);
     const button = buttonFor(asset);
     button.focus();
@@ -95,6 +97,7 @@ describe('AssetList', () => {
     const user = userEvent.setup();
     const asset = fixtureSnapshot.assets[1]!;
     render(<App client={clientFor(fixtureSnapshot)} />);
+    await user.click(screen.getByRole('button', { name: 'Evidencia' }));
     await screen.findByText(asset.key);
     const button = buttonFor(asset);
 
@@ -112,6 +115,7 @@ describe('AssetList', () => {
     const user = userEvent.setup();
     const asset = fixtureSnapshot.assets[0]!;
     render(<App client={clientFor(fixtureSnapshot)} />);
+    await user.click(screen.getByRole('button', { name: 'Evidencia' }));
 
     await user.click(await screen.findByText(asset.key));
     const heading = screen.getByRole('heading', { name: 'Asset seleccionado' });
@@ -134,7 +138,9 @@ describe('AssetList', () => {
   });
 
   it('does not select an asset automatically', async () => {
+    const user = userEvent.setup();
     render(<App client={clientFor(fixtureSnapshot)} />);
+    await user.click(screen.getByRole('button', { name: 'Evidencia' }));
 
     await screen.findByRole('heading', { name: 'Assets disponibles' });
     expect(
@@ -151,6 +157,7 @@ describe('AssetList', () => {
     const originalClient = clientFor(fixtureSnapshot);
     const reducedClient = clientFor(withoutAsset(selected.id));
     const view = render(<App client={originalClient} />);
+    await user.click(screen.getByRole('button', { name: 'Evidencia' }));
 
     await user.click(await screen.findByText(selected.key));
     expect(buttonFor(selected)).toHaveAttribute('aria-pressed', 'true');

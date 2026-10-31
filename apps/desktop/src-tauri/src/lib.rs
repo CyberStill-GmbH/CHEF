@@ -1,7 +1,13 @@
-use std::{collections::HashMap, path::PathBuf};
+use std::{
+    collections::{BTreeMap, HashMap},
+    path::PathBuf,
+};
 
-use chef_application::{ImportCancellation, ImportJobEvent, spawn_bbot_import_job_with_config};
-use chef_core::{Clock, ScopePolicy, Snapshot, SystemClock};
+use chef_application::{
+    ImportCancellation, ImportJobEvent, import_censys_ip_response, import_urlscan_snapshot,
+    spawn_bbot_import_job_with_config,
+};
+use chef_core::{Clock, ScopePolicy, Snapshot, SystemClock, deterministic_id, digest_bytes};
 use chef_storage::LocalSnapshotStore;
 use serde::Serialize;
 use tauri::{AppHandle, Emitter, Manager, State};
@@ -54,6 +60,48 @@ struct ScanLogPayload {
     event_type: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     observed_at: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ReconGraphProgressPayload {
+    schema_version: &'static str,
+    request_id: String,
+    job_id: String,
+    sequence: u64,
+    phase: &'static str,
+    assets: Vec<chef_core::ReconAsset>,
+    evidence: Vec<chef_core::ReconEvidence>,
+    relationships: Vec<chef_core::ReconRelationship>,
+    unmapped_event_types: BTreeMap<String, usize>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct CensysIpImportSummaryDto {
+    schema_version: &'static str,
+    import_id: String,
+    target_ip: String,
+    response_sha256: String,
+    imported_at: String,
+    event_count: usize,
+    asset_count: usize,
+    relationship_count: usize,
+    unprojected_event_types: BTreeMap<String, usize>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct UrlScanImportSummaryDto {
+    schema_version: &'static str,
+    import_id: String,
+    query_domain: String,
+    response_sha256: String,
+    imported_at: String,
+    event_count: usize,
+    asset_count: usize,
+    relationship_count: usize,
+    unprojected_event_types: BTreeMap<String, usize>,
 }
 
 #[tauri::command]
@@ -109,6 +157,285 @@ async fn import_bbot_jsonl(
         request_id,
     )
     .await
+}
+
+#[tauri::command]
+async fn import_censys_host_response(
+    app: AppHandle,
+    state: State<'_, StoreSlot>,
+    request_id: String,
+    target_ip: String,
+    response_json: String,
+) -> Result<CensysIpImportSummaryDto, String> {
+    validate_request_id(&request_id)?;
+    let bytes = response_json.into_bytes();
+    if bytes.len() > 2 * 1024 * 1024 {
+        return Err("La respuesta Censys supera el máximo de 2 MiB CHEF".to_owned());
+    }
+    let job_id = deterministic_id(
+        "job",
+        &["censys-hosts-ip", &request_id, &digest_bytes(&bytes)],
+    );
+    let mut sequence = 1;
+    app.emit(
+        "scan-log",
+        ScanLogPayload {
+            schema_version: "1.2.0",
+            job_id: job_id.clone(),
+            request_id: request_id.clone(),
+            sequence,
+            phase: "started",
+            message: "Importación local de respuesta Censys iniciada.".to_owned(),
+            event_type: None,
+            observed_at: None,
+        },
+    )
+    .map_err(|_| "No se pudo enviar el evento de actividad CHEF".to_owned())?;
+
+    let imported = match import_censys_ip_response(target_ip, bytes, SystemClock.now()).await {
+        Ok(imported) => imported,
+        Err(error) => {
+            sequence += 1;
+            let _ = app.emit(
+                "scan-log",
+                ScanLogPayload {
+                    schema_version: "1.2.0",
+                    job_id,
+                    request_id,
+                    sequence,
+                    phase: "failed",
+                    message: "La respuesta archivada no pudo validarse.".to_owned(),
+                    event_type: None,
+                    observed_at: None,
+                },
+            );
+            return Err(error.message.to_owned());
+        }
+    };
+    sequence += 1;
+    app.emit(
+        "scan-log",
+        ScanLogPayload {
+            schema_version: "1.2.0",
+            job_id: job_id.clone(),
+            request_id: request_id.clone(),
+            sequence,
+            phase: "validated",
+            message: "Respuesta archivada normalizada como pistas históricas.".to_owned(),
+            event_type: None,
+            observed_at: None,
+        },
+    )
+    .map_err(|_| "No se pudo enviar el evento de actividad CHEF".to_owned())?;
+
+    let mut slot = state.store.lock().await;
+    if slot.is_none() {
+        *slot = Some(
+            LocalSnapshotStore::open(&state.database_path)
+                .await
+                .map_err(|error| error.to_string())?,
+        );
+    }
+    let store = slot.as_ref().expect("el almacén se abrió arriba");
+    let import_id = store
+        .save_censys_ip_import(&imported)
+        .await
+        .map_err(|error| error.to_string())?;
+    drop(slot);
+
+    sequence += 1;
+    app.emit(
+        "scan-log",
+        ScanLogPayload {
+            schema_version: "1.2.0",
+            job_id: job_id.clone(),
+            request_id: request_id.clone(),
+            sequence,
+            phase: "stored",
+            message: "Evidencia Censys guardada en SurrealDB local.".to_owned(),
+            event_type: None,
+            observed_at: None,
+        },
+    )
+    .map_err(|_| "No se pudo enviar el evento de actividad CHEF".to_owned())?;
+    sequence += 1;
+    app.emit(
+        "scan-log",
+        ScanLogPayload {
+            schema_version: "1.2.0",
+            job_id,
+            request_id,
+            sequence,
+            phase: "completed",
+            message: "Importación offline de Censys finalizada.".to_owned(),
+            event_type: None,
+            observed_at: None,
+        },
+    )
+    .map_err(|_| "No se pudo enviar el evento de actividad CHEF".to_owned())?;
+
+    let imported_at = imported
+        .event_graph
+        .events
+        .first()
+        .map(|event| event.timestamp.clone())
+        .unwrap_or_default();
+    Ok(CensysIpImportSummaryDto {
+        schema_version: "1.0.0",
+        import_id,
+        target_ip: imported.target_ip,
+        response_sha256: imported.response_sha256,
+        imported_at,
+        event_count: imported.event_graph.events.len(),
+        asset_count: imported.recon_graph.assets.len(),
+        relationship_count: imported.recon_graph.relationships.len(),
+        unprojected_event_types: imported.recon_graph.unmapped_event_types,
+    })
+}
+
+#[tauri::command]
+async fn import_urlscan_response(
+    app: AppHandle,
+    state: State<'_, StoreSlot>,
+    request_id: String,
+    query_domain: String,
+    response_json: String,
+) -> Result<UrlScanImportSummaryDto, String> {
+    validate_request_id(&request_id)?;
+    let bytes = response_json.into_bytes();
+    if bytes.len() > 2 * 1024 * 1024 {
+        return Err("La respuesta urlscan supera el máximo de 2 MiB CHEF".to_owned());
+    }
+    let job_id = deterministic_id(
+        "job",
+        &["urlscan-snapshot", &request_id, &digest_bytes(&bytes)],
+    );
+    let mut sequence = 1;
+    app.emit(
+        "scan-log",
+        ScanLogPayload {
+            schema_version: "1.2.0",
+            job_id: job_id.clone(),
+            request_id: request_id.clone(),
+            sequence,
+            phase: "started",
+            message: "Importación local de respuesta urlscan iniciada.".to_owned(),
+            event_type: None,
+            observed_at: None,
+        },
+    )
+    .map_err(|_| "No se pudo enviar el evento de actividad CHEF".to_owned())?;
+
+    let imported = match import_urlscan_snapshot(query_domain, bytes, SystemClock.now()).await {
+        Ok(imported) => imported,
+        Err(error) => {
+            sequence += 1;
+            let _ = app.emit(
+                "scan-log",
+                ScanLogPayload {
+                    schema_version: "1.2.0",
+                    job_id,
+                    request_id,
+                    sequence,
+                    phase: "failed",
+                    message: "La respuesta archivada no pudo validarse.".to_owned(),
+                    event_type: None,
+                    observed_at: None,
+                },
+            );
+            return Err(error.message.to_owned());
+        }
+    };
+    sequence += 1;
+    app.emit(
+        "scan-log",
+        ScanLogPayload {
+            schema_version: "1.2.0",
+            job_id: job_id.clone(),
+            request_id: request_id.clone(),
+            sequence,
+            phase: "validated",
+            message: "Respuesta archivada normalizada como pistas históricas.".to_owned(),
+            event_type: None,
+            observed_at: None,
+        },
+    )
+    .map_err(|_| "No se pudo enviar el evento de actividad CHEF".to_owned())?;
+
+    let mut slot = state.store.lock().await;
+    if slot.is_none() {
+        match LocalSnapshotStore::open(&state.database_path).await {
+            Ok(store) => *slot = Some(store),
+            Err(error) => {
+                drop(slot);
+                emit_urlscan_failure(&app, &job_id, &request_id, sequence + 1);
+                return Err(error.to_string());
+            }
+        }
+    }
+    let save_result = slot
+        .as_ref()
+        .expect("el almacén se abrió arriba")
+        .save_urlscan_import(&imported)
+        .await;
+    let import_id = match save_result {
+        Ok(import_id) => import_id,
+        Err(error) => {
+            drop(slot);
+            emit_urlscan_failure(&app, &job_id, &request_id, sequence + 1);
+            return Err(error.to_string());
+        }
+    };
+    drop(slot);
+
+    sequence += 1;
+    app.emit(
+        "scan-log",
+        ScanLogPayload {
+            schema_version: "1.2.0",
+            job_id: job_id.clone(),
+            request_id: request_id.clone(),
+            sequence,
+            phase: "stored",
+            message: "Evidencia urlscan guardada en SurrealDB local.".to_owned(),
+            event_type: None,
+            observed_at: None,
+        },
+    )
+    .map_err(|_| "No se pudo enviar el evento de actividad CHEF".to_owned())?;
+    sequence += 1;
+    app.emit(
+        "scan-log",
+        ScanLogPayload {
+            schema_version: "1.2.0",
+            job_id,
+            request_id,
+            sequence,
+            phase: "completed",
+            message: "Importación offline de urlscan finalizada.".to_owned(),
+            event_type: None,
+            observed_at: None,
+        },
+    )
+    .map_err(|_| "No se pudo enviar el evento de actividad CHEF".to_owned())?;
+
+    let imported_at = imported
+        .event_graph
+        .events
+        .first()
+        .map(|event| event.timestamp.clone())
+        .unwrap_or_default();
+    Ok(UrlScanImportSummaryDto {
+        schema_version: "1.0.0",
+        import_id,
+        query_domain: imported.query_domain,
+        response_sha256: imported.response_sha256,
+        imported_at,
+        event_count: imported.event_graph.events.len(),
+        asset_count: imported.recon_graph.assets.len(),
+        relationship_count: imported.recon_graph.relationships.len(),
+        unprojected_event_types: imported.recon_graph.unmapped_event_types,
+    })
 }
 
 async fn import_bbot_payload(
@@ -261,6 +588,7 @@ async fn import_bbot_payload(
     }
     let imported = import_result.map_err(|error| error.message.to_owned())?;
 
+    let job_id = job_id.ok_or_else(|| "La tarea CHEF no emitió su identificador".to_owned())?;
     let mut slot = state.store.lock().await;
     if slot.is_none() {
         *slot = Some(
@@ -275,7 +603,11 @@ async fn import_bbot_payload(
         .await
         .map_err(|error| error.to_string())?;
 
-    let job_id = job_id.ok_or_else(|| "La tarea CHEF no emitió su identificador".to_owned())?;
+    if let Some(graph) = imported.recon_graph.as_ref() {
+        sequence =
+            emit_recon_graph_progress(&app, request_id.as_str(), job_id.as_str(), sequence, graph)?;
+    }
+
     sequence += 1;
     app.emit(
         "scan-log",
@@ -308,6 +640,88 @@ async fn import_bbot_payload(
     .map_err(|_| "No se pudo enviar el evento de actividad CHEF".to_owned())?;
 
     Ok(imported.snapshot)
+}
+
+fn emit_recon_graph_progress(
+    app: &AppHandle,
+    request_id: &str,
+    job_id: &str,
+    mut sequence: u64,
+    graph: &chef_core::ChefReconGraph,
+) -> Result<u64, String> {
+    const BATCH_SIZE: usize = 100;
+
+    for batch in graph.evidence.chunks(BATCH_SIZE) {
+        sequence += 1;
+        app.emit(
+            "recon-graph-progress",
+            ReconGraphProgressPayload {
+                schema_version: "1.0.0",
+                request_id: request_id.to_owned(),
+                job_id: job_id.to_owned(),
+                sequence,
+                phase: "evidence",
+                assets: Vec::new(),
+                evidence: batch.to_vec(),
+                relationships: Vec::new(),
+                unmapped_event_types: BTreeMap::new(),
+            },
+        )
+        .map_err(|_| "No se pudo emitir el avance del grafo CHEF".to_owned())?;
+    }
+    for batch in graph.assets.chunks(BATCH_SIZE) {
+        sequence += 1;
+        app.emit(
+            "recon-graph-progress",
+            ReconGraphProgressPayload {
+                schema_version: "1.0.0",
+                request_id: request_id.to_owned(),
+                job_id: job_id.to_owned(),
+                sequence,
+                phase: "assets",
+                assets: batch.to_vec(),
+                evidence: Vec::new(),
+                relationships: Vec::new(),
+                unmapped_event_types: BTreeMap::new(),
+            },
+        )
+        .map_err(|_| "No se pudo emitir el avance del grafo CHEF".to_owned())?;
+    }
+    for batch in graph.relationships.chunks(BATCH_SIZE) {
+        sequence += 1;
+        app.emit(
+            "recon-graph-progress",
+            ReconGraphProgressPayload {
+                schema_version: "1.0.0",
+                request_id: request_id.to_owned(),
+                job_id: job_id.to_owned(),
+                sequence,
+                phase: "relationships",
+                assets: Vec::new(),
+                evidence: Vec::new(),
+                relationships: batch.to_vec(),
+                unmapped_event_types: BTreeMap::new(),
+            },
+        )
+        .map_err(|_| "No se pudo emitir el avance del grafo CHEF".to_owned())?;
+    }
+    sequence += 1;
+    app.emit(
+        "recon-graph-progress",
+        ReconGraphProgressPayload {
+            schema_version: "1.0.0",
+            request_id: request_id.to_owned(),
+            job_id: job_id.to_owned(),
+            sequence,
+            phase: "completed",
+            assets: Vec::new(),
+            evidence: Vec::new(),
+            relationships: Vec::new(),
+            unmapped_event_types: graph.unmapped_event_types.clone(),
+        },
+    )
+    .map_err(|_| "No se pudo emitir el avance del grafo CHEF".to_owned())?;
+    Ok(sequence)
 }
 
 #[tauri::command]
@@ -388,6 +802,66 @@ async fn load_chef_recon_graph(
         .await
         .map_err(|error| error.to_string())?
         .ok_or_else(|| "No existe un grafo CHEF para esa importación".to_owned())
+}
+
+#[tauri::command]
+async fn load_censys_ip_recon_graph(
+    import_id: String,
+    state: State<'_, StoreSlot>,
+) -> Result<chef_core::ChefReconGraph, String> {
+    let mut slot = state.store.lock().await;
+    if slot.is_none() {
+        *slot = Some(
+            LocalSnapshotStore::open(&state.database_path)
+                .await
+                .map_err(|error| error.to_string())?,
+        );
+    }
+    slot.as_ref()
+        .expect("el almacén se abrió arriba")
+        .load_censys_ip_import(&import_id)
+        .await
+        .map_err(|error| error.to_string())?
+        .map(|result| result.recon_graph)
+        .ok_or_else(|| "No existe una importación Censys para ese identificador".to_owned())
+}
+
+#[tauri::command]
+async fn load_urlscan_recon_graph(
+    import_id: String,
+    state: State<'_, StoreSlot>,
+) -> Result<chef_core::ChefReconGraph, String> {
+    let mut slot = state.store.lock().await;
+    if slot.is_none() {
+        *slot = Some(
+            LocalSnapshotStore::open(&state.database_path)
+                .await
+                .map_err(|error| error.to_string())?,
+        );
+    }
+    slot.as_ref()
+        .expect("el almacén se abrió arriba")
+        .load_urlscan_import(&import_id)
+        .await
+        .map_err(|error| error.to_string())?
+        .map(|result| result.recon_graph)
+        .ok_or_else(|| "No existe una importación urlscan para ese identificador".to_owned())
+}
+
+fn emit_urlscan_failure(app: &AppHandle, job_id: &str, request_id: &str, sequence: u64) {
+    let _ = app.emit(
+        "scan-log",
+        ScanLogPayload {
+            schema_version: "1.2.0",
+            job_id: job_id.to_owned(),
+            request_id: request_id.to_owned(),
+            sequence,
+            phase: "failed",
+            message: "No se pudo guardar la evidencia urlscan en SurrealDB local.".to_owned(),
+            event_type: None,
+            observed_at: None,
+        },
+    );
 }
 
 #[tauri::command]
@@ -642,8 +1116,12 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             load_offline_demo_snapshot,
             import_bbot_jsonl,
+            import_censys_host_response,
+            import_urlscan_response,
             cancel_import_job,
             load_chef_recon_graph,
+            load_censys_ip_recon_graph,
+            load_urlscan_recon_graph,
             load_chef_event_statistics,
             export_chef_snapshot,
             export_chef_observed_domains,

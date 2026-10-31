@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://chef.local/contracts/archived-web-marker-candidate.schema.json",
+  "title": "Candidato derivado de marcador web archivado",
+  "description": "Marcadores descriptivos vistos en un cuerpo HTTP importado. No confirman plataforma, versión ni vulnerabilidad.",
+  "type": "object",
+  "properties": {
+    "kind": {
+      "enum": ["telerik_response_markers", "dotnetnuke_response_markers"]
+    },
+    "title": { "type": "string", "maxLength": 128 },
+    "responseOrigin": { "type": "string", "format": "uri", "maxLength": 8192 },
+    "markers": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 128,
+      "items": { "type": "string", "minLength": 1, "maxLength": 128 }
+    }
+  },
+  "required": ["kind", "title", "responseOrigin", "markers"],
+  "additionalProperties": false
+}

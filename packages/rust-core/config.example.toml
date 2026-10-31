@@ -14,9 +14,13 @@ allowed_protocols = ["tcp"]
 max_scope_distance = 0
 
 [modules]
-import_bbot_events = true
 chef_org_stub_hints = false
 chef_dns_mutation_hints = false
+chef_git_archive_hints = false
+chef_robots_archive_hints = false
+chef_web_parameter_hints = false
+chef_archived_web_marker_hints = false
+chef_security_contact_url_hints = false
 
 [sources.shodan]
 enabled = false

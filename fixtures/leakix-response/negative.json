@@ -1,0 +1,6 @@
+[
+  { "subdomain": "outside.example.net" },
+  { "subdomain": "*.wild.example.com" },
+  { "subdomain": "example.com" },
+  { "subdomain": "bad..label.example.com" }
+]

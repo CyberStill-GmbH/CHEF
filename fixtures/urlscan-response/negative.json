@@ -1,0 +1,21 @@
+{
+  "results": [
+    {
+      "task": { "domain": "example.com", "url": "https://example.com/" },
+      "page": {
+        "domain": "outside.example.net",
+        "url": "https://outside.example.net/"
+      }
+    },
+    {
+      "task": {
+        "domain": "*.wild.example.com",
+        "url": "https://user:secret@www.example.com/path"
+      },
+      "page": {
+        "domain": "bad..label.example.com",
+        "url": "javascript:alert(1)"
+      }
+    }
+  ]
+}

@@ -48,12 +48,15 @@ export function useSnapshot(
     let unlisten: (() => void) | undefined;
     void (async () => {
       try {
-        unlisten = await client.listenScanLogs?.(
-          onScanLog ?? (() => undefined),
-          {
-            signal: controller.signal,
-          },
-        );
+        if (client.listenScanLogs !== undefined) {
+          unlisten = await client.listenScanLogs(
+            onScanLog ?? (() => undefined),
+            {
+              signal: controller.signal,
+            },
+          );
+        }
+        if (controller.signal.aborted) return;
         const snapshot = await client.loadSnapshot({
           signal: controller.signal,
         });

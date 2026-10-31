@@ -12,6 +12,7 @@ import { decodeWebEvidenceReportExport } from '../contracts/decodeWebEvidenceRep
 import type { ApiClient } from './ApiClient';
 
 export class FixtureApiClient implements ApiClient {
+  readonly runtimeMode = 'demo' as const;
   async loadConfig(options?: { signal?: AbortSignal }) {
     options?.signal?.throwIfAborted();
     return decodeChefConfig(config);
@@ -24,31 +25,35 @@ export class FixtureApiClient implements ApiClient {
     options?.signal?.throwIfAborted();
     const messages = [
       {
-        schemaVersion: '1.0.0',
+        schemaVersion: '1.2.0',
         jobId: 'job:browser-demo',
+        requestId: '00000000-0000-4000-8000-000000000001',
         sequence: 1,
         phase: 'started',
         message: 'Simulación offline CHEF iniciada.',
       },
       {
-        schemaVersion: '1.0.0',
+        schemaVersion: '1.2.0',
         jobId: 'job:browser-demo',
+        requestId: '00000000-0000-4000-8000-000000000001',
         sequence: 2,
         phase: 'event',
-        message: 'Evento de evidencia BBOT procesado.',
+        message: 'Evento de evidencia CHEF procesado.',
         eventType: 'OPEN_TCP_PORT',
         observedAt: '2026-10-18T12:00:00Z',
       },
       {
-        schemaVersion: '1.0.0',
+        schemaVersion: '1.2.0',
         jobId: 'job:browser-demo',
+        requestId: '00000000-0000-4000-8000-000000000001',
         sequence: 3,
         phase: 'validated',
         message: 'Fixture validado; resultado listo.',
       },
       {
-        schemaVersion: '1.0.0',
+        schemaVersion: '1.2.0',
         jobId: 'job:browser-demo',
+        requestId: '00000000-0000-4000-8000-000000000001',
         sequence: 4,
         phase: 'completed',
         message: 'Simulación CHEF finalizada.',

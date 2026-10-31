@@ -36,6 +36,7 @@ describe('EvidencePanel', () => {
   it('appears after selecting an asset in App', async () => {
     const user = userEvent.setup();
     render(<App client={clientFor(fixtureSnapshot)} />);
+    await user.click(screen.getByRole('button', { name: 'Evidencia' }));
 
     await user.click(await screen.findByText(selectedAsset.key));
 
@@ -190,6 +191,7 @@ describe('EvidencePanel', () => {
     const user = userEvent.setup();
     const nextAsset = fixtureSnapshot.assets[1]!;
     render(<App client={clientFor(fixtureSnapshot)} />);
+    await user.click(screen.getByRole('button', { name: 'Evidencia' }));
 
     await user.click(await screen.findByText(selectedAsset.key));
     let assetDetails = within(namedSection('Asset seleccionado'));

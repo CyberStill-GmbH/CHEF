@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 
 import type { ApiClient } from '../api/ApiClient';
 import type { SnapshotDto } from '../contracts/snapshot';
@@ -198,96 +198,105 @@ export function SnapshotExportButton({
   }
 
   return (
-    <section aria-labelledby="snapshot-export-title">
+    <section className="export-panel" aria-labelledby="snapshot-export-title">
       <h2 id="snapshot-export-title">Exportación local</h2>
-      <button
-        type="button"
-        disabled={busy || client.exportSnapshot === undefined}
-        onClick={() => void exportSnapshot()}
-      >
-        {busy ? 'Preparando…' : 'Descargar snapshot JSON'}
-      </button>
-      <button
-        type="button"
-        disabled={
-          busy || client.exportObservedDomains === undefined || !hasReconGraph
-        }
-        onClick={() => void exportObservedDomains()}
-      >
-        {busy ? 'Preparando…' : 'Descargar dominios observados JSON'}
-      </button>
-      <p>
-        La lista incluye nombres sustentados por eventos DNS_NAME directos.
-        Excluye candidatos y nombres sin resolver; no afirma alcance ni
-        propiedad.
-      </p>
-      <button
-        type="button"
-        disabled={
-          busy || client.exportEvidenceCsv === undefined || !hasReconGraph
-        }
-        onClick={() => void exportEvidenceCsv()}
-      >
-        {busy ? 'Preparando…' : 'Descargar evidencia CHEF CSV'}
-      </button>
-      <p>
-        El CSV mantiene IDs y linaje, conserva evidencia sin activo adaptado y
-        no incluye payloads originales ni nombres de módulo no verificados;
-        conserva claves CHEF proyectadas y no afirma alcance.
-      </p>
-      <button
-        type="button"
-        disabled={
-          busy || client.exportNmapEvidence === undefined || !hasReconGraph
-        }
-        onClick={() => void exportNmapEvidence()}
-      >
-        {busy ? 'Preparando…' : 'Descargar XML CHEF (vocabulario Nmap)'}
-      </button>
-      <p>
-        Incluye solo puertos TCP/UDP con evidencia directa y relación observada
-        a una IP. No es un resultado de escaneo actual, no afirma alcance y no
-        cumple el DTD oficial de Nmap ni garantiza interoperabilidad con sus
-        herramientas.
-      </p>
-      <button
-        type="button"
-        disabled={
-          busy || client.exportAssetInventory === undefined || !hasReconGraph
-        }
-        onClick={() => void exportAssetInventory()}
-      >
-        {busy ? 'Preparando…' : 'Descargar inventario de activos CSV'}
-      </button>
-      <p>
-        Resume hosts e IP, puertos abiertos, endpoints, tecnologías e IDs de
-        hallazgos candidatos solo cuando el grafo conserva la relación y
-        evidencia. No exporta descripciones ni clasifica riesgo o alcance.
-      </p>
-      <button
-        type="button"
-        disabled={
-          busy || client.exportWebEvidenceReport === undefined || !hasReconGraph
-        }
-        onClick={() => void exportWebEvidenceReport()}
-      >
-        {busy ? 'Preparando…' : 'Descargar informe web HTML'}
-      </button>
-      <p>
-        Informe estático y local de endpoints, tecnologías, hallazgos candidatos
-        y evidencia relacionada. No carga recursos remotos ni afirma alcance;
-        tecnología y candidato se relacionan con el host, no con una URL
-        individual.
-      </p>
-      <details>
+      <div className="export-grid">
+        <ExportOption
+          title="Snapshot"
+          description="Datos completos del snapshot CHEF en JSON."
+        >
+          <button
+            type="button"
+            disabled={busy || client.exportSnapshot === undefined}
+            onClick={() => void exportSnapshot()}
+          >
+            {busy ? 'Preparando…' : 'Descargar snapshot JSON'}
+          </button>
+        </ExportOption>
+        <ExportOption
+          title="Dominios observados"
+          description="Solo nombres con eventos DNS_NAME directos; excluye candidatos y nombres sin resolver."
+        >
+          <button
+            type="button"
+            disabled={
+              busy ||
+              client.exportObservedDomains === undefined ||
+              !hasReconGraph
+            }
+            onClick={() => void exportObservedDomains()}
+          >
+            {busy ? 'Preparando…' : 'Descargar dominios observados JSON'}
+          </button>
+        </ExportOption>
+        <ExportOption
+          title="Evidencia"
+          description="CSV con IDs y linaje. Omite payloads originales y no afirma alcance."
+        >
+          <button
+            type="button"
+            disabled={
+              busy || client.exportEvidenceCsv === undefined || !hasReconGraph
+            }
+            onClick={() => void exportEvidenceCsv()}
+          >
+            {busy ? 'Preparando…' : 'Descargar evidencia CHEF CSV'}
+          </button>
+        </ExportOption>
+        <ExportOption
+          title="Puertos observados"
+          description="XML CHEF con evidencia directa de puertos; no es un escaneo actual ni cumple el DTD oficial de Nmap."
+        >
+          <button
+            type="button"
+            disabled={
+              busy || client.exportNmapEvidence === undefined || !hasReconGraph
+            }
+            onClick={() => void exportNmapEvidence()}
+          >
+            {busy ? 'Preparando…' : 'Descargar XML CHEF (vocabulario Nmap)'}
+          </button>
+        </ExportOption>
+        <ExportOption
+          title="Inventario"
+          description="Hosts, IP, puertos, endpoints, tecnologías y hallazgos candidatos sustentados por relaciones."
+        >
+          <button
+            type="button"
+            disabled={
+              busy ||
+              client.exportAssetInventory === undefined ||
+              !hasReconGraph
+            }
+            onClick={() => void exportAssetInventory()}
+          >
+            {busy ? 'Preparando…' : 'Descargar inventario de activos CSV'}
+          </button>
+        </ExportOption>
+        <ExportOption
+          title="Informe web"
+          description="Informe HTML estático y local; no carga recursos remotos ni clasifica riesgo."
+        >
+          <button
+            type="button"
+            disabled={
+              busy ||
+              client.exportWebEvidenceReport === undefined ||
+              !hasReconGraph
+            }
+            onClick={() => void exportWebEvidenceReport()}
+          >
+            {busy ? 'Preparando…' : 'Descargar informe web HTML'}
+          </button>
+        </ExportOption>
+      </div>
+      <details className="sensitive-export">
         <summary>
-          Exportar correos observados (incluye datos personales)
+          Exportar correos observados · contiene datos personales
         </summary>
         <p>
-          Al confirmar, descargarás direcciones de eventos EMAIL_ADDRESS ya
-          presentes en esta importación en un JSON local. La exportación no
-          envía datos, no deriva correos desde nombres de usuario y declara que
-          el scope no está acreditado.
+          Descarga en JSON las direcciones EMAIL_ADDRESS ya presentes en esta
+          importación. No envía datos ni deriva correos de nombres de usuario.
         </p>
         <button
           type="button"
@@ -303,6 +312,26 @@ export function SnapshotExportButton({
         {status}
       </p>
     </section>
+  );
+}
+
+function ExportOption({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description: string;
+  children: ReactNode;
+}) {
+  return (
+    <article className="export-option">
+      <div>
+        <h3>{title}</h3>
+        <p>{description}</p>
+      </div>
+      {children}
+    </article>
   );
 }
 

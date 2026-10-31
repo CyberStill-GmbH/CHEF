@@ -11,8 +11,12 @@ import type { NmapEvidenceExportDto } from '../contracts/nmap-evidence-export';
 import type { AssetInventoryExportDto } from '../contracts/asset-inventory-export';
 import type { WebEvidenceReportExportDto } from '../contracts/web-evidence-report-export';
 import type { ObservedEmailExportDto } from '../contracts/observed-email-export';
+import type { CensysIpImportSummaryDto } from '../contracts/censys-ip-import';
+import type { UrlScanImportSummaryDto } from '../contracts/urlscan-import';
+import type { ReconGraphProgressDto } from '../contracts/recon-graph-progress';
 
 export interface ApiClient {
+  runtimeMode?: 'desktop' | 'demo';
   loadSnapshot(options?: { signal?: AbortSignal }): Promise<SnapshotDto>;
   exportSnapshot?(
     runId: string,
@@ -57,8 +61,27 @@ export interface ApiClient {
       signal?: AbortSignal;
       presetId?: string;
       onPhase?: (phase: ScanLogPhase) => void;
+      onReconGraphProgress?: (event: ReconGraphProgressDto) => void;
     },
   ): Promise<SnapshotDto>;
+  importCensysIpResponse?(
+    targetIp: string,
+    responseJson: string,
+    options?: { onPhase?: (phase: ScanLogPhase) => void },
+  ): Promise<CensysIpImportSummaryDto>;
+  loadCensysIpReconGraph?(
+    importId: string,
+    options?: { signal?: AbortSignal },
+  ): Promise<ReconGraphDto>;
+  importUrlScanResponse?(
+    queryDomain: string,
+    responseJson: string,
+    options?: { onPhase?: (phase: ScanLogPhase) => void },
+  ): Promise<UrlScanImportSummaryDto>;
+  loadUrlScanReconGraph?(
+    importId: string,
+    options?: { signal?: AbortSignal },
+  ): Promise<ReconGraphDto>;
   listenScanLogs?(
     listener: (event: ScanLogDto) => void,
     options?: { signal?: AbortSignal },
