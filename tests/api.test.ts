@@ -410,3 +410,42 @@ describe('CHEF API body limit', () => {
     }
   });
 });
+
+describe('private OAuth instance', () => {
+  it('issues sessions only for explicitly enabled provider user IDs', async () => {
+    const deps = {
+      ...dependencies(),
+      allowedOAuthUserIds: new Set(['1']),
+    };
+    const started = await start(deps);
+    try {
+      for (const [code, expectedStatus] of [
+        ['first', 200],
+        ['second', 403],
+      ] as const) {
+        const auth = await fetch(`${started.base}/auth/github/start`, {
+          method: 'POST',
+        });
+        const state = text(record(await auth.json())['state']);
+        const result = await fetch(
+          `${started.base}/auth/github/callback?code=${code}&state=${encodeURIComponent(state)}`,
+        );
+        assert.equal(result.status, expectedStatus);
+        const body = record(await result.json());
+        if (expectedStatus === 403) {
+          assert.equal(body['error'], 'FORBIDDEN');
+          assert.equal(body['token'], undefined);
+        }
+      }
+      const oldToken = deps.sessions.issue('github:2');
+      const revoked = await fetch(`${started.base}/projects`, {
+        headers: { authorization: `Bearer ${oldToken}` },
+      });
+      assert.equal(revoked.status, 403);
+    } finally {
+      await new Promise<void>((resolve) =>
+        started.server.close(() => resolve()),
+      );
+    }
+  });
+});

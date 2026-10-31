@@ -28,6 +28,7 @@ export interface ApiDependencies {
   sessions: SessionService;
   oauth: OAuthProvider;
   scopePolicy: ScopePolicy;
+  allowedOAuthUserIds?: ReadonlySet<string>;
   maxBodyBytes?: number;
 }
 
@@ -118,14 +119,26 @@ async function readJson(
 
 function authenticate(
   request: IncomingMessage,
-  sessions: SessionService,
+  dependencies: ApiDependencies,
 ): string {
   const header = request.headers.authorization;
   if (typeof header !== 'string' || !header.startsWith(BEARER))
     throw new ChefError('UNAUTHORIZED', 'Missing bearer token');
   const token = header.slice(BEARER.length).trim();
   if (token === '') throw new ChefError('UNAUTHORIZED', 'Missing bearer token');
-  return sessions.verify(token);
+  const userId = dependencies.sessions.verify(token);
+  if (dependencies.allowedOAuthUserIds) {
+    const prefix = `${dependencies.oauth.name}:`;
+    if (
+      !userId.startsWith(prefix) ||
+      !dependencies.allowedOAuthUserIds.has(userId.slice(prefix.length))
+    )
+      throw new ChefError(
+        'FORBIDDEN',
+        'Account is not enabled for this private instance',
+      );
+  }
+  return userId;
 }
 
 function queryParam(url: URL, name: string): string {
@@ -170,6 +183,14 @@ export function createChefApi(dependencies: ApiDependencies) {
           const state = queryParam(url, 'state');
           dependencies.sessions.verifyNonce(state, OAUTH_STATE_PURPOSE);
           const identity = await dependencies.oauth.exchange(code);
+          if (
+            dependencies.allowedOAuthUserIds &&
+            !dependencies.allowedOAuthUserIds.has(identity.providerUserId)
+          )
+            throw new ChefError(
+              'FORBIDDEN',
+              'GitHub account is not enabled for this private instance',
+            );
           const userId = `${dependencies.oauth.name}:${identity.providerUserId}`;
           sendJson(response, 200, {
             userId,
@@ -180,7 +201,7 @@ export function createChefApi(dependencies: ApiDependencies) {
         }
 
         if (method === 'GET' && path === '/projects') {
-          const userId = authenticate(request, dependencies.sessions);
+          const userId = authenticate(request, dependencies);
           sendJson(response, 200, {
             projects: await dependencies.listProjects.execute(userId),
           });
@@ -188,7 +209,7 @@ export function createChefApi(dependencies: ApiDependencies) {
         }
 
         if (method === 'POST' && path === '/projects') {
-          const userId = authenticate(request, dependencies.sessions);
+          const userId = authenticate(request, dependencies);
           const body = await readJson(request, limit);
           const name = body.name;
           if (typeof name !== 'string')
@@ -203,7 +224,7 @@ export function createChefApi(dependencies: ApiDependencies) {
 
         const importMatch = /^\/projects\/([^/]+)\/imports$/.exec(path);
         if (method === 'POST' && importMatch) {
-          const userId = authenticate(request, dependencies.sessions);
+          const userId = authenticate(request, dependencies);
           const projectId = decodeURIComponent(importMatch[1] ?? '');
           if (!XML_TYPE.test(contentTypeOf(request)))
             throw new ChefError('INVALID_INPUT', 'Import requires an XML body');
@@ -230,7 +251,7 @@ export function createChefApi(dependencies: ApiDependencies) {
 
         const snapshotMatch = /^\/projects\/([^/]+)\/snapshot$/.exec(path);
         if (method === 'GET' && snapshotMatch) {
-          const userId = authenticate(request, dependencies.sessions);
+          const userId = authenticate(request, dependencies);
           const projectId = decodeURIComponent(snapshotMatch[1] ?? '');
           const snapshot = await dependencies.readSnapshot.execute(
             projectId,

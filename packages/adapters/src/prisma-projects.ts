@@ -15,9 +15,9 @@ import type {
  * generador produce, para poder probar el mapeo con un cliente falso y compilar
  * sin generar el cliente. Al componer la API se pasa la instancia real.
  *
- * Estado: probado contra un cliente falso; **no ejecutado contra PostgreSQL**.
- * Antes de usarlo en producción hay que aplicar la migración y correr una prueba
- * de aislamiento con dos proyectos reales.
+ * Probado con cliente falso y con PostgreSQL 16 temporal mediante db:verify:
+ * dos usuarios/proyectos, persistencia al reiniciar y recuperación desde backup.
+ * La validación del entorno remoto sigue siendo un paso del despliegue.
  */
 
 export interface PrismaProjectRow {

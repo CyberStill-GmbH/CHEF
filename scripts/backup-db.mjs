@@ -1,64 +1,54 @@
 #!/usr/bin/env node
-import { spawnSync } from 'node:child_process';
-import { createHash } from 'node:crypto';
-import { createReadStream, mkdirSync } from 'node:fs';
+import { randomUUID } from 'node:crypto';
+import {
+  closeSync,
+  mkdirSync,
+  openSync,
+  renameSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { basename, join } from 'node:path';
+import { runDatabaseTool, sha256 } from './db-tools.mjs';
 
-/**
- * Backup lógico de PostgreSQL para CHEF.
- * Verificado en seco: validación de configuración y manifiesto de integridad.
- * La ejecución real queda pendiente hasta tener PostgreSQL y pg_dump.
- *
- * Uso: DATABASE_URL=... node scripts/backup-db.mjs [directorio]
- */
-
-function fail(message, code) {
-  console.error(`error: ${message}`);
-  process.exit(code);
+let temporary;
+try {
+  const directory = process.argv[2] ?? join('artifacts', 'backup');
+  if (process.argv.length > 3)
+    throw new Error('uso: npm run db:backup -- [directorio]');
+  if (!process.env.DATABASE_URL)
+    throw new Error('define DATABASE_URL (no la imprimas en logs)');
+  mkdirSync(directory, { recursive: true });
+  const stamp = new Date().toISOString().replace(/[-:.]/g, '');
+  const file = join(
+    directory,
+    `chef-${stamp}-${randomUUID().slice(0, 8)}.dump`,
+  );
+  temporary = `${file}.partial`;
+  const descriptor = openSync(temporary, 'wx', 0o600);
+  let mode;
+  try {
+    mode = runDatabaseTool(
+      'pg_dump',
+      ['--format=custom', '--no-owner', '--no-privileges', '--no-password'],
+      { output: descriptor },
+    );
+  } finally {
+    closeSync(descriptor);
+  }
+  const digest = await sha256(temporary);
+  renameSync(temporary, file);
+  temporary = undefined;
+  writeFileSync(`${file}.sha256`, `${digest}  ${basename(file)}\n`, {
+    mode: 0o600,
+    flag: 'wx',
+  });
+  console.log(`backup (${mode}): ${file}`);
+  console.log(`sha256: ${digest}`);
+} catch (error) {
+  if (temporary) rmSync(temporary, { force: true });
+  console.error(
+    `error: ${error instanceof Error ? error.message.replace(/postgres(?:ql)?:\/\/\S+/gi, '[URL omitida]') : 'backup fallido'}`,
+  );
+  process.exitCode = 1;
 }
-
-const databaseUrl = process.env['DATABASE_URL'];
-if (databaseUrl === undefined || databaseUrl.trim() === '')
-  fail('define DATABASE_URL (no la imprimas en logs)', 2);
-
-const outDir = process.argv[2] ?? join('artifacts', 'backup');
-mkdirSync(outDir, { recursive: true });
-
-const stamp = new Date()
-  .toISOString()
-  .replace(/[-:]/g, '')
-  .replace(/\..+/, 'Z');
-const file = join(outDir, `chef-${stamp}.dump`);
-
-const dump = spawnSync(
-  'pg_dump',
-  [
-    '--format=custom',
-    '--no-owner',
-    '--no-privileges',
-    `--file=${file}`,
-    `--dbname=${databaseUrl}`,
-  ],
-  { stdio: 'inherit' },
-);
-
-if (dump.error !== undefined) {
-  if (dump.error.code === 'ENOENT')
-    fail('pg_dump no está instalado o no está en PATH', 3);
-  fail(dump.error.message, 3);
-}
-if (dump.status !== 0) fail(`pg_dump terminó con código ${dump.status}`, 3);
-
-const digest = await new Promise((resolve, reject) => {
-  const hash = createHash('sha256');
-  createReadStream(file)
-    .on('error', reject)
-    .on('data', (chunk) => hash.update(chunk))
-    .on('end', () => resolve(hash.digest('hex')));
-});
-
-const { writeFileSync } = await import('node:fs');
-writeFileSync(`${file}.sha256`, `${digest}  ${basename(file)}\n`, 'utf8');
-
-console.log(`backup: ${file}`);
-console.log(`sha256: ${digest}`);

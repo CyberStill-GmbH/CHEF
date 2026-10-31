@@ -28,6 +28,7 @@ Requisitos: Node.js 24 (`fnm use` / `nvm use`; el repo incluye `.nvmrc`), npm y 
 
 ```sh
 npm ci
+npm run engine:build # compila el motor Go local
 npm run check        # lint + tipos + 56 core + 34 web + smoke API + docs + arquitectura + formato
 npm run demo         # snapshot 1.0.0 con conteos de limpieza
 npm run smoke        # arranca la API compilada y verifica /health, 401 y fallo rápido
@@ -49,7 +50,7 @@ npm run api             # construye y escucha en 127.0.0.1:8787
 | `GET /nope`                        | `404 {"error":"NOT_FOUND"}`                                   |
 | Arrancar sin `CHEF_SESSION_SECRET` | el proceso termina con código 1 y nombra la variable faltante |
 
-La API actual **persiste en memoria**: al reiniciar se pierden proyectos y snapshots. Es deliberado y está declarado en [apps/api/README.md](../../apps/api/README.md). No presentar esto como multiusuario persistente.
+La API usa Prisma/PostgreSQL cuando hay `DATABASE_URL`. En producción exige esa conexión y una allowlist de IDs GitHub; el modo en memoria queda para desarrollo. Véase [despliegue privado](../architecture/private-deployment.md).
 
 ### Web local
 
@@ -60,36 +61,20 @@ npm run web:check   # tipos + 34 pruebas + build
 
 La web todavía consume el fixture canónico; no está conectada a la API y no tiene grafo ni filtros.
 
-## Base de datos (pendiente de ejecución)
+## Base de datos, contenedor y recuperación
 
-El esquema y la migración existen en `apps/api/prisma/`, y el adaptador `packages/adapters/src/prisma-projects.ts` está probado con un cliente falso. **Nada de esto se ejecutó contra PostgreSQL.** Para cerrarlo:
-
-```sh
-docker compose up -d db          # requiere Docker daemon activo
-npm install --save-dev prisma    # el CLI aún no es dependencia del repo
-export DATABASE_URL="postgresql://chef:chef-dev-only@127.0.0.1:5432/chef?schema=public"
-npx prisma migrate deploy --schema apps/api/prisma/schema.prisma
-```
-
-Después hay que **componer** `PrismaProjectRepository` y `PrismaSnapshotStore` en `apps/api/src/main.ts` (hoy usa los adaptadores en memoria) y repetir la prueba de aislamiento con dos usuarios y dos proyectos. Hasta entonces, la API no toca la base.
-
-## Empaquetado
+La migración, aislamiento entre usuarios, persistencia tras reiniciar y backup/restore se validaron contra PostgreSQL 16 temporal. Para repetir sin tocar datos existentes:
 
 ```sh
-docker build -t chef-api .       # no ejecutado: daemon apagado en el entorno de entrega
-docker compose up api            # imagen + Postgres; requiere .env completo
+docker build -t chef-db-operations:local .
+npm run db:verify
 ```
 
-La imagen es multi-stage, corre como usuario `node` y tiene `HEALTHCHECK` contra `/health`. Cuando exista el motor Go se añade su etapa de build y el binario estático.
+Para una base elegida por el operador: configurar `DATABASE_URL` y ejecutar `npm run db:migrate`. En Compose, levantar `db`, ejecutar `docker compose run --rm api npm run db:migrate` y arrancar `api` con la configuración completa de `.env`. La imagen contiene Node, Go y Prisma.
 
-## Backup y restore
+`npm run db:backup` genera dump y SHA-256. `npm run db:restore -- <archivo.dump> --yes` verifica integridad y restaura en una transacción. Si faltan clientes PostgreSQL en Windows, los scripts usan Docker automáticamente. No utilizar comodines en lugar del nombre exacto del archivo. Las instrucciones y variables están en [operaciones de base de datos](../architecture/database-operations.md).
 
-```sh
-DATABASE_URL=... npm run db:backup -- artifacts/backup
-DATABASE_URL=... npm run db:restore -- artifacts/backup/chef-*.dump --yes
-```
-
-Los scripts se verificaron **en seco** (sin URL, sin herramienta, sin confirmación y con digest alterado: cada caso falla con código distinto). El backup real requiere `pg_dump`, el restore requiere `pg_restore` y ambos exigen `DATABASE_URL`. El restore verifica el SHA-256 del sidecar antes de tocar la base y exige `--yes`.
+El despliegue remoto sigue pendiente de cuentas/configuración y validación en Railway/Vercel. La web todavía usa un fixture; no tiene sesión ni conexión con la API.
 
 ## Rollback
 
@@ -107,7 +92,7 @@ Los scripts se verificaron **en seco** (sin URL, sin herramienta, sin confirmaci
 | La API no arranca                     | Falta `CHEF_SESSION_SECRET` o credenciales de GitHub | Completar `.env`; el fallo es intencional             |
 | `npm run smoke` no encuentra `dist`   | Se ejecutó sin build                                 | `npm test` o `npm run build` antes                    |
 | `pg_dump`/`pg_restore` no encontrado  | Cliente PostgreSQL ausente                           | Instalarlo o usar `docker compose exec db ...`        |
-| El snapshot no aparece tras reiniciar | Persistencia en memoria                              | Esperado; falta componer el adaptador Prisma          |
+| El snapshot no aparece tras reiniciar | Persistencia en memoria                              | Comprobar DATABASE_URL y la base/entorno consultado   |
 
 ## Registro y evidencia
 

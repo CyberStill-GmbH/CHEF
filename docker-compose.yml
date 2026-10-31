@@ -1,6 +1,4 @@
-# Entorno local de prueba. La API todavía persiste en memoria: el servicio `db`
-# queda preparado para cuando se componga el adaptador Prisma y se apliquen las
-# migraciones. No se ejecutó en el entorno de entrega (sin Docker daemon).
+# Entorno local persistente. Aplicar migraciones antes de arrancar la API.
 services:
   db:
     image: postgres:16-alpine
@@ -9,7 +7,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-chef-dev-only}
       POSTGRES_DB: chef
     ports:
-      - '5432:5432'
+      - '127.0.0.1:5432:5432'
     volumes:
       - chef-pg:/var/lib/postgresql/data
     healthcheck:
@@ -24,6 +22,7 @@ services:
       CHEF_SESSION_SECRET: ${CHEF_SESSION_SECRET:?define CHEF_SESSION_SECRET en .env}
       GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:?define GITHUB_CLIENT_ID en .env}
       GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:?define GITHUB_CLIENT_SECRET en .env}
+      CHEF_ALLOWED_GITHUB_USER_IDS: ${CHEF_ALLOWED_GITHUB_USER_IDS:?define IDs numéricos permitidos en .env}
       GITHUB_REDIRECT_URI: ${GITHUB_REDIRECT_URI:-http://127.0.0.1:8787/auth/github/callback}
       PORT: '8787'
       # Escucha en todas las interfaces del contenedor; el puerto publicado se

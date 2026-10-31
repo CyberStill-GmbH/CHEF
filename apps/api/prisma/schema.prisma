@@ -1,7 +1,5 @@
-// Propuesta de WB05. No ejecutada: no hay PostgreSQL ni Docker activos en el
-// entorno de entrega. El puerto ProjectRepository ya existe y la suite de tests
-// lo cubre con el adaptador en memoria; este esquema es el destino del adaptador
-// Prisma cuando exista base de datos.
+// Esquema aplicado y validado contra PostgreSQL 16 temporal en Docker.
+// Verificación de migración/aislamiento/persistencia/restore: npm run db:verify.
 generator client {
   provider = "prisma-client-js"
 }

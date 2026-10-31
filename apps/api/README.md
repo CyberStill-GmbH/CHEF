@@ -28,15 +28,17 @@ Variables opcionales: `PORT` (8787), `CHEF_SCOPE` (`fixtures/scope/lab.json`), `
 
 Sin `CHEF_SESSION_SECRET` o sin credenciales de GitHub el proceso **no arranca**: no existe modo "sin autenticación".
 
+En producción también exige `DATABASE_URL` y `CHEF_ALLOWED_GITHUB_USER_IDS` (IDs numéricos separados por coma). La allowlist se aplica en el callback y en cada petición autenticada. Para migrar: `npm run db:migrate`. Véanse [operaciones de base de datos](../../docs/architecture/database-operations.md) y [despliegue privado](../../docs/architecture/private-deployment.md).
+
 ## Estado real
 
 | Pieza                       | Estado                                                                                                  |
 | --------------------------- | ------------------------------------------------------------------------------------------------------- |
 | Rutas, sesión y aislamiento | Implementado y probado                                                                                  |
-| Persistencia                | Adaptador en memoria (`InMemoryProjectRepository`)                                                      |
-| PostgreSQL/Prisma           | Esquema y migración escritos en `prisma/`, **no ejecutados**                                            |
+| Persistencia                | Prisma cuando hay `DATABASE_URL`; memoria solo para desarrollo sin base                                 |
+| PostgreSQL/Prisma           | Migración, aislamiento, reinicio y backup/restore probados contra PostgreSQL 16 temporal                |
 | OAuth GitHub                | Adaptador real con `fetch`, probado con proveedor falso; no probado contra GitHub                       |
 | Motor Go                    | Integrado localmente para `open-service/v1`; pruebas con binario real; revisión y despliegue pendientes |
 | Despliegue                  | No realizado                                                                                            |
 
-El adaptador en memoria pierde los datos al reiniciar. Es deliberado: preferimos declararlo antes que presentar una persistencia que nadie ejecutó.
+El modo en memoria de desarrollo pierde los datos al reiniciar. La prueba `npm run db:verify` utiliza PostgreSQL real y sesiones sintéticas; no acredita OAuth real ni despliegue remoto.

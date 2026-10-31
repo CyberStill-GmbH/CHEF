@@ -84,6 +84,25 @@ async function createPersistence(): Promise<Persistence> {
 }
 
 async function main(): Promise<void> {
+  if (process.env['NODE_ENV'] === 'production') {
+    required('DATABASE_URL');
+    required('CHEF_ALLOWED_GITHUB_USER_IDS');
+  }
+  const configuredIds = process.env['CHEF_ALLOWED_GITHUB_USER_IDS']
+    ?.split(',')
+    .map((id) => id.trim())
+    .filter(Boolean);
+  if (configuredIds?.some((id) => !/^[1-9][0-9]*$/.test(id)))
+    throw new Error(
+      'CHEF_ALLOWED_GITHUB_USER_IDS must contain numeric GitHub user IDs',
+    );
+  const allowedOAuthUserIds = configuredIds?.length
+    ? new Set(configuredIds)
+    : undefined;
+  if (process.env['NODE_ENV'] === 'production' && !allowedOAuthUserIds)
+    throw new Error(
+      'CHEF_ALLOWED_GITHUB_USER_IDS requires at least one user ID',
+    );
   const contracts = loadContracts('docs/contracts/snapshot.schema.json');
   const scopePolicy = contracts.scope(
     JSON.parse(readFileSync(SCOPE_PATH, 'utf8')),
@@ -122,6 +141,7 @@ async function main(): Promise<void> {
       redirectUri: required('GITHUB_REDIRECT_URI'),
     }),
     scopePolicy,
+    ...(allowedOAuthUserIds === undefined ? {} : { allowedOAuthUserIds }),
   });
 
   api.listen(PORT, HOST, () => {
