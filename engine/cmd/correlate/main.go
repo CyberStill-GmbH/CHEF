@@ -42,6 +42,9 @@ func run(in io.Reader, out io.Writer) error {
 	if err := decoder.Decode(&job); err != nil {
 		return fmt.Errorf("input is not a valid CorrelationJob v0 document")
 	}
+	if err := decoder.Decode(new(json.RawMessage)); err != io.EOF {
+		return fmt.Errorf("input must contain exactly one JSON document")
+	}
 	if err := correlation.ValidateJob(job); err != nil {
 		return fmt.Errorf("invalid job: %w", err)
 	}

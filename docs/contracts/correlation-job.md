@@ -32,4 +32,5 @@ En el ejemplo, las dos observaciones de `127.0.0.1\|tcp\|8080` producen un únic
 
 - `correlation-job/v0` y `correlation-result/v0` se versionan en el propio `schemaVersion`. Un cambio incompatible exige `v1` y nota de compatibilidad, sin reutilizar IDs existentes.
 - Este contrato no fija el transporte (ejecutable local por `stdin/stdout`, servicio aparte, etc.): eso se valida en el spike del ADR 0011. Solo describe el _payload_.
-- Pendiente antes de aceptarlo: validador en Go equivalente a este JSON Schema y fixtures de conformidad compartidos TS/Go (siguiente incremento).
+- Implementado en `engine/`: validadores Go, regla `open-service/v1`, ejecutable local y pruebas contra los fixtures compartidos. La conformidad del fixture no demuestra equivalencia completa entre el validador Go y JSON Schema.
+- Pendiente antes de aceptarlo: revisión humana del contrato, seguridad y operación conforme al ADR 0011. El spike de transporte y la integración con la API siguen pendientes.
