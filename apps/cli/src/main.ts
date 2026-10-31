@@ -2,6 +2,7 @@ import { open } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { ImportEvidence } from '../../../packages/application/src/import-evidence.js';
 import { NmapXmlParser } from '../../../packages/adapters/src/nmap.js';
+import { summarizeDuplicates } from '../../../packages/adapters/src/cleaning.js';
 import { ExactScopeGuard } from '../../../packages/adapters/src/scope.js';
 import { Sha256Identity } from '../../../packages/adapters/src/identity.js';
 import { loadContracts } from '../../../packages/adapters/src/contracts.js';
@@ -37,6 +38,26 @@ async function boundedRead(path: string, limit: number): Promise<Uint8Array> {
   }
 }
 
+function reportCleaningDiagnostics(
+  parser: NmapXmlParser,
+  bytes: Uint8Array,
+  maxObservations: number,
+  openKept: number,
+): void {
+  try {
+    const { inputs, stats } = parser.parseWithStats(bytes, maxObservations);
+    // Never print misleading counts: the recount must match the export.
+    if (inputs.length !== openKept) return;
+    const duplicates = summarizeDuplicates(inputs);
+    // Counts only: no addresses, ports, paths, or digests leave this channel.
+    process.stderr.write(
+      `${JSON.stringify({ cleaning: { ...stats, uniqueServices: duplicates.uniqueServices, duplicatedInputs: duplicates.duplicatedInputs, duplicateGroups: duplicates.duplicateGroups.length } })}\n`,
+    );
+  } catch {
+    // Import already succeeded; diagnostics must never fail the export.
+  }
+}
+
 try {
   const [input, scopeFile, ...extra] = process.argv.slice(2);
   if (!input || !scopeFile || extra.length)
@@ -54,8 +75,9 @@ try {
   const controller = new AbortController();
   process.once('SIGINT', () => controller.abort());
   const bytes = await boundedRead(input, policy.maxInputBytes);
+  const parser = new NmapXmlParser();
   const pipeline = new ImportEvidence(
-    new NmapXmlParser(),
+    parser,
     new ExactScopeGuard(),
     new Sha256Identity(),
     { now: () => new Date().toISOString() },
@@ -63,6 +85,12 @@ try {
   const result = pipeline.execute(bytes, policy, controller.signal);
   contracts.snapshot(result);
   process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
+  reportCleaningDiagnostics(
+    parser,
+    bytes,
+    policy.maxObservations,
+    result.observations.length,
+  );
 } catch (error: unknown) {
   // Do not print target data, paths, XML fragments, or stack traces to routine logs.
   const code = error instanceof ChefError ? error.code : 'INVALID_INPUT';

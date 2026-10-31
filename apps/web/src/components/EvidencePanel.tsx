@@ -189,7 +189,9 @@ export function EvidencePanel({ snapshot, asset }: EvidencePanelProps) {
                     <dd>{path.assertion}</dd>
                     <dt>Confirmed vulnerability</dt>
                     <dd>
-                      {String(path.isConfirmedVulnerability)} — No confirmada
+                      {path.isConfirmedVulnerability
+                        ? 'Sí, confirmada'
+                        : 'No confirmada'}
                     </dd>
                   </dl>
                 </section>
