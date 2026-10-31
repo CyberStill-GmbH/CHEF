@@ -189,6 +189,37 @@ mod tests {
     }
 
     #[test]
+    fn adapts_source_robots_fixture_without_fetching_or_inventing_wildcard_urls() {
+        let text = "Allow: /allow/\nDisallow: /disallow/\nJunk: test.com\nDisallow: /*/wildcard.txt\nSitemap: https://example.com/sitemap.txt";
+        let result = parse_archived_robots_hints(text, "https://example.com").unwrap();
+
+        assert_eq!(result.hints.len(), 4);
+        assert!(result.hints.iter().any(|hint| {
+            hint.kind == RobotsHintKind::Permitir
+                && hint.url_hint.as_deref() == Some("https://example.com/allow/")
+        }));
+        assert!(result.hints.iter().any(|hint| {
+            hint.kind == RobotsHintKind::Restringir
+                && hint.url_hint.as_deref() == Some("https://example.com/disallow/")
+        }));
+        let wildcard = result
+            .hints
+            .iter()
+            .find(|hint| hint.value == "/*/wildcard.txt")
+            .unwrap();
+        assert_eq!(wildcard.url_hint, None);
+        assert!(result.hints.iter().any(|hint| {
+            hint.kind == RobotsHintKind::MapaDelSitio
+                && hint.url_hint.as_deref() == Some("https://example.com/sitemap.txt")
+        }));
+        assert!(result.hints.iter().all(|hint| {
+            hint.url_hint
+                .as_deref()
+                .is_none_or(|url| url.starts_with("https://example.com/"))
+        }));
+    }
+
+    #[test]
     fn rejects_foreign_origins_and_non_path_directives() {
         let text = "Disallow: //evil.example/path\nAllow: https://evil.example/x\nSitemap: https://other.example/map.xml\nUnknown: /ignored\nDisallow: /ok\n";
         let result = parse_archived_robots_hints(text, "https://example.com").unwrap();

@@ -43,15 +43,15 @@ pub fn parse_archived_ajaxpro_html(html: &str) -> ChefResult<ArchivedAjaxProPath
             break;
         };
         let tag_end = tag_start + relative_end;
-        if let Some(path) = script_src_path(&bytes[tag_start..tag_end]) {
-            if let Ok(path) = std::str::from_utf8(path) {
-                paths.insert(path.to_owned());
-                if paths.len() > MAX_PATH_HINTS {
-                    return Err(ChefError::new(
-                        ErrorCode::LimitExceeded,
-                        "El HTML supera el máximo de rutas AJAXPro",
-                    ));
-                }
+        if let Some(path) = script_src_path(&bytes[tag_start..tag_end])
+            && let Ok(path) = std::str::from_utf8(path)
+        {
+            paths.insert(path.to_owned());
+            if paths.len() > MAX_PATH_HINTS {
+                return Err(ChefError::new(
+                    ErrorCode::LimitExceeded,
+                    "El HTML supera el máximo de rutas AJAXPro",
+                ));
             }
         }
         cursor = tag_end + 1;

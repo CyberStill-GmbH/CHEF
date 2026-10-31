@@ -1,5 +1,9 @@
 # Registro de trabajo
 
+### 31-10-2026 — Adaptadores offline de archivos, geolocalización y ASN
+
+Se añadieron `parse_archived_bucket_file_listing`, `parse_archived_ipstack_geolocation`, `summarize_asn_records`, `parse_archived_crt_db_rows`, `compute_similarity_fingerprint`, `similarity_fingerprint_score`, `normalize_utc_datetime`, `select_preferred_http_status`, `parse_import_byte_limit`, `format_import_byte_limit`, `filter_report_module_statistics` y `describe_module_flag` en el core Rust. Los adaptadores operan sobre evidencia archivada, normalizan datos o describen etiquetas; no abren conexiones ni ejecutan análisis automático. Se agregó una prueba de conformidad adaptada para `robots.py` que confirma el manejo de Allow/Disallow/Sitemap sin red ni expansión de comodines; la prueba dirigida pasó. El core Rust pasó 200/200 pruebas antes de añadir esa prueba; no representa aún un pase completo actualizado. Faltan transporte remoto, integración adicional y equivalencia completa con el origen. Inventario actual: 130 parciales, 306 pendientes y 30 excluidos (466 filas). No representa migración completa.
+
 ## 31-10-2026 — Parser offline de urlscan
 
 Se añadió `parse_urlscan_subdomains` para normalizar respuestas JSON archivadas. Recorre `task.domain`, `task.url`, `page.domain` y `page.url`, convierte hosts HTTP(S) en candidatos DNS y `URL_HINT` con solo el origen; rechaza hosts externos, wildcard y credenciales. `import_urlscan_snapshot` crea un evento raíz con hash de respuesta y derivados `DNS_NAME_HINT`/`URL_HINT`, con IDs deterministas, evidencia fuente y calificación temporal desconocida; la proyección los mantiene como pistas. Los límites son 2 MiB/2 048 resultados/8 192 campos/512 candidatos. Hay fixtures positivos/negativos y pruebas del importador. No consulta urlscan ni DNS. Persistencia SurrealDB, composición Tauri y transporte autorizado permanecen pendientes.

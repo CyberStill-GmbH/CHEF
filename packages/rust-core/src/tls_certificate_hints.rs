@@ -76,10 +76,10 @@ pub fn parse_archived_tls_certificate_hints(
     }
 
     let mut dns_candidates = Vec::new();
-    if let Some(common_name) = object.get("common_name").and_then(Value::as_str) {
-        if let Some(name) = canonical_certificate_name(common_name) {
-            dns_candidates.push(name);
-        }
+    if let Some(common_name) = object.get("common_name").and_then(Value::as_str)
+        && let Some(name) = canonical_certificate_name(common_name)
+    {
+        dns_candidates.push(name);
     }
     if let Some(sans) = object.get("sans") {
         let sans = sans.as_array().ok_or(ChefError::new(

@@ -113,14 +113,12 @@ pub fn parse_archived_service_fingerprints(
 
 fn truncate_banner(value: &str) -> String {
     let mut bounded = String::new();
-    let mut char_count = 0;
-    for character in value.chars() {
+    for (char_count, character) in value.chars().enumerate() {
         if char_count == MAX_BANNER_CHARS || bounded.len() + character.len_utf8() > MAX_BANNER_BYTES
         {
             break;
         }
         bounded.push(character);
-        char_count += 1;
     }
     bounded
 }

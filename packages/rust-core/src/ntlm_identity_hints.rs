@@ -153,7 +153,7 @@ pub fn parse_archived_ntlm_challenge(
 }
 
 fn decode_base64(token: &str) -> ChefResult<Vec<u8>> {
-    if token.len() > MAX_HEADER_CHARS || token.len() % 4 != 0 {
+    if token.len() > MAX_HEADER_CHARS || !token.len().is_multiple_of(4) {
         return Err(ChefError::new(
             ErrorCode::InvalidInput,
             "El token NTLM no es base64 válido",
@@ -245,7 +245,7 @@ fn read_u32(bytes: &[u8], offset: usize) -> ChefResult<u32> {
 }
 
 fn decode_utf16_attribute(bytes: &[u8]) -> ChefResult<Option<String>> {
-    if bytes.is_empty() || bytes.len() % 2 != 0 {
+    if bytes.is_empty() || !bytes.len().is_multiple_of(2) {
         return Ok(None);
     }
     let units = bytes

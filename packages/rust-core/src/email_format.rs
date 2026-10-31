@@ -42,8 +42,7 @@ pub fn parse_archived_cfemail_html(html: &str, queried_domain: &str) -> ChefResu
             continue;
         }
         let value_start = attribute_start + 1;
-        let Some(end_relative) = html[value_start..]
-            .as_bytes()
+        let Some(end_relative) = html.as_bytes()[value_start..]
             .iter()
             .position(|byte| *byte == quote)
         else {
@@ -73,7 +72,7 @@ pub fn parse_archived_cfemail_html(html: &str, queried_domain: &str) -> ChefResu
 
 fn decode_cfemail(encoded: &str) -> Option<String> {
     if encoded.len() < 4
-        || encoded.len() % 2 != 0
+        || !encoded.len().is_multiple_of(2)
         || !encoded.bytes().all(|byte| byte.is_ascii_hexdigit())
     {
         return None;

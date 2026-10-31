@@ -9,9 +9,11 @@ mod anubisdb_subdomains;
 mod apk_attachment_hints;
 mod application;
 mod asn;
+mod asn_report;
 mod aspnet_binary_response_hints;
 mod asset_inventory_export;
 mod bimi;
+mod bucket_file_hints;
 mod builtwith;
 mod c99_subdomain_hints;
 mod caa;
@@ -26,6 +28,7 @@ mod config;
 mod config_merge;
 mod container_repository_hints;
 mod contracts;
+mod crt_db_hints;
 mod crtsh;
 mod dns_cache;
 mod dns_format;
@@ -52,14 +55,18 @@ mod gitlab_instance_project_hints;
 mod gitlab_project_hints;
 mod graphql_schema_hints;
 mod host;
+mod http_status_preference;
 mod hunter_source_hints;
 mod identity;
+mod import_byte_size;
 mod ip_geolocation_hints;
 mod ip_neighbor_candidates;
+mod ipstack_geolocation_hints;
 mod javascript_component_hints;
 mod mobile_app_hints;
 mod mobile_osint_hints;
 mod module_catalog;
+mod module_flag_catalog;
 mod myssl_subdomain_hints;
 mod nmap;
 mod nmap_export;
@@ -73,6 +80,7 @@ mod presets;
 mod provider_subdomains;
 mod rate_limit;
 mod recon;
+mod report_module_policy;
 mod repository_link_hints;
 mod resource_file_hints;
 mod reverse_whois_hints;
@@ -82,6 +90,7 @@ mod service_fingerprint_hints;
 mod shodan_dns;
 mod shodan_host_hints;
 mod shodan_internetdb_hints;
+mod similarity_fingerprint;
 mod skymem_domain_hints;
 mod social_profile_hints;
 mod speculate;
@@ -97,6 +106,7 @@ mod url_fingerprint;
 mod url_policy;
 mod url_tools;
 mod urlscan_import;
+mod utc_datetime;
 mod virustotal;
 mod wayback_cdx_hints;
 mod web_parameter_hints;
@@ -116,10 +126,12 @@ pub use application::{
 pub use asn::{
     AsnEnrichmentCircuitBreaker, AsnRecord, AsnTargetRetryPolicy, normalize_asn_response,
 };
+pub use asn_report::{AsnSummaryRow, summarize_asn_records};
 pub use aspnet_binary_response_hints::{
     ArchivedAspNetBinaryResponseHint, parse_archived_aspnet_binary_response,
 };
 pub use asset_inventory_export::{ChefAssetInventoryExport, export_asset_inventory_csv};
+pub use bucket_file_hints::{ArchivedBucketFileHint, parse_archived_bucket_file_listing};
 pub use builtwith::parse_builtwith_subdomains;
 pub use c99_subdomain_hints::parse_archived_c99_subdomains;
 pub use cdn_port_filter::{
@@ -142,6 +154,7 @@ pub use container_repository_hints::{
     ArchivedContainerRepositories, ContainerRepositoryHint, parse_archived_container_repositories,
 };
 pub use contracts::{ScopePolicy, Snapshot};
+pub use crt_db_hints::parse_archived_crt_db_rows;
 pub use crtsh::{CrtShSubdomainPage, parse_crtsh_subdomains};
 pub use dns_cache::DnsCache;
 pub use dns_format::format_dns_rdata;
@@ -192,10 +205,13 @@ pub use gitlab_project_hints::{
 };
 pub use graphql_schema_hints::{ArchivedGraphqlSchemaHint, summarize_archived_graphql_schema};
 pub use host::dns_parent_zones;
+pub use http_status_preference::select_preferred_http_status;
 pub use hunter_source_hints::{ArchivedHunterSourceHints, parse_archived_hunter_sources};
 pub use identity::{digest as digest_bytes, id as deterministic_id};
+pub use import_byte_size::{format_import_byte_limit, parse_import_byte_limit};
 pub use ip_geolocation_hints::{ArchivedIpGeolocationHint, parse_archived_ip_geolocation};
 pub use ip_neighbor_candidates::{IpNeighborCandidateSet, derive_ip_neighbor_candidates};
+pub use ipstack_geolocation_hints::parse_archived_ipstack_geolocation;
 pub use javascript_component_hints::{
     ArchivedJavaScriptInventory, JavaScriptComponentHint, parse_archived_javascript_inventory,
 };
@@ -205,6 +221,7 @@ pub use module_catalog::{
     ModuleCapability, ModuleCapabilityKind, ModuleCapabilityState, module_capabilities,
     module_capability,
 };
+pub use module_flag_catalog::describe_module_flag;
 pub use myssl_subdomain_hints::{ArchivedMysslSubdomainHints, parse_archived_myssl_subdomains};
 pub use nmap_export::{ChefNmapEvidenceExport, export_nmap_evidence_xml};
 pub use ntlm_identity_hints::{ArchivedNtlmIdentityHints, parse_archived_ntlm_challenge};
@@ -227,6 +244,7 @@ pub use recon::{
     ChefReconGraph, ReconAsset, ReconAssetKind, ReconEvidence, ReconRelationship,
     ReconRelationshipKind, adapt_bbot_to_chef, validate_chef_recon_graph,
 };
+pub use report_module_policy::filter_report_module_statistics;
 pub use repository_link_hints::{
     ArchivedRepositoryLinkHints, RepositoryLinkHint, RepositoryPlatform,
     parse_archived_repository_links,
@@ -249,6 +267,7 @@ pub use shodan_host_hints::{
 pub use shodan_internetdb_hints::{
     ArchivedShodanInternetDbHints, ShodanInternetDbPortHint, parse_archived_shodan_internetdb,
 };
+pub use similarity_fingerprint::{compute_similarity_fingerprint, similarity_fingerprint_score};
 pub use skymem_domain_hints::{ArchivedSkymemDomainHints, parse_archived_skymem_domains};
 pub use social_profile_hints::{
     ArchivedSocialProfileHint, SocialPlatform, parse_archived_social_profile,
@@ -273,6 +292,7 @@ pub use trickest_subdomain_hints::{
 pub use url_fingerprint::url_shape_fingerprint;
 pub use url_policy::{canonical_fqdn_or_ip, url_path_depth};
 pub use urlscan_import::{UrlScanImportResult, import_urlscan_snapshot};
+pub use utc_datetime::normalize_utc_datetime;
 pub use virustotal::{VirusTotalSubdomainPage, parse_virustotal_subdomain_page};
 pub use wayback_cdx_hints::{ArchivedWaybackCdxHints, parse_archived_wayback_cdx};
 pub use web_parameter_hints::{ArchivedWebParameterHints, parse_archived_web_parameters};
