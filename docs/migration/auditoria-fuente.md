@@ -2,6 +2,8 @@
 
 ## Parsers offline añadidos
 
+`modules/git.py` tiene un clasificador parcial en `git_exposure_hints.rs::classify_archived_git_config`: recibe una respuesta archivada, exige status 200, una de las dos rutas `.git/config` derivadas del URL original, mismo origen, texto UTF-8 de hasta 256 KiB y una sección `[core]`; descarta HTML. Devuelve la URL de configuración y el directorio `.git/` como pista histórica. No envía los dos probes HTTP del módulo fuente, no persiste el cuerpo ni emite un hallazgo confirmado. La asociación con evidencia importada y su composición en la aplicación siguen pendientes; no se escribieron ni ejecutaron pruebas funcionales.
+
 `modules/builtwith.py` tiene una adaptación parcial en `parse_builtwith_subdomains`: procesa offline `Results[].Result.Paths[]` y las listas `Inbound`/`Outbound`; conserva hasta 512 nombres bajo la raíz ICANN y limita bytes, registros y campos. Fixtures positivos/negativos reemplazan la validación de red; los nombres se conservan como pistas históricas. La fuente y sus pruebas de transporte siguen en el inventario, sin copiar la implementación.
 
 `modules/emailformat.py` cuenta con un parser Rust parcial en `email_format.rs`: `parse_archived_cfemail_html` decodifica atributos `data-cfemail` desde HTML ya archivado, valida que el correo pertenezca al dominio consultado o a un subdominio con límite de etiqueta, y limita el HTML a 1 MiB y 4 096 atributos. Los resultados son correos candidatos históricos; no se recupera HTML, no se resuelve el dominio y no se afirma vigencia del contacto. Hay tres pruebas unitarias escritas, aún no ejecutadas; la prueba Python de origen sigue pendiente de reconstrucción equivalente.

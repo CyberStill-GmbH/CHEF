@@ -47,6 +47,7 @@ mod event_engine;
 mod event_import;
 mod evidence_csv;
 mod fullhunt;
+mod git_exposure_hints;
 mod github_code_search_hints;
 mod github_profile_hints;
 mod github_repository_hints;
@@ -184,6 +185,7 @@ pub use event_engine::{
 };
 pub use evidence_csv::{ChefEvidenceCsvExport, export_evidence_csv};
 pub use fullhunt::{FullHuntSubdomainPage, parse_fullhunt_subdomains};
+pub use git_exposure_hints::{ArchivedGitExposureHint, classify_archived_git_config};
 pub use github_code_search_hints::{
     ArchivedGithubCodeSearchHints, parse_archived_github_code_search,
 };

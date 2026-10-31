@@ -1,5 +1,9 @@
 # Registro de trabajo
 
+## 31-10-2026 — Clasificador offline de configuración Git expuesta
+
+Se portó a Rust la regla de detección de `modules/git.py` como `classify_archived_git_config`. Clasifica únicamente una respuesta archivada con status 200, ruta `.git/config` derivada de uno de los dos probes del origen, mismo origen, texto UTF-8 hasta 256 KiB y una sección `[core]`; rechaza HTML. Devuelve una pista histórica con la URL del archivo y del directorio `.git/`, sin realizar HTTP ni conservar el cuerpo. El resultado todavía no se asocia a evidencia ni se compone en Tauri, así que el módulo sigue parcial. No se agregaron ni ejecutaron pruebas; la compilación requiere verificación estática en esta máquina. Inventario: 131 parciales, 305 pendientes y 30 excluidos de 466 filas.
+
 ### 31-10-2026 — Adaptadores offline de archivos, geolocalización y ASN
 
 Se añadieron `parse_archived_bucket_file_listing`, `parse_archived_ipstack_geolocation`, `summarize_asn_records`, `parse_archived_crt_db_rows`, `compute_similarity_fingerprint`, `similarity_fingerprint_score`, `normalize_utc_datetime`, `select_preferred_http_status`, `parse_import_byte_limit`, `format_import_byte_limit`, `filter_report_module_statistics` y `describe_module_flag` en el core Rust. Los adaptadores operan sobre evidencia archivada, normalizan datos o describen etiquetas; no abren conexiones ni ejecutan análisis automático. Se agregó una prueba de conformidad adaptada para `robots.py` que confirma el manejo de Allow/Disallow/Sitemap sin red ni expansión de comodines; la prueba dirigida pasó. El core Rust pasó 200/200 pruebas antes de añadir esa prueba; no representa aún un pase completo actualizado. Faltan transporte remoto, integración adicional y equivalencia completa con el origen. Inventario actual: 130 parciales, 306 pendientes y 30 excluidos (466 filas). No representa migración completa.
