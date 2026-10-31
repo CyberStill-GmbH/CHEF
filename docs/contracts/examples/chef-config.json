@@ -17,7 +17,8 @@
     },
     "modules": {
       "chef_dns_mutation_hints": false,
-      "chef_git_archive_hints": false
+      "chef_git_archive_hints": false,
+      "chef_robots_archive_hints": false
     },
     "sources": {},
     "defectdojo": {

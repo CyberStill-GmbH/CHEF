@@ -17,6 +17,7 @@ const MAX_LINE_BYTES: usize = 128 * 1024;
 const MAX_EVENT_DEPTH: usize = 32;
 const DEFAULT_BBOT_SCOPE_DISTANCE: u16 = 10;
 const MAX_ARCHIVED_GIT_HINTS: usize = 2048;
+const MAX_ARCHIVED_ROBOTS_HINTS: usize = 4096;
 
 #[derive(Debug)]
 pub(crate) enum ArchivedGitImportHint {
@@ -32,6 +33,14 @@ pub(crate) enum ArchivedGitImportHint {
         url: String,
         is_directory: bool,
     },
+}
+
+#[derive(Debug)]
+pub(crate) struct ArchivedRobotsImportHint {
+    pub parent_event_id: String,
+    pub host: String,
+    pub url: String,
+    pub kind: crate::RobotsHintKind,
 }
 
 #[derive(Debug)]
@@ -86,19 +95,21 @@ pub struct ParsedBbotEvents {
     pub services: Vec<ServiceInput>,
     pub event_graph: BbotEventGraph,
     pub(crate) archived_git_hints: Vec<ArchivedGitImportHint>,
+    pub(crate) archived_robots_hints: Vec<ArchivedRobotsImportHint>,
 }
 
 /// Lee el flujo de eventos BBOT conservando tipos, datos, metadatos y linaje.
 /// Los datos adicionales quedan dentro de `data` cuando la fuente los incluye
 /// allí; los campos reconocidos se normalizan como propiedades del evento.
 pub fn parse_event_graph(bytes: &[u8], max_events: usize) -> ChefResult<BbotEventGraph> {
-    Ok(parse_event_graph_with_hints(bytes, max_events, false)?.event_graph)
+    Ok(parse_event_graph_with_hints(bytes, max_events, false, false)?.event_graph)
 }
 
 fn parse_event_graph_with_hints(
     bytes: &[u8],
     max_events: usize,
     collect_archived_git_hints: bool,
+    collect_archived_robots_hints: bool,
 ) -> ChefResult<ParsedBbotEvents> {
     if max_events == 0 {
         return Err(ChefError::new(
@@ -156,12 +167,14 @@ fn parse_event_graph_with_hints(
             .ok_or_else(|| {
                 ChefError::new(ErrorCode::InvalidInput, "Evento BBOT sin data/data_json")
             })?;
-        let transient_http_response =
-            if collect_archived_git_hints && raw.event_type == "HTTP_RESPONSE" {
-                transient_http_response(&data)
-            } else {
-                None
-            };
+        let transient_http_response = if (collect_archived_git_hints
+            || collect_archived_robots_hints)
+            && raw.event_type == "HTTP_RESPONSE"
+        {
+            transient_http_response(&data)
+        } else {
+            None
+        };
         let (host, port) =
             complete_open_port_fields(&raw.event_type, &data, raw.host.take(), raw.port.take())?;
         let (data, data_redacted) = sanitize_event_data(&raw.event_type, data);
@@ -256,7 +269,8 @@ fn parse_event_graph_with_hints(
         ));
     }
     let mut archived_git_hints = Vec::new();
-    if collect_archived_git_hints {
+    let mut archived_robots_hints = Vec::new();
+    if collect_archived_git_hints || collect_archived_robots_hints {
         let events_by_id = events
             .iter()
             .map(|event| (event.id.as_str(), event))
@@ -277,40 +291,71 @@ fn parse_event_graph_with_hints(
             let Some(target_url) = target_event.data.as_str() else {
                 continue;
             };
-            for hint in inspect_archived_git_response(
-                target_url,
-                &response.response_url,
-                response.status_code,
-                response.body.as_bytes(),
-            ) {
-                let archived_hint = match hint {
-                    TransientGitArchiveHint::ConfigExposure {
-                        host,
-                        config_url,
-                        repository_directory_url,
-                    } => ArchivedGitImportHint::ConfigExposure {
-                        parent_event_id: response_event.id.clone(),
-                        host,
-                        config_url,
-                        repository_directory_url,
-                    },
-                    TransientGitArchiveHint::DirectoryEntry {
-                        host,
-                        url,
-                        is_directory,
-                    } => ArchivedGitImportHint::DirectoryEntry {
-                        parent_event_id: response_event.id.clone(),
-                        host,
-                        url,
-                        is_directory,
-                    },
+            if collect_archived_git_hints {
+                for hint in inspect_archived_git_response(
+                    target_url,
+                    &response.response_url,
+                    response.status_code,
+                    response.body.as_bytes(),
+                ) {
+                    let archived_hint = match hint {
+                        TransientGitArchiveHint::ConfigExposure {
+                            host,
+                            config_url,
+                            repository_directory_url,
+                        } => ArchivedGitImportHint::ConfigExposure {
+                            parent_event_id: response_event.id.clone(),
+                            host,
+                            config_url,
+                            repository_directory_url,
+                        },
+                        TransientGitArchiveHint::DirectoryEntry {
+                            host,
+                            url,
+                            is_directory,
+                        } => ArchivedGitImportHint::DirectoryEntry {
+                            parent_event_id: response_event.id.clone(),
+                            host,
+                            url,
+                            is_directory,
+                        },
+                    };
+                    archived_git_hints.push(archived_hint);
+                    if archived_git_hints.len() > MAX_ARCHIVED_GIT_HINTS {
+                        return Err(ChefError::new(
+                            ErrorCode::LimitExceeded,
+                            "La importación supera el máximo de pistas Git archivadas",
+                        ));
+                    }
+                }
+            }
+            if collect_archived_robots_hints
+                && response.status_code == Some(200)
+                && let Some(origin) = archived_robots_origin(target_url, &response.response_url)
+                && let Ok(parsed) = crate::parse_archived_robots_hints(&response.body, &origin)
+            {
+                let Some(host) = url::Url::parse(&origin)
+                    .ok()
+                    .and_then(|url| url.host_str().map(str::to_owned))
+                else {
+                    continue;
                 };
-                archived_git_hints.push(archived_hint);
-                if archived_git_hints.len() > MAX_ARCHIVED_GIT_HINTS {
-                    return Err(ChefError::new(
-                        ErrorCode::LimitExceeded,
-                        "La importación supera el máximo de pistas Git archivadas",
-                    ));
+                for hint in parsed.hints {
+                    let Some(url) = hint.url_hint else {
+                        continue;
+                    };
+                    archived_robots_hints.push(ArchivedRobotsImportHint {
+                        parent_event_id: response_event.id.clone(),
+                        host: host.clone(),
+                        url,
+                        kind: hint.kind,
+                    });
+                    if archived_robots_hints.len() > MAX_ARCHIVED_ROBOTS_HINTS {
+                        return Err(ChefError::new(
+                            ErrorCode::LimitExceeded,
+                            "La importación supera el máximo de pistas robots archivadas",
+                        ));
+                    }
                 }
             }
         }
@@ -323,7 +368,22 @@ fn parse_event_graph_with_hints(
             duplicates_suppressed: 0,
         },
         archived_git_hints,
+        archived_robots_hints,
     })
+}
+
+fn archived_robots_origin(target_url: &str, response_url: &str) -> Option<String> {
+    let target = url::Url::parse(target_url).ok()?;
+    let response = url::Url::parse(response_url).ok()?;
+    if !matches!(target.scheme(), "http" | "https")
+        || !target.username().is_empty()
+        || target.password().is_some()
+        || target.origin() != response.origin()
+        || response.path() != "/robots.txt"
+    {
+        return None;
+    }
+    Some(target.origin().ascii_serialization())
 }
 
 fn transient_http_response(data: &Value) -> Option<TransientHttpResponse> {
@@ -490,9 +550,14 @@ pub fn parse(
     bytes: &[u8],
     max_observations: usize,
     collect_archived_git_hints: bool,
+    collect_archived_robots_hints: bool,
 ) -> ChefResult<ParsedBbotEvents> {
-    let mut parsed =
-        parse_event_graph_with_hints(bytes, max_observations, collect_archived_git_hints)?;
+    let mut parsed = parse_event_graph_with_hints(
+        bytes,
+        max_observations,
+        collect_archived_git_hints,
+        collect_archived_robots_hints,
+    )?;
     let mut services = Vec::new();
 
     for event in &parsed.event_graph.events {
