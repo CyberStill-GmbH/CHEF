@@ -19,6 +19,7 @@ const DEFAULT_BBOT_SCOPE_DISTANCE: u16 = 10;
 const MAX_ARCHIVED_GIT_HINTS: usize = 2048;
 const MAX_ARCHIVED_ROBOTS_HINTS: usize = 4096;
 const MAX_ARCHIVED_WEB_PARAMETER_HINTS: usize = 4096;
+const MAX_ARCHIVED_WEB_MARKER_HINTS: usize = 2048;
 
 #[derive(Debug)]
 pub(crate) enum ArchivedGitImportHint {
@@ -52,6 +53,23 @@ pub(crate) struct ArchivedWebParameterHint {
 }
 
 #[derive(Debug)]
+pub(crate) enum ArchivedWebMarkerHint {
+    AjaxProPath {
+        parent_event_id: String,
+        host: String,
+        url: String,
+    },
+    ComponentMarkers {
+        parent_event_id: String,
+        host: String,
+        origin: String,
+        kind: &'static str,
+        title: &'static str,
+        markers: Vec<String>,
+    },
+}
+
+#[derive(Debug)]
 enum TransientGitArchiveHint {
     ConfigExposure {
         host: String,
@@ -62,6 +80,21 @@ enum TransientGitArchiveHint {
         host: String,
         url: String,
         is_directory: bool,
+    },
+}
+
+#[derive(Debug)]
+enum TransientArchivedWebMarkerHint {
+    AjaxProPath {
+        host: String,
+        url: String,
+    },
+    ComponentMarkers {
+        host: String,
+        origin: String,
+        kind: &'static str,
+        title: &'static str,
+        markers: Vec<String>,
     },
 }
 
@@ -105,13 +138,14 @@ pub struct ParsedBbotEvents {
     pub(crate) archived_git_hints: Vec<ArchivedGitImportHint>,
     pub(crate) archived_robots_hints: Vec<ArchivedRobotsImportHint>,
     pub(crate) archived_web_parameter_hints: Vec<ArchivedWebParameterHint>,
+    pub(crate) archived_web_marker_hints: Vec<ArchivedWebMarkerHint>,
 }
 
 /// Lee el flujo de eventos BBOT conservando tipos, datos, metadatos y linaje.
 /// Los datos adicionales quedan dentro de `data` cuando la fuente los incluye
 /// allí; los campos reconocidos se normalizan como propiedades del evento.
 pub fn parse_event_graph(bytes: &[u8], max_events: usize) -> ChefResult<BbotEventGraph> {
-    Ok(parse_event_graph_with_hints(bytes, max_events, false, false, false)?.event_graph)
+    Ok(parse_event_graph_with_hints(bytes, max_events, false, false, false, false)?.event_graph)
 }
 
 fn parse_event_graph_with_hints(
@@ -120,6 +154,7 @@ fn parse_event_graph_with_hints(
     collect_archived_git_hints: bool,
     collect_archived_robots_hints: bool,
     collect_archived_web_parameter_hints: bool,
+    collect_archived_web_marker_hints: bool,
 ) -> ChefResult<ParsedBbotEvents> {
     if max_events == 0 {
         return Err(ChefError::new(
@@ -197,7 +232,8 @@ fn parse_event_graph_with_hints(
             None
         };
         let transient_http_response = if (collect_archived_git_hints
-            || collect_archived_robots_hints)
+            || collect_archived_robots_hints
+            || collect_archived_web_marker_hints)
             && raw.event_type == "HTTP_RESPONSE"
         {
             transient_http_response(&data)
@@ -314,7 +350,11 @@ fn parse_event_graph_with_hints(
     }
     let mut archived_git_hints = Vec::new();
     let mut archived_robots_hints = Vec::new();
-    if collect_archived_git_hints || collect_archived_robots_hints {
+    let mut archived_web_marker_hints = Vec::new();
+    if collect_archived_git_hints
+        || collect_archived_robots_hints
+        || collect_archived_web_marker_hints
+    {
         let events_by_id = events
             .iter()
             .map(|event| (event.id.as_str(), event))
@@ -402,6 +442,43 @@ fn parse_event_graph_with_hints(
                     }
                 }
             }
+            if collect_archived_web_marker_hints && response.status_code == Some(200) {
+                for hint in inspect_archived_web_markers(
+                    target_url,
+                    &response.response_url,
+                    response.body.as_bytes(),
+                ) {
+                    archived_web_marker_hints.push(match hint {
+                        TransientArchivedWebMarkerHint::AjaxProPath { host, url } => {
+                            ArchivedWebMarkerHint::AjaxProPath {
+                                parent_event_id: response_event.id.clone(),
+                                host,
+                                url,
+                            }
+                        }
+                        TransientArchivedWebMarkerHint::ComponentMarkers {
+                            host,
+                            origin,
+                            kind,
+                            title,
+                            markers,
+                        } => ArchivedWebMarkerHint::ComponentMarkers {
+                            parent_event_id: response_event.id.clone(),
+                            host,
+                            origin,
+                            kind,
+                            title,
+                            markers,
+                        },
+                    });
+                    if archived_web_marker_hints.len() > MAX_ARCHIVED_WEB_MARKER_HINTS {
+                        return Err(ChefError::new(
+                            ErrorCode::LimitExceeded,
+                            "La importación supera el máximo de pistas de marcadores web archivados",
+                        ));
+                    }
+                }
+            }
         }
     }
     Ok(ParsedBbotEvents {
@@ -414,6 +491,7 @@ fn parse_event_graph_with_hints(
         archived_git_hints,
         archived_robots_hints,
         archived_web_parameter_hints,
+        archived_web_marker_hints,
     })
 }
 
@@ -425,6 +503,87 @@ fn archived_robots_origin(target_url: &str, response_url: &str) -> Option<String
         || target.password().is_some()
         || target.origin() != response.origin()
         || response.path() != "/robots.txt"
+    {
+        return None;
+    }
+    Some(target.origin().ascii_serialization())
+}
+
+fn inspect_archived_web_markers(
+    target_url: &str,
+    response_url: &str,
+    body: &[u8],
+) -> Vec<TransientArchivedWebMarkerHint> {
+    let Some(origin) = same_origin_archived_response(target_url, response_url) else {
+        return Vec::new();
+    };
+    let Some(host) = url::Url::parse(&origin)
+        .ok()
+        .and_then(|url| url.host_str().map(str::to_owned))
+    else {
+        return Vec::new();
+    };
+    let mut hints = Vec::new();
+
+    if let Ok(telerik) = crate::parse_archived_telerik_response(body)
+        && !telerik.markers.is_empty()
+    {
+        hints.push(TransientArchivedWebMarkerHint::ComponentMarkers {
+            host: host.clone(),
+            origin: origin.clone(),
+            kind: "telerik_response_markers",
+            title: "Marcadores Telerik en respuesta archivada",
+            markers: telerik
+                .markers
+                .into_iter()
+                .map(|marker| format!("{:?}:{}", marker.marker, marker.occurrences))
+                .collect(),
+        });
+    }
+
+    if let Ok(body_text) = std::str::from_utf8(body) {
+        if let Ok(dotnetnuke) = crate::parse_archived_dotnetnuke_response("", body_text)
+            && !dotnetnuke.markers.is_empty()
+        {
+            hints.push(TransientArchivedWebMarkerHint::ComponentMarkers {
+                host: host.clone(),
+                origin: origin.clone(),
+                kind: "dotnetnuke_response_markers",
+                title: "Marcadores DotNetNuke en respuesta archivada",
+                markers: dotnetnuke
+                    .markers
+                    .into_iter()
+                    .map(|marker| format!("{marker:?}"))
+                    .collect(),
+            });
+        }
+
+        if let Ok(ajaxpro) = crate::parse_archived_ajaxpro_html(body_text) {
+            let Ok(base) = url::Url::parse(&origin) else {
+                return hints;
+            };
+            for path in ajaxpro.script_paths {
+                if let Ok(url) = base.join(&path)
+                    && url.origin() == base.origin()
+                {
+                    hints.push(TransientArchivedWebMarkerHint::AjaxProPath {
+                        host: host.clone(),
+                        url: url.to_string(),
+                    });
+                }
+            }
+        }
+    }
+    hints
+}
+
+fn same_origin_archived_response(target_url: &str, response_url: &str) -> Option<String> {
+    let target = url::Url::parse(target_url).ok()?;
+    let response = url::Url::parse(response_url).ok()?;
+    if !matches!(target.scheme(), "http" | "https")
+        || !target.username().is_empty()
+        || target.password().is_some()
+        || target.origin() != response.origin()
     {
         return None;
     }
@@ -597,6 +756,7 @@ pub fn parse(
     collect_archived_git_hints: bool,
     collect_archived_robots_hints: bool,
     collect_archived_web_parameter_hints: bool,
+    collect_archived_web_marker_hints: bool,
 ) -> ChefResult<ParsedBbotEvents> {
     let mut parsed = parse_event_graph_with_hints(
         bytes,
@@ -604,6 +764,7 @@ pub fn parse(
         collect_archived_git_hints,
         collect_archived_robots_hints,
         collect_archived_web_parameter_hints,
+        collect_archived_web_marker_hints,
     )?;
     let mut services = Vec::new();
 

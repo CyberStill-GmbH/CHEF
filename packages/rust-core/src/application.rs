@@ -19,6 +19,7 @@ const EVENT_GRAPH_BYTE_LIMIT: usize = 8 * 1024 * 1024;
 const MAX_GIT_DERIVED_EVENTS: usize = 2048;
 const MAX_ROBOTS_DERIVED_EVENTS: usize = 2048;
 const MAX_WEB_PARAMETER_DERIVED_EVENTS: usize = 4096;
+const MAX_WEB_MARKER_DERIVED_EVENTS: usize = 2048;
 
 pub trait Clock {
     fn now(&self) -> String;
@@ -286,12 +287,18 @@ impl ImportBbotEvidence {
             .get("chef_web_parameter_hints")
             .copied()
             .unwrap_or(false);
+        let archived_web_marker_hints_enabled = config
+            .modules
+            .get("chef_archived_web_marker_hints")
+            .copied()
+            .unwrap_or(false);
         let parsed = event_import::parse(
             bytes,
             policy.max_observations.min(OBSERVATION_LIMIT),
             git_archive_hints_enabled,
             robots_archive_hints_enabled,
             web_parameter_hints_enabled,
+            archived_web_marker_hints_enabled,
         )?;
         let event_import::ParsedBbotEvents {
             services,
@@ -299,6 +306,7 @@ impl ImportBbotEvidence {
             archived_git_hints,
             archived_robots_hints,
             archived_web_parameter_hints,
+            archived_web_marker_hints,
         } = parsed;
         if config.modules.values().any(|enabled| *enabled) {
             let engine = BbotEventEngine::with_chef_modules(
@@ -338,6 +346,17 @@ impl ImportBbotEvidence {
             cancelled,
         )?;
         for event in &event_graph.events[event_count_before_web_parameters..] {
+            check_cancelled(cancelled)?;
+            observer(event)?;
+        }
+        let event_count_before_web_markers = event_graph.events.len();
+        append_archived_web_marker_hints(
+            &mut event_graph,
+            &archived_web_marker_hints,
+            config,
+            cancelled,
+        )?;
+        for event in &event_graph.events[event_count_before_web_markers..] {
             check_cancelled(cancelled)?;
             observer(event)?;
         }
@@ -711,6 +730,150 @@ fn append_archived_web_parameter_hints(
         }
         graph_bytes += event_bytes + 1;
         graph.events.push(event);
+    }
+    Ok(())
+}
+
+fn append_archived_web_marker_hints(
+    graph: &mut crate::BbotEventGraph,
+    hints: &[event_import::ArchivedWebMarkerHint],
+    config: &ChefConfig,
+    cancelled: Option<&AtomicBool>,
+) -> ChefResult<()> {
+    if !config
+        .modules
+        .get("chef_archived_web_marker_hints")
+        .copied()
+        .unwrap_or(false)
+    {
+        return Ok(());
+    }
+
+    graph.modules_run = graph.modules_run.saturating_add(1);
+    let parents = graph
+        .events
+        .iter()
+        .map(|event| (event.id.clone(), event.clone()))
+        .collect::<std::collections::BTreeMap<_, _>>();
+    let mut existing_ids = graph
+        .events
+        .iter()
+        .map(|event| event.id.clone())
+        .collect::<std::collections::BTreeSet<_>>();
+    let mut graph_bytes = serde_json::to_vec(graph)
+        .map_err(|_| ChefError::new(ErrorCode::InvalidInput, "Grafo de eventos inválido"))?
+        .len();
+
+    for hint in hints.iter().take(MAX_WEB_MARKER_DERIVED_EVENTS) {
+        check_cancelled(cancelled)?;
+        let (parent_id, host, drafts) = match hint {
+            event_import::ArchivedWebMarkerHint::AjaxProPath {
+                parent_event_id,
+                host,
+                url,
+            } => (
+                parent_event_id.as_str(),
+                host.as_str(),
+                vec![crate::BbotEventDraft {
+                    event_type: "URL_HINT".to_owned(),
+                    data: serde_json::Value::String(url.clone()),
+                    host: Some(host.clone()),
+                    port: None,
+                    tags: vec![
+                        "chef:derived-archived-web-marker".to_owned(),
+                        "chef:ajaxpro-script-path".to_owned(),
+                    ],
+                }],
+            ),
+            event_import::ArchivedWebMarkerHint::ComponentMarkers {
+                parent_event_id,
+                host,
+                origin,
+                kind,
+                title,
+                markers,
+            } => (
+                parent_event_id.as_str(),
+                host.as_str(),
+                vec![crate::BbotEventDraft {
+                    event_type: "FINDING".to_owned(),
+                    data: serde_json::json!({
+                        "kind": kind,
+                        "title": title,
+                        "responseOrigin": origin,
+                        "markers": markers,
+                    }),
+                    host: Some(host.clone()),
+                    port: None,
+                    tags: vec![
+                        "chef:historical-candidate".to_owned(),
+                        "chef:derived-archived-web-marker".to_owned(),
+                    ],
+                }],
+            ),
+        };
+        let Some(parent) = parents.get(parent_id) else {
+            continue;
+        };
+        let Some(depth) = parent.depth.checked_add(1) else {
+            continue;
+        };
+        if depth > config.runtime.max_depth || parent.scope_distance > 32 {
+            continue;
+        }
+
+        for draft in drafts {
+            check_cancelled(cancelled)?;
+            if graph.events.len() >= config.runtime.max_events {
+                break;
+            }
+            let event_type = draft.event_type;
+            let (data, data_redacted) =
+                crate::event_engine::sanitize_event_data(&event_type, draft.data);
+            let mut event = crate::BbotEvent {
+                id: String::new(),
+                source_id: None,
+                source_uuid: None,
+                event_type,
+                data,
+                data_redacted,
+                metadata: serde_json::json!({
+                    "assertion": "historical_candidate",
+                    "ruleId": "chef_archived_web_marker_hints",
+                    "ruleVersion": "1",
+                    "sourceEventId": parent.id,
+                }),
+                metadata_redacted: false,
+                host: Some(host.to_owned()),
+                port: parent.port,
+                parent_id: Some(parent.id.clone()),
+                parent_source_id: None,
+                parent_source_uuid: None,
+                timestamp: parent.timestamp.clone(),
+                tags: draft.tags,
+                module: Some("chef_archived_web_marker_hints".to_owned()),
+                locator: format!(
+                    "rule:chef_archived_web_marker_hints@1;source={}",
+                    parent.locator
+                ),
+                depth,
+                scope_distance: parent.scope_distance,
+            };
+            event.id = crate::event_engine::event_id(&event)?;
+            if !existing_ids.insert(event.id.clone()) {
+                graph.duplicates_suppressed = graph.duplicates_suppressed.saturating_add(1);
+                continue;
+            }
+            crate::event_engine::validate_event(&event)?;
+            let event_bytes = serde_json::to_vec(&event)
+                .map_err(|_| ChefError::new(ErrorCode::InvalidInput, "Pista HTTP inválida"))?
+                .len();
+            if graph_bytes.saturating_add(event_bytes).saturating_add(1) > EVENT_GRAPH_BYTE_LIMIT {
+                break;
+            }
+            graph_bytes += event_bytes + 1;
+            graph.events.push(event);
+        }
     }
     Ok(())
 }

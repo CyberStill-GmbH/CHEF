@@ -32,6 +32,12 @@ const CATALOG: &[ModuleCapability] = &[
         offline_only: true,
     },
     ModuleCapability {
+        id: "chef_archived_web_marker_hints",
+        kind: ModuleCapabilityKind::ImportTransform,
+        state: ModuleCapabilityState::Implemented,
+        offline_only: true,
+    },
+    ModuleCapability {
         id: "chef_caa_record_hints",
         kind: ModuleCapabilityKind::EventTransform,
         state: ModuleCapabilityState::Implemented,
