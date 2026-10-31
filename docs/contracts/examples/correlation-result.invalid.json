@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "correlation-result/v0",
+  "ruleSetVersion": "v0",
+  "asOf": "2026-09-29T00:00:00.000Z",
+  "assets": [],
+  "relationships": [],
+  "paths": [
+    {
+      "id": "path:4760c9dd67ff0aaa7b4423fbf709077fe8ed958519060b151d267e3e02952d6c",
+      "assetIds": [
+        "asset:b5a3dd9dc948bc986bc3a40013a1d6d34f043ff82dbb2cd2be57fe5f5e926cb2",
+        "asset:585d047e936bf8e2ce95fbeada3c65782029231c9cfd97f2c1f4ada12090c0ba"
+      ],
+      "relationshipIds": [
+        "relationship:5f62147f50dc4abe5261d9ad87580d02cebb31744effb7df0a920948ff834fbb"
+      ],
+      "ruleId": "open-service/v1",
+      "ruleVersion": "v1",
+      "status": "inferred",
+      "explanation": "An imported observation reports an open service.",
+      "confidence": 1,
+      "isConfirmedVulnerability": true
+    }
+  ],
+  "metrics": {
+    "observationsIn": 1,
+    "assetsOut": 0,
+    "relationshipsOut": 0,
+    "pathsOut": 1,
+    "duplicateObservations": 0
+  }
+}
