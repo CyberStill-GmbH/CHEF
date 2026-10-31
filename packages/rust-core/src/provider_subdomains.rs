@@ -23,6 +23,138 @@ pub type RapidDnsSubdomainPage = ProviderSubdomainPage;
 pub type HackerTargetSubdomainPage = ProviderSubdomainPage;
 pub type SecurityTrailsSubdomainPage = ProviderSubdomainPage;
 pub type SubdomainCenterPage = ProviderSubdomainPage;
+pub type LeakIxSubdomainPage = ProviderSubdomainPage;
+pub type BufferOverrunSubdomainPage = ProviderSubdomainPage;
+
+/// Adapta offline la lista `subdomain` archivada de LeakIX.
+///
+/// No requiere ni recibe la clave LeakIX; los resultados permanecen como
+/// candidatos históricos y solo se conservan descendientes de la raíz.
+pub fn parse_leakix_subdomains(
+    query_domain: &str,
+    response: &[u8],
+) -> ChefResult<LeakIxSubdomainPage> {
+    if response.len() > MAX_RESPONSE_BYTES {
+        return Err(ChefError::new(
+            ErrorCode::LimitExceeded,
+            "La respuesta LeakIX supera el límite de bytes CHEF",
+        ));
+    }
+    let query_domain = canonical_query_domain(query_domain)?;
+    let entries: serde_json::Value = serde_json::from_slice(response).map_err(|_| {
+        ChefError::new(
+            ErrorCode::InvalidInput,
+            "La respuesta LeakIX no contiene JSON válido",
+        )
+    })?;
+    let entries = entries.as_array().ok_or(ChefError::new(
+        ErrorCode::InvalidInput,
+        "La respuesta LeakIX debe ser una lista JSON",
+    ))?;
+    if entries.len() > MAX_JSON_ENTRIES {
+        return Err(ChefError::new(
+            ErrorCode::LimitExceeded,
+            "La respuesta LeakIX supera el límite CHEF de entradas",
+        ));
+    }
+
+    let suffix = format!(".{query_domain}");
+    let mut candidates = BTreeSet::new();
+    for entry in entries {
+        let Some(name) = entry
+            .as_object()
+            .and_then(|object| object.get("subdomain"))
+            .and_then(serde_json::Value::as_str)
+        else {
+            continue;
+        };
+        let name = name.trim().trim_end_matches('.');
+        if name.len() > 253 || name.contains('*') || !valid_ascii_hostname(name) {
+            continue;
+        }
+        let Some(name) = crate::host::canonical_domain(name) else {
+            continue;
+        };
+        if name != query_domain && name.ends_with(&suffix) {
+            candidates.insert(name);
+            if candidates.len() > MAX_CANDIDATES {
+                return Err(ChefError::new(
+                    ErrorCode::LimitExceeded,
+                    "La respuesta LeakIX supera el límite CHEF de subdominios",
+                ));
+            }
+        }
+    }
+    Ok(ProviderSubdomainPage {
+        query_domain,
+        candidates: candidates.into_iter().collect(),
+    })
+}
+
+/// Adapta offline el campo CSV número cinco de cada fila `Results` de BufferOverrun.
+///
+/// Se descartan IP y demás metadatos históricos: solo se devuelven nombres
+/// canonicalizados descendientes de la raíz declarada.
+pub fn parse_bufferoverrun_subdomains(
+    query_domain: &str,
+    response: &[u8],
+) -> ChefResult<BufferOverrunSubdomainPage> {
+    if response.len() > MAX_RESPONSE_BYTES {
+        return Err(ChefError::new(
+            ErrorCode::LimitExceeded,
+            "La respuesta BufferOverrun supera el límite de bytes CHEF",
+        ));
+    }
+    let query_domain = canonical_query_domain(query_domain)?;
+    let value: serde_json::Value = serde_json::from_slice(response).map_err(|_| {
+        ChefError::new(
+            ErrorCode::InvalidInput,
+            "La respuesta BufferOverrun no contiene JSON válido",
+        )
+    })?;
+    let results = value
+        .as_object()
+        .and_then(|object| object.get("Results"))
+        .and_then(serde_json::Value::as_array)
+        .ok_or(ChefError::new(
+            ErrorCode::InvalidInput,
+            "La respuesta BufferOverrun no contiene una lista Results válida",
+        ))?;
+    if results.len() > MAX_JSON_ENTRIES {
+        return Err(ChefError::new(
+            ErrorCode::LimitExceeded,
+            "La respuesta BufferOverrun supera el límite CHEF de entradas",
+        ));
+    }
+
+    let suffix = format!(".{query_domain}");
+    let mut candidates = BTreeSet::new();
+    for row in results.iter().filter_map(serde_json::Value::as_str) {
+        let Some(name) = row.split(',').nth(4) else {
+            continue;
+        };
+        let name = name.trim().trim_end_matches('.');
+        if name.len() > 253 || name.contains('*') || !valid_ascii_hostname(name) {
+            continue;
+        }
+        let Some(name) = crate::host::canonical_domain(name) else {
+            continue;
+        };
+        if name != query_domain && name.ends_with(&suffix) {
+            candidates.insert(name);
+            if candidates.len() > MAX_CANDIDATES {
+                return Err(ChefError::new(
+                    ErrorCode::LimitExceeded,
+                    "La respuesta BufferOverrun supera el límite CHEF de subdominios",
+                ));
+            }
+        }
+    }
+    Ok(ProviderSubdomainPage {
+        query_domain,
+        candidates: candidates.into_iter().collect(),
+    })
+}
 
 /// Adapta offline la respuesta JSON `subdomains[]` de SecurityTrails.
 ///

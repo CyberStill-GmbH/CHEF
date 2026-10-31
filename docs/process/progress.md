@@ -1,5 +1,9 @@
 # Registro de trabajo
 
+## 31-10-2026 — Parsers offline de LeakIX y BufferOverrun
+
+Se adaptaron a Rust los normalizadores de los módulos `leakix.py` y `bufferoverrun.py`. `parse_leakix_subdomains` lee el campo `subdomain` de JSON archivado; `parse_bufferoverrun_subdomains` extrae la quinta columna de las cadenas en `Results`. Ambos requieren una raíz registrable ICANN, canonicalizan, deduplican y filtran descendientes; aplican límites de 1 MiB, 2 048 filas y 512 candidatos, sin claves, HTTP ni DNS. Los nombres son candidatos históricos, no observaciones actuales. Se añadieron fixtures sintéticos y pruebas para formatos, filtro de raíz y límites. El código fuente local permanece intacto. Quedan pendientes transporte autorizado, términos del proveedor, emisión de eventos con linaje e integración Tauri.
+
 ## 30-10-2026 — Portado offline de SecurityTrails y Subdomain Center
 
 Se añadieron al core Rust dos parsers de respuestas archivadas que estaban pendientes en el inventario: `parse_securitytrails_subdomains` combina `subdomains[]` con la raíz consultada; `parse_subdomaincenter_subdomains` filtra una lista JSON de FQDN por esa raíz. Ambos exigen dominio registrable ICANN, procesan como máximo 1 MiB, 2 048 entradas y 512 candidatos, canonicalizan y deduplican con orden estable. Entradas JSON malformadas o fuera de forma se rechazan completas; entradas inválidas o externas no se convierten en candidatos. No se consultan APIs, no se leen credenciales ni se afirma resolución DNS actual. Se ejecutaron tres pruebas Rust nuevas para normalización, filtro de raíz, forma, dominio inválido y límite de entradas; pasan junto con las 10 pruebas actuales de `rust-core`. El transporte, términos, autorización por proyecto y persistencia de linaje permanecen pendientes. La fuente local en `C:\projects\CHEF` no se modificó. El inventario ahora registra 67 elementos parciales, 369 pendientes y 30 exclusiones justificadas (466 en total).

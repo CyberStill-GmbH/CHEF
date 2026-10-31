@@ -1,5 +1,9 @@
 # Auditoría de la fuente local
 
+## Parsers offline añadidos
+
+Las filas de `modules/leakix.py` y `modules/bufferoverrun.py` tienen adaptación Rust parcial. Se consume solo una respuesta archivada: el campo `subdomain` de LeakIX o la quinta columna de `Results` de BufferOverrun. CHEF limita tamaño, entradas y candidatos, valida la raíz ICANN y descarta nombres externos, inválidos o wildcard. No se ejecutan solicitudes ni se usan credenciales; integrar conectores con autorización, términos, linaje y transporte sigue pendiente.
+
 Actualizado 28-10-2026. Esta auditoría revisa la carpeta indicada por el propietario: `C:\projects\CHEF`. La copia fuente se mantiene intacta. El inventario reproducible está en [inventario-migracion.csv](inventario-migracion.csv).
 
 ## Hallazgo

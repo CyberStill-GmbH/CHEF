@@ -6,11 +6,18 @@ use std::{
 use crate::{
     ChefConfig, ChefError, ChefPreset, ErrorCode, FixedClock, ImportBbotEvidence, ImportEvidence,
     ModuleCapabilityState, PresetCatalog, ScopePolicy, module_capabilities, module_capability,
-    parse_securitytrails_subdomains, parse_subdomaincenter_subdomains,
+    parse_bufferoverrun_subdomains, parse_leakix_subdomains, parse_securitytrails_subdomains,
+    parse_subdomaincenter_subdomains,
 };
 
 const NMAP: &[u8] = include_bytes!("../../../fixtures/nmap/lab.xml");
 const SCOPE: &str = include_str!("../../../fixtures/scope/lab.json");
+const LEAKIX: &[u8] = include_bytes!("../../../fixtures/leakix-response/positive.json");
+const LEAKIX_NEGATIVE: &[u8] = include_bytes!("../../../fixtures/leakix-response/negative.json");
+const BUFFEROVERRUN: &[u8] =
+    include_bytes!("../../../fixtures/bufferoverrun-response/positive.json");
+const BUFFEROVERRUN_NEGATIVE: &[u8] =
+    include_bytes!("../../../fixtures/bufferoverrun-response/negative.json");
 
 fn policy() -> ScopePolicy {
     serde_json::from_str(SCOPE).expect("fixture scope is valid")
@@ -340,5 +347,89 @@ fn built_in_presets_only_enable_registered_implemented_capabilities() {
     assert_eq!(
         PresetCatalog::new([preset]).unwrap_err().code,
         ErrorCode::InvalidInput
+    );
+}
+
+#[test]
+fn leakix_archived_names_are_canonicalized_and_filtered_to_the_query_root() {
+    let page = parse_leakix_subdomains("blacklanternsecurity.com", LEAKIX)
+        .expect("valid archived LeakIX response");
+    assert_eq!(page.query_domain, "blacklanternsecurity.com");
+    assert_eq!(
+        page.candidates
+            .iter()
+            .map(String::as_str)
+            .collect::<Vec<_>>(),
+        [
+            "api.blacklanternsecurity.com",
+            "asdf.blacklanternsecurity.com"
+        ]
+    );
+}
+
+#[test]
+fn bufferoverrun_archived_results_use_only_the_hostname_column() {
+    let page = parse_bufferoverrun_subdomains("blacklanternsecurity.com", BUFFEROVERRUN)
+        .expect("valid archived BufferOverrun response");
+    assert_eq!(page.query_domain, "blacklanternsecurity.com");
+    assert_eq!(
+        page.candidates
+            .iter()
+            .map(String::as_str)
+            .collect::<Vec<_>>(),
+        [
+            "api.blacklanternsecurity.com",
+            "sub.blacklanternsecurity.com"
+        ]
+    );
+}
+
+#[test]
+fn archived_leakix_and_bufferoverrun_parsers_reject_invalid_shapes_and_limits() {
+    assert_eq!(
+        parse_leakix_subdomains("example.com", br#"{"subdomain":"www.example.com"}"#)
+            .unwrap_err()
+            .code,
+        ErrorCode::InvalidInput
+    );
+    assert_eq!(
+        parse_bufferoverrun_subdomains("example.com", br#"{"Results":"not-a-list"}"#)
+            .unwrap_err()
+            .code,
+        ErrorCode::InvalidInput
+    );
+
+    let leakix_oversized = format!("[{}]", vec!["{}"; 2_049].join(","));
+    assert_eq!(
+        parse_leakix_subdomains("example.com", leakix_oversized.as_bytes())
+            .unwrap_err()
+            .code,
+        ErrorCode::LimitExceeded
+    );
+    let bufferoverrun_oversized = format!(
+        "{{\"Results\":[{}]}}",
+        vec!["\"1.2.3.4,a,*,*,www.example.com\""; 2_049].join(",")
+    );
+    assert_eq!(
+        parse_bufferoverrun_subdomains("example.com", bufferoverrun_oversized.as_bytes())
+            .unwrap_err()
+            .code,
+        ErrorCode::LimitExceeded
+    );
+}
+
+#[test]
+fn archived_leakix_and_bufferoverrun_negative_fixtures_emit_no_external_or_invalid_hosts() {
+    assert!(
+        parse_leakix_subdomains("example.com", LEAKIX_NEGATIVE)
+            .expect("valid LeakIX negative fixture")
+            .candidates
+            .is_empty()
+    );
+    assert!(
+        parse_bufferoverrun_subdomains("example.com", BUFFEROVERRUN_NEGATIVE)
+            .expect("valid BufferOverrun negative fixture")
+            .candidates
+            .is_empty()
     );
 }

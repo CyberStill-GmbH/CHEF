@@ -1,0 +1,9 @@
+{
+  "Results": [
+    "1.2.3.4,example.com,*,*,SUB.blacklanternsecurity.com.",
+    "5.6.7.8,example.com,*,*,api.blacklanternsecurity.com",
+    "9.8.7.6,example.net,*,*,outside.example.net",
+    "1.2.3.4,example.com,*,*,*.wild.blacklanternsecurity.com",
+    "1.2.3.4,example.com,*,*,blacklanternsecurity.com"
+  ]
+}

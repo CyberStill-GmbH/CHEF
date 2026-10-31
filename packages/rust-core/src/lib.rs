@@ -111,9 +111,10 @@ pub use otx::{OtxPassiveDnsPage, parse_otx_passive_dns};
 pub use port_spec::parse_port_string;
 pub use presets::{ChefPreset, PresetCatalog, ResolvedPreset};
 pub use provider_subdomains::{
-    DnsDumpsterSubdomainPage, HackerTargetSubdomainPage, ProviderSubdomainPage,
-    RapidDnsSubdomainPage, SecurityTrailsSubdomainPage, SubdomainCenterPage,
-    parse_dnsdumpster_subdomains, parse_hackertarget_subdomains, parse_provider_subdomains,
+    BufferOverrunSubdomainPage, DnsDumpsterSubdomainPage, HackerTargetSubdomainPage,
+    LeakIxSubdomainPage, ProviderSubdomainPage, RapidDnsSubdomainPage, SecurityTrailsSubdomainPage,
+    SubdomainCenterPage, parse_bufferoverrun_subdomains, parse_dnsdumpster_subdomains,
+    parse_hackertarget_subdomains, parse_leakix_subdomains, parse_provider_subdomains,
     parse_rapiddns_subdomains, parse_securitytrails_subdomains, parse_subdomaincenter_subdomains,
 };
 pub use rate_limit::RateLimiter;
