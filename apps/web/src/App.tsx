@@ -414,7 +414,7 @@ export function App({ client = defaultClient }: AppProps) {
               </h1>
               <p className="page-description">
                 {activeWorkspace === 'recon'
-                  ? 'Escribe un comando y revisa el grafo validado.'
+                  ? 'Explora el snapshot cargado y sus relaciones. Los comandos disponibles procesan datos localmente.'
                   : activeWorkspace === 'evidence'
                     ? 'Consulta procedencia, relaciones y exportaciones.'
                     : activeWorkspace === 'sources'
@@ -425,7 +425,7 @@ export function App({ client = defaultClient }: AppProps) {
             <div className="workspace-badge">
               <span className="status-dot" />{' '}
               {state.status === 'success'
-                ? `${state.snapshot.assets.length} activos`
+                ? `${state.snapshot.assets.length} en snapshot`
                 : 'Sin snapshot'}
             </div>
           </section>

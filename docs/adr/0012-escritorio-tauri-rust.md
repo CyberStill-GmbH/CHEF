@@ -1,6 +1,6 @@
 # ADR 0012: Aplicación de escritorio Tauri con núcleo Rust
 
-Estado: **dirección de producto aceptada por el propietario; build e instalación NSIS/MSI completados en Windows; revisión técnica del equipo y validación interactiva pendientes**. Fecha: 18-10-2026. Responsables propuestos: César (núcleo Rust/IPC), Diego (React/UX/terminal) y Jhojan (persistencia, fixtures y conformidad). Define el destino que reemplaza la propuesta web Node–Go del [ADR 0011](0011-node-go-boundary.md); no elimina el código ni los registros históricos.
+Estado: **supersedido como destino de producto por el ADR 0013**. Registra la decisión histórica de escritorio Tauri/Rust y su implementación local; no elimina el código ni los registros históricos. Fecha: 18-10-2026. Responsables propuestos: César (núcleo Rust/IPC), Diego (React/UX/terminal) y Jhojan (persistencia, fixtures y conformidad).
 
 ## Contexto y decisión que se debe tomar
 

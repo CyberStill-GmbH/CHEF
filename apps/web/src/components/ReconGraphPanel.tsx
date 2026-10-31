@@ -49,6 +49,17 @@ export function ReconGraphPanel({ graph }: ReconGraphPanelProps) {
     let cy: Core | null = null;
     const container = document.getElementById('recon-graph-canvas');
     if (container === null) return;
+    const observer = new ResizeObserver(() => {
+      if (
+        cy === null ||
+        container.clientWidth === 0 ||
+        container.clientHeight === 0
+      )
+        return;
+      cy.resize();
+      cy.fit(undefined, 24);
+    });
+    observer.observe(container);
 
     void import('cytoscape').then(({ default: cytoscape }) => {
       if (disposed) return;
@@ -132,11 +143,16 @@ export function ReconGraphPanel({ graph }: ReconGraphPanelProps) {
       if (selectedAssetIdRef.current !== null) {
         cy.getElementById(selectedAssetIdRef.current).select();
       }
+      if (container.clientWidth > 0 && container.clientHeight > 0) {
+        cy.resize();
+        cy.fit(undefined, 24);
+      }
       cy.on('tap', 'node', (event) => setSelectedAssetId(event.target.id()));
     });
 
     return () => {
       disposed = true;
+      observer.disconnect();
       graphRef.current = null;
       cy?.destroy();
     };

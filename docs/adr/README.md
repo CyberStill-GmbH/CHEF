@@ -1,6 +1,6 @@
 # Registro de decisiones arquitectónicas
 
-Los ADRs preservan **por qué** se eligió una dirección, sus alternativas, consecuencias y evidencia de revisión. El código/contrato actual muestran **qué** se implementó; una dirección aceptada no equivale a una implementación. El [ADR 0012](0012-escritorio-tauri-rust.md) registra la dirección de producto aceptada por el propietario, con revisión técnica y toolchain pendientes. El contexto general está en [C4 del código actual](../architecture/overview.md), [arquitectura de escritorio](../architecture/desktop-tauri.md) y [seguridad CWE](../security/cwe-controls.md).
+Los ADRs preservan **por qué** se eligió una dirección, sus alternativas, consecuencias y evidencia de revisión. El código/contrato actual muestran **qué** se implementó; una dirección aceptada no equivale a una implementación. El [ADR 0013](0013-producto-web.md) registra la decisión vigente de producto web y supersede el destino de escritorio del ADR 0012. El contexto general está en [C4 del código actual](../architecture/overview.md), [arquitectura local heredada](../architecture/desktop-tauri.md) y [seguridad CWE](../security/cwe-controls.md).
 
 ## Índice y vigencia
 
@@ -15,7 +15,8 @@ Los ADRs preservan **por qué** se eligió una dirección, sus alternativas, con
 - [0009 · correlación multifuente](0009-evidence-correlation.md), **propuesto**; conserva los invariantes de 0002.
 - [0010 · fuentes y ejecución activa](0010-source-integration.md), **propuesto**; la fase actual solo importa resultados autorizados.
 - [0011 · frontera Node.js/Prisma/OAuth y motor Go](0011-node-go-boundary.md), **retirado por decisión del propietario el 18-10-2026**; se conserva como antecedente sin implementación.
-- [0012 · escritorio Tauri, núcleo Rust y SurrealDB local](0012-escritorio-tauri-rust.md), **dirección aceptada por el propietario; validación técnica de integración pendiente**; fija gates de migración, seguridad y conformidad.
+- [0012 · escritorio Tauri, núcleo Rust y SurrealDB local](0012-escritorio-tauri-rust.md), **supersedido como destino de producto por ADR 0013**; se conserva como historial de implementación local.
+- [0013 · CHEF como producto web](0013-producto-web.md), **dirección vigente del propietario; API Rust, almacenamiento web y despliegue pendientes**.
 
 ## Cuándo abrir un ADR
 
