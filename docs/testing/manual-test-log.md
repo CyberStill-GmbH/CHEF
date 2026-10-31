@@ -55,3 +55,21 @@ Esta sección complementa el registro histórico anterior. Entorno: Windows, Nod
 | Herramientas de despliegue   | Railway CLI 5.71.0 y Vercel CLI 65.9.0                        | Ejecutables verificados en el entorno del agente; la terminal del usuario no los detectó y se indicó instalación desde su propia sesión. |
 
 Evidencia sintética: `artifacts/db-verification/*/verification.json` y `artifacts/backup-host-probe/`. Los dumps no se suben a Git. Las pruebas usan sesiones HMAC sintéticas: OAuth real, cuentas de hosting y aceptación en despliegue siguen pendientes. Las filas históricas sobre ausencia de Docker/Go/PostgreSQL describen el entorno anterior, no este incremento.
+
+## Integración web local — 30-10-2026
+
+Rama `feature/web-api-projects`, sobre `c1d050f`. Windows, Node 24.18.0, Edge/Playwright CLI, PostgreSQL 16 y motor Go real. Sesiones sintéticas para los recorridos automáticos; GitHub real no se automatizó.
+
+| Prueba              | Esperado                                                                 | Observado                                                                                                                                                                      |
+| ------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Web/API             | Crear proyecto, subir `fixtures/nmap/lab.xml`, consultar datos guardados | Desde formularios del navegador: proyecto creado, importación guardada; snapshot con 4 assets, 3 observaciones y 1 evidencia.                                                  |
+| Recarga             | Mantener resultados persistidos                                          | Proyecto y snapshot vuelven a aparecer tras recargar.                                                                                                                          |
+| Segunda cuenta      | No mostrar el proyecto ajeno                                             | La segunda sesión ve lista vacía, sin datos de la primera cuenta.                                                                                                              |
+| Sesión              | No exponer token a JavaScript                                            | Cookie HttpOnly no visible en `document.cookie`; localStorage y sessionStorage sin claves de aplicación.                                                                       |
+| Navegador real      | Transporte fetch operativo                                               | Se detectó receptor incorrecto del fetch nativo, se corrigió y se añadió regresión automatizada.                                                                               |
+| Cookies/OAuth       | Estado ligado al navegador, CSRF y rechazo de cuentas                    | Pruebas HTTP: cuatro casos de navegador, con éxito/fallos/origen/logout/Secure/allowlist, sin token en URL.                                                                    |
+| Regresión           | Core, CLI y web estables                                                 | `npm run check`: 92 backend/core y 47 web; resto del gate correcto.                                                                                                            |
+| PostgreSQL          | Persistencia y recuperación intactas                                     | `CHEF_VERIFY_IMAGE=chef-web-api:local npm run db:verify` correcto; rollback, restore, dos usuarios y reinicio.                                                                 |
+| API local existente | Activar web sin tocar la base                                            | API recreada con imagen `chef-web-api:local`; DB y credenciales previas conservadas; `/health` 200 y ruta de navegador disponible. Imagen anterior `chef-main-api` conservada. |
+
+Web local en `http://127.0.0.1:5173/`, API en `http://127.0.0.1:8787`. La allowlist local habilita al operador autenticado del repositorio; ampliar con IDs de compañeros cuando corresponda. No se desplegó a hosting ni se aprobó el contrato formal. La aceptación de GitHub real y la revisión del equipo siguen pendientes.

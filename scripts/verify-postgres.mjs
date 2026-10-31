@@ -112,6 +112,8 @@ async function startApi(name, url) {
     'HOST=0.0.0.0',
     '--env',
     'CHEF_ALLOWED_GITHUB_USER_IDS=1,2',
+    '--env',
+    'CHEF_WEB_ORIGIN=http://127.0.0.1:5173',
     image,
   ]);
   created.push(name);

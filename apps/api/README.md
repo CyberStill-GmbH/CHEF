@@ -28,6 +28,8 @@ Variables opcionales: `PORT` (8787), `CHEF_SCOPE` (`fixtures/scope/lab.json`), `
 
 Sin `CHEF_SESSION_SECRET` o sin credenciales de GitHub el proceso **no arranca**: no existe modo "sin autenticación".
 
+La web usa sesiones HttpOnly y el [contrato de navegador](../../docs/contracts/browser-api.md). Configurar `CHEF_WEB_ORIGIN` (obligatorio en producción; `http://127.0.0.1:5173` en desarrollo) y ejecutar `npm run web:dev`. El acceso bearer de la CLI se conserva.
+
 En producción también exige `DATABASE_URL` y `CHEF_ALLOWED_GITHUB_USER_IDS` (IDs numéricos separados por coma). La allowlist se aplica en el callback y en cada petición autenticada. Para migrar: `npm run db:migrate`. Véanse [operaciones de base de datos](../../docs/architecture/database-operations.md) y [despliegue privado](../../docs/architecture/private-deployment.md).
 
 ## Estado real

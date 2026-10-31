@@ -74,6 +74,7 @@ function dependencies(maxBodyBytes?: number): ApiDependencies {
     }),
     oauth,
     scopePolicy,
+    browserCookieSecret: 't'.repeat(32),
   };
   return maxBodyBytes === undefined ? base : { ...base, maxBodyBytes };
 }
@@ -446,6 +447,200 @@ describe('private OAuth instance', () => {
       await new Promise<void>((resolve) =>
         started.server.close(() => resolve()),
       );
+    }
+  });
+});
+
+describe('browser sessions', () => {
+  const origin = 'http://127.0.0.1:5173';
+  const browserHeaders = { origin, 'x-chef-request': '1' };
+  function cookies(response: Response) {
+    return response.headers
+      .getSetCookie()
+      .map((value) => value.split(';')[0])
+      .filter(Boolean)
+      .join('; ');
+  }
+  async function signIn(base: string, code = 'first') {
+    const started = await fetch(`${base}/auth/github/browser/start`, {
+      method: 'POST',
+      headers: browserHeaders,
+    });
+    assert.equal(started.status, 200);
+    const authorize = text(record(await started.json())['authorizeUrl']);
+    const state = new URL(authorize).searchParams.get('state');
+    const callback = await fetch(
+      `${base}/auth/github/callback?code=${code}&state=${encodeURIComponent(state ?? '')}`,
+      {
+        redirect: 'manual',
+        headers: { cookie: cookies(started) },
+      },
+    );
+    return { started, callback };
+  }
+
+  it('binds unique OAuth state to the browser and returns an HttpOnly session without a token URL', async () => {
+    const app = await start({ ...dependencies(), webOrigin: origin });
+    try {
+      const { started, callback } = await signIn(app.base);
+      assert.match(
+        started.headers.get('set-cookie') ?? '',
+        /HttpOnly; SameSite=Lax/,
+      );
+      assert.equal(callback.status, 303);
+      assert.equal(callback.headers.get('location'), `${origin}/`);
+      assert.equal(await callback.text(), '');
+      assert.match(
+        callback.headers.get('set-cookie') ?? '',
+        /chef-session=.*HttpOnly/,
+      );
+      const encryptedCookie = cookies(callback)
+        .split('; ')
+        .find((part) => part.startsWith('chef-session='));
+      assert.ok(encryptedCookie?.startsWith('chef-session=b1.'));
+      const altered = await fetch(`${app.base}/auth/session`, {
+        headers: {
+          'x-chef-request': '1',
+          cookie: encryptedCookie?.replace('b1.', 'b1.A') ?? '',
+        },
+      });
+      assert.equal(altered.status, 401);
+      const session = await fetch(`${app.base}/auth/session`, {
+        headers: { cookie: cookies(callback), 'x-chef-request': '1' },
+      });
+      assert.deepEqual(await session.json(), { userId: 'github:1' });
+      const second = await fetch(`${app.base}/auth/github/browser/start`, {
+        method: 'POST',
+        headers: browserHeaders,
+      });
+      assert.notEqual(cookies(started), cookies(second));
+    } finally {
+      await new Promise<void>((resolve) => app.server.close(() => resolve()));
+    }
+  });
+
+  it('rejects missing origin, a foreign origin and browser state without its cookie', async () => {
+    const app = await start({ ...dependencies(), webOrigin: origin });
+    try {
+      for (const headers of [
+        { 'x-chef-request': '1' },
+        { origin: 'https://foreign.invalid', 'x-chef-request': '1' },
+        { origin },
+      ]) {
+        const denied = await fetch(`${app.base}/auth/github/browser/start`, {
+          method: 'POST',
+          headers,
+        });
+        assert.equal(denied.status, 403);
+      }
+      const started = await fetch(`${app.base}/auth/github/browser/start`, {
+        method: 'POST',
+        headers: browserHeaders,
+      });
+      const state =
+        new URL(
+          text(record(await started.json())['authorizeUrl']),
+        ).searchParams.get('state') ?? '';
+      const noCookie = await fetch(
+        `${app.base}/auth/github/callback?code=first&state=${encodeURIComponent(state)}`,
+        { redirect: 'manual' },
+      );
+      assert.equal(noCookie.status, 303);
+      assert.equal(noCookie.headers.get('location'), `${origin}/?auth=failed`);
+      const changed = await fetch(
+        `${app.base}/auth/github/callback?code=first&state=wrong`,
+        { redirect: 'manual', headers: { cookie: cookies(started) } },
+      );
+      assert.equal(changed.headers.get('location'), `${origin}/?auth=failed`);
+      assert.ok(!cookies(changed).includes('chef-session='));
+    } finally {
+      await new Promise<void>((resolve) => app.server.close(() => resolve()));
+    }
+  });
+
+  it('protects cookie-authenticated writes and clears the browser session at logout', async () => {
+    const app = await start({ ...dependencies(), webOrigin: origin });
+    try {
+      const { callback } = await signIn(app.base);
+      const sessionCookie = cookies(callback);
+      const rejected = await fetch(`${app.base}/projects`, {
+        method: 'POST',
+        headers: {
+          cookie: sessionCookie,
+          origin: 'https://foreign.invalid',
+          'x-chef-request': '1',
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ name: 'Blocked' }),
+      });
+      assert.equal(rejected.status, 403);
+      const noHeader = await fetch(`${app.base}/projects`, {
+        headers: { cookie: sessionCookie },
+      });
+      assert.equal(noHeader.status, 403);
+      const created = await fetch(`${app.base}/projects`, {
+        method: 'POST',
+        headers: {
+          ...browserHeaders,
+          cookie: sessionCookie,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ name: 'Browser project' }),
+      });
+      assert.equal(created.status, 201);
+      const logout = await fetch(`${app.base}/auth/logout`, {
+        method: 'POST',
+        headers: { ...browserHeaders, cookie: sessionCookie },
+      });
+      assert.equal(logout.status, 200);
+      assert.match(
+        logout.headers.get('set-cookie') ?? '',
+        /chef-session=;.*Max-Age=0/,
+      );
+      assert.equal(
+        (
+          await fetch(`${app.base}/auth/session`, {
+            headers: { 'x-chef-request': '1' },
+          })
+        ).status,
+        401,
+      );
+    } finally {
+      await new Promise<void>((resolve) => app.server.close(() => resolve()));
+    }
+  });
+
+  it('sets Secure host cookies for HTTPS and rejects accounts outside the allowlist', async () => {
+    const secureOrigin = 'https://chef.example.invalid';
+    const app = await start({
+      ...dependencies(),
+      webOrigin: secureOrigin,
+      allowedOAuthUserIds: new Set(['1']),
+    });
+    try {
+      const started = await fetch(`${app.base}/auth/github/browser/start`, {
+        method: 'POST',
+        headers: { origin: secureOrigin, 'x-chef-request': '1' },
+      });
+      assert.match(
+        started.headers.get('set-cookie') ?? '',
+        /__Host-chef-oauth=.*; Secure/,
+      );
+      const state =
+        new URL(
+          text(record(await started.json())['authorizeUrl']),
+        ).searchParams.get('state') ?? '';
+      const denied = await fetch(
+        `${app.base}/auth/github/callback?code=second&state=${encodeURIComponent(state)}`,
+        { redirect: 'manual', headers: { cookie: cookies(started) } },
+      );
+      assert.equal(
+        denied.headers.get('location'),
+        `${secureOrigin}/?auth=failed`,
+      );
+      assert.ok(!cookies(denied).includes('__Host-chef-session='));
+    } finally {
+      await new Promise<void>((resolve) => app.server.close(() => resolve()));
     }
   });
 });

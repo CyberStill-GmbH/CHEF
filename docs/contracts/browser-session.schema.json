@@ -1,0 +1,8 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://chef.cyberstill.dev/contracts/browser-session/v0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["userId"],
+  "properties": { "userId": { "type": "string", "minLength": 1 } }
+}

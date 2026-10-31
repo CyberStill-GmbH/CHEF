@@ -19,6 +19,7 @@ const ignored = new Set([
   'node_modules',
   'dist',
   'artifacts',
+  '.playwright-cli',
   'target',
 ]);
 function files(directory) {
@@ -135,6 +136,25 @@ assert.ok(
   'correlation-result.invalid.json must fail CorrelationResult v0 validation',
 );
 const sources = JSON.parse(readFileSync('docs/research/sources.json', 'utf8'));
+for (const name of ['browser-session', 'browser-authorize']) {
+  const check = ajv.compile(
+    JSON.parse(readFileSync(`docs/contracts/${name}.schema.json`, 'utf8')),
+  );
+  assert.ok(
+    check(
+      JSON.parse(readFileSync(`docs/contracts/examples/${name}.json`, 'utf8')),
+    ),
+    `${name}: positive example failed`,
+  );
+  assert.ok(
+    !check(
+      JSON.parse(
+        readFileSync(`docs/contracts/examples/${name}.invalid.json`, 'utf8'),
+      ),
+    ),
+    `${name}: negative example passed`,
+  );
+}
 assert.equal(new Set(sources.map((item) => item.id)).size, sources.length);
 for (const source of sources) {
   assert.equal(new URL(source.url).protocol, 'https:');

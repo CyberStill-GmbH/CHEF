@@ -59,7 +59,7 @@ npm run web:dev     # Vite sirve la UI con el snapshot fixture, sin sesiones
 npm run web:check   # tipos + 34 pruebas + build
 ```
 
-La web todavía consume el fixture canónico; no está conectada a la API y no tiene grafo ni filtros.
+La web se conecta a la API por `/api`, con sesión HttpOnly, proyectos, importación XML y lectura del snapshot persistido. El fixture se ofrece como demo sintética explícita. Ver el [contrato de navegador](../contracts/browser-api.md).
 
 ## Base de datos, contenedor y recuperación
 
@@ -74,7 +74,7 @@ Para una base elegida por el operador: configurar `DATABASE_URL` y ejecutar `npm
 
 `npm run db:backup` genera dump y SHA-256. `npm run db:restore -- <archivo.dump> --yes` verifica integridad y restaura en una transacción. Si faltan clientes PostgreSQL en Windows, los scripts usan Docker automáticamente. No utilizar comodines en lugar del nombre exacto del archivo. Las instrucciones y variables están en [operaciones de base de datos](../architecture/database-operations.md).
 
-El despliegue remoto sigue pendiente de cuentas/configuración y validación en Railway/Vercel. La web todavía usa un fixture; no tiene sesión ni conexión con la API.
+El despliegue remoto sigue pendiente de cuentas/configuración y validación en Railway/Vercel. La web local usa la sesión y los proyectos reales de la API; queda pendiente validar el despliegue remoto y el login real con el proveedor.
 
 ## Rollback
 
