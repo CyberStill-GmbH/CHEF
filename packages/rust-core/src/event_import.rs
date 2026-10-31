@@ -18,6 +18,7 @@ const MAX_EVENT_DEPTH: usize = 32;
 const DEFAULT_BBOT_SCOPE_DISTANCE: u16 = 10;
 const MAX_ARCHIVED_GIT_HINTS: usize = 2048;
 const MAX_ARCHIVED_ROBOTS_HINTS: usize = 4096;
+const MAX_ARCHIVED_WEB_PARAMETER_HINTS: usize = 4096;
 
 #[derive(Debug)]
 pub(crate) enum ArchivedGitImportHint {
@@ -41,6 +42,13 @@ pub(crate) struct ArchivedRobotsImportHint {
     pub host: String,
     pub url: String,
     pub kind: crate::RobotsHintKind,
+}
+
+#[derive(Debug)]
+pub(crate) struct ArchivedWebParameterHint {
+    pub parent_event_id: String,
+    pub host: String,
+    pub name: String,
 }
 
 #[derive(Debug)]
@@ -96,13 +104,14 @@ pub struct ParsedBbotEvents {
     pub event_graph: BbotEventGraph,
     pub(crate) archived_git_hints: Vec<ArchivedGitImportHint>,
     pub(crate) archived_robots_hints: Vec<ArchivedRobotsImportHint>,
+    pub(crate) archived_web_parameter_hints: Vec<ArchivedWebParameterHint>,
 }
 
 /// Lee el flujo de eventos BBOT conservando tipos, datos, metadatos y linaje.
 /// Los datos adicionales quedan dentro de `data` cuando la fuente los incluye
 /// allí; los campos reconocidos se normalizan como propiedades del evento.
 pub fn parse_event_graph(bytes: &[u8], max_events: usize) -> ChefResult<BbotEventGraph> {
-    Ok(parse_event_graph_with_hints(bytes, max_events, false, false)?.event_graph)
+    Ok(parse_event_graph_with_hints(bytes, max_events, false, false, false)?.event_graph)
 }
 
 fn parse_event_graph_with_hints(
@@ -110,6 +119,7 @@ fn parse_event_graph_with_hints(
     max_events: usize,
     collect_archived_git_hints: bool,
     collect_archived_robots_hints: bool,
+    collect_archived_web_parameter_hints: bool,
 ) -> ChefResult<ParsedBbotEvents> {
     if max_events == 0 {
         return Err(ChefError::new(
@@ -121,6 +131,7 @@ fn parse_event_graph_with_hints(
         .map_err(|_| ChefError::new(ErrorCode::InvalidInput, "BBOT JSONL debe ser UTF-8"))?;
     let mut events = Vec::new();
     let mut archived_http_responses = Vec::new();
+    let mut archived_web_parameter_hints = Vec::new();
     let mut source_ids = HashMap::<String, usize>::new();
     let mut source_uuids = HashMap::<String, usize>::new();
 
@@ -167,6 +178,24 @@ fn parse_event_graph_with_hints(
             .ok_or_else(|| {
                 ChefError::new(ErrorCode::InvalidInput, "Evento BBOT sin data/data_json")
             })?;
+        let transient_web_parameters = if collect_archived_web_parameter_hints
+            && raw.event_type == "URL"
+        {
+            data.as_str()
+                .and_then(|value| crate::parse_archived_web_parameters(value).ok())
+                .and_then(|parsed| {
+                    let url = url::Url::parse(&parsed.url_without_query).ok()?;
+                    let host = url.host_str()?.to_owned();
+                    if raw.host.as_deref().is_some_and(|declared| {
+                        crate::host::canonical_host(declared) != crate::host::canonical_host(&host)
+                    }) {
+                        return None;
+                    }
+                    Some((host, parsed.parameter_names))
+                })
+        } else {
+            None
+        };
         let transient_http_response = if (collect_archived_git_hints
             || collect_archived_robots_hints)
             && raw.event_type == "HTTP_RESPONSE"
@@ -205,6 +234,21 @@ fn parse_event_graph_with_hints(
         };
         validate_event(&event)?;
         event.id = event_id(&event)?;
+        if let Some((host, names)) = transient_web_parameters {
+            for name in names {
+                archived_web_parameter_hints.push(ArchivedWebParameterHint {
+                    parent_event_id: event.id.clone(),
+                    host: host.clone(),
+                    name,
+                });
+                if archived_web_parameter_hints.len() > MAX_ARCHIVED_WEB_PARAMETER_HINTS {
+                    return Err(ChefError::new(
+                        ErrorCode::LimitExceeded,
+                        "La importación supera el máximo de nombres de parámetros web",
+                    ));
+                }
+            }
+        }
         if let Some(mut response) = transient_http_response {
             response.response_event_id = event.id.clone();
             archived_http_responses.push(response);
@@ -369,6 +413,7 @@ fn parse_event_graph_with_hints(
         },
         archived_git_hints,
         archived_robots_hints,
+        archived_web_parameter_hints,
     })
 }
 
@@ -551,12 +596,14 @@ pub fn parse(
     max_observations: usize,
     collect_archived_git_hints: bool,
     collect_archived_robots_hints: bool,
+    collect_archived_web_parameter_hints: bool,
 ) -> ChefResult<ParsedBbotEvents> {
     let mut parsed = parse_event_graph_with_hints(
         bytes,
         max_observations,
         collect_archived_git_hints,
         collect_archived_robots_hints,
+        collect_archived_web_parameter_hints,
     )?;
     let mut services = Vec::new();
 

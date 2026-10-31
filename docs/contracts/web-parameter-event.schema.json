@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://chef.local/contracts/web-parameter-event.schema.json",
+  "title": "Datos de evento WEB_PARAMETER de CHEF",
+  "description": "Representación CHEF mínima de un nombre de parámetro que ya aparecía en una URL importada. No incluye valor ni URL.",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    }
+  },
+  "required": ["name"],
+  "additionalProperties": false
+}

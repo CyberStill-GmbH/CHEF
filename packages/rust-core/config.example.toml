@@ -18,6 +18,7 @@ chef_org_stub_hints = false
 chef_dns_mutation_hints = false
 chef_git_archive_hints = false
 chef_robots_archive_hints = false
+chef_web_parameter_hints = false
 
 [sources.shodan]
 enabled = false
