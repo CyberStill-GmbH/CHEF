@@ -400,7 +400,13 @@ export function App({ client = defaultClient }: AppProps) {
             </span>
           </div>
         </header>
-        <div className="main-content">
+        <div
+          className={
+            activeWorkspace === 'recon'
+              ? 'main-content recon-content'
+              : 'main-content'
+          }
+        >
           <section className="page-heading" id="overview">
             <div>
               <h1>
@@ -414,7 +420,7 @@ export function App({ client = defaultClient }: AppProps) {
               </h1>
               <p className="page-description">
                 {activeWorkspace === 'recon'
-                  ? 'Explora el snapshot cargado y sus relaciones. Los comandos disponibles procesan datos localmente.'
+                  ? 'Explora activos y evidencia del snapshot cargado.'
                   : activeWorkspace === 'evidence'
                     ? 'Consulta procedencia, relaciones y exportaciones.'
                     : activeWorkspace === 'sources'
@@ -431,7 +437,7 @@ export function App({ client = defaultClient }: AppProps) {
           </section>
           <div className="recon-workbench" hidden={activeWorkspace !== 'recon'}>
             <div className="terminal-column">
-              <h2>Terminal CHEF</h2>
+              <h2>Consola</h2>
               <Suspense
                 fallback={
                   <section

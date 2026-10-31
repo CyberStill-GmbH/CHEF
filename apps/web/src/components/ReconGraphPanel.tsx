@@ -67,7 +67,15 @@ export function ReconGraphPanel({ graph }: ReconGraphPanelProps) {
       cy = cytoscape({
         container,
         elements: graphElements(initialGraph),
-        layout: { name: 'cose', animate: false, fit: true, padding: 24 },
+        layout: {
+          name: 'cose',
+          animate: false,
+          fit: true,
+          padding: 36,
+          spacingFactor: 1.2,
+          nodeRepulsion: 7200,
+          idealEdgeLength: 170,
+        },
         minZoom: 0.2,
         maxZoom: 3,
         style: [
@@ -77,12 +85,12 @@ export function ReconGraphPanel({ graph }: ReconGraphPanelProps) {
               label: 'data(label)',
               'text-wrap': 'wrap',
               'text-max-width': '140px',
-              'font-size': 10,
+              'font-size': 12,
               color: '#e2e8f0',
               'text-valign': 'center',
               'text-halign': 'center',
-              width: 150,
-              height: 54,
+              width: 176,
+              height: 66,
               shape: 'round-rectangle',
               'background-color': '#132019',
               'border-width': 2,
@@ -113,7 +121,7 @@ export function ReconGraphPanel({ graph }: ReconGraphPanelProps) {
             selector: 'edge',
             style: {
               label: 'data(label)',
-              'font-size': 8,
+              'font-size': 9,
               color: '#b8c8bc',
               'text-background-color': '#0b100d',
               'text-background-opacity': 0.9,
@@ -242,15 +250,19 @@ export function ReconGraphPanel({ graph }: ReconGraphPanelProps) {
 
   return (
     <section aria-labelledby="recon-graph-title">
-      <h2 id="recon-graph-title">Grafo de reconocimiento CHEF</h2>
-      <p>
-        {graph.assets.length} activos · {graph.relationships.length} relaciones
-        · {graph.evidence.length} evidencias
-      </p>
-      <p>
-        Grafo CHEF validado y guardado. La animación ordena datos importados; no
-        representa tráfico de red en vivo. El ámbar marca candidatos y las
-        relaciones pueden ser pistas sin verificar.
+      <header className="graph-summary">
+        <div>
+          <h2 id="recon-graph-title">Mapa de relaciones</h2>
+          <p>
+            {graph.assets.length} activos · {graph.relationships.length}{' '}
+            relaciones · {graph.evidence.length} evidencias
+          </p>
+        </div>
+        <span className="graph-data-state">Snapshot local</span>
+      </header>
+      <p className="graph-disclaimer">
+        La animación organiza evidencia importada; no representa tráfico en
+        vivo. Los candidatos y las pistas no son vulnerabilidades confirmadas.
       </p>
       <div
         id="recon-graph-canvas"
@@ -259,7 +271,9 @@ export function ReconGraphPanel({ graph }: ReconGraphPanelProps) {
         aria-label="Diagrama de activos y relaciones. Usa la lista accesible para seleccionar un activo y consultar su evidencia."
       />
 
-      <label htmlFor="recon-asset-filter">Filtrar activos</label>
+      <label className="graph-filter-label" htmlFor="recon-asset-filter">
+        Filtrar activos
+      </label>
       <input
         id="recon-asset-filter"
         type="search"
