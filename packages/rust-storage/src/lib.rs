@@ -24,6 +24,22 @@ const DATABASE: &str = "local";
 const TABLE: &str = "snapshots";
 const PROVIDER_IMPORT_TABLE: &str = "provider_imports";
 const PROVIDER_IMPORT_SCHEMA_VERSION: &str = "1.0.0";
+const STORAGE_SCHEMA: &str = "DEFINE TABLE IF NOT EXISTS snapshots SCHEMAFULL;
+     DEFINE FIELD IF NOT EXISTS run_id ON snapshots TYPE string;
+     DEFINE FIELD IF NOT EXISTS schema_version ON snapshots TYPE string;
+     DEFINE FIELD OVERWRITE snapshot ON snapshots TYPE object FLEXIBLE;
+     DEFINE FIELD IF NOT EXISTS event_graph ON snapshots TYPE any;
+     DEFINE FIELD IF NOT EXISTS chef_recon_graph ON snapshots TYPE any;
+     DEFINE TABLE IF NOT EXISTS provider_imports SCHEMAFULL;
+     DEFINE FIELD IF NOT EXISTS import_id ON provider_imports TYPE string;
+     DEFINE FIELD IF NOT EXISTS schema_version ON provider_imports TYPE string;
+     DEFINE FIELD IF NOT EXISTS provider ON provider_imports TYPE string;
+     DEFINE FIELD OVERWRITE target_ip ON provider_imports TYPE option<string>;
+     DEFINE FIELD OVERWRITE query_domain ON provider_imports TYPE option<string>;
+     DEFINE FIELD IF NOT EXISTS response_sha256 ON provider_imports TYPE string;
+     DEFINE FIELD IF NOT EXISTS imported_at ON provider_imports TYPE string;
+     DEFINE FIELD IF NOT EXISTS event_graph ON provider_imports TYPE any;
+     DEFINE FIELD IF NOT EXISTS chef_recon_graph ON provider_imports TYPE any;";
 
 #[derive(Debug, Error)]
 pub enum StorageError {
@@ -44,6 +60,11 @@ pub struct LocalSnapshotStore {
     db: Surreal<Db>,
 }
 
+async fn initialize_schema(db: &Surreal<Db>) -> Result<(), surrealdb::Error> {
+    db.query(STORAGE_SCHEMA).await?.check()?;
+    Ok(())
+}
+
 impl LocalSnapshotStore {
     /// Abre o crea el directorio de RocksDB. La ruta debe venir de la capa Tauri.
     pub async fn open(path: impl AsRef<Path>) -> Result<Self, StorageError> {
@@ -55,26 +76,7 @@ impl LocalSnapshotStore {
         let path = path.as_ref().to_string_lossy().into_owned();
         let db = Surreal::new::<RocksDb>(path).await?;
         db.use_ns(NAMESPACE).use_db(DATABASE).await?;
-        db.query(
-            "DEFINE TABLE IF NOT EXISTS snapshots SCHEMAFULL;
-             DEFINE FIELD IF NOT EXISTS run_id ON snapshots TYPE string;
-             DEFINE FIELD IF NOT EXISTS schema_version ON snapshots TYPE string;
-             DEFINE FIELD OVERWRITE snapshot ON snapshots TYPE object FLEXIBLE;
-             DEFINE FIELD IF NOT EXISTS event_graph ON snapshots TYPE any;
-             DEFINE FIELD IF NOT EXISTS chef_recon_graph ON snapshots TYPE any;
-             DEFINE TABLE IF NOT EXISTS provider_imports SCHEMAFULL;
-             DEFINE FIELD IF NOT EXISTS import_id ON provider_imports TYPE string;
-             DEFINE FIELD IF NOT EXISTS schema_version ON provider_imports TYPE string;
-             DEFINE FIELD IF NOT EXISTS provider ON provider_imports TYPE string;
-             DEFINE FIELD IF NOT EXISTS target_ip ON provider_imports TYPE string;
-             DEFINE FIELD IF NOT EXISTS query_domain ON provider_imports TYPE string;
-             DEFINE FIELD IF NOT EXISTS response_sha256 ON provider_imports TYPE string;
-             DEFINE FIELD IF NOT EXISTS imported_at ON provider_imports TYPE string;
-             DEFINE FIELD IF NOT EXISTS event_graph ON provider_imports TYPE any;
-             DEFINE FIELD IF NOT EXISTS chef_recon_graph ON provider_imports TYPE any;",
-        )
-        .await?
-        .check()?;
+        initialize_schema(&db).await?;
         Ok(Self { db })
     }
 
@@ -724,5 +726,45 @@ mod tests {
             store.load_urlscan_import("urlscan-import:invalid").await,
             Err(StorageError::InvalidRecord)
         ));
+    }
+
+    #[tokio::test]
+    async fn upgrades_provider_target_fields_to_optional_for_existing_database() {
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("chef-surreal");
+        let db = Surreal::new::<RocksDb>(path.to_string_lossy().into_owned())
+            .await
+            .unwrap();
+        db.use_ns(NAMESPACE).use_db(DATABASE).await.unwrap();
+        db.query(
+            "DEFINE TABLE provider_imports SCHEMAFULL;
+             DEFINE FIELD import_id ON provider_imports TYPE string;
+             DEFINE FIELD schema_version ON provider_imports TYPE string;
+             DEFINE FIELD provider ON provider_imports TYPE string;
+             DEFINE FIELD target_ip ON provider_imports TYPE string;
+             DEFINE FIELD query_domain ON provider_imports TYPE string;
+             DEFINE FIELD response_sha256 ON provider_imports TYPE string;
+             DEFINE FIELD imported_at ON provider_imports TYPE string;
+             DEFINE FIELD event_graph ON provider_imports TYPE any;
+             DEFINE FIELD chef_recon_graph ON provider_imports TYPE any;",
+        )
+        .await
+        .unwrap()
+        .check()
+        .unwrap();
+        initialize_schema(&db).await.unwrap();
+        let store = LocalSnapshotStore { db };
+        let body = include_bytes!("../../../fixtures/censys-ip-response/positive.json");
+        let imported = chef_core::import_censys_ip_snapshot(
+            "1.2.3.4",
+            body,
+            &FixedClock("2026-10-28T00:00:00.000Z".into()),
+        )
+        .unwrap();
+        let import_id = store.save_censys_ip_import(&imported).await.unwrap();
+        assert_eq!(
+            store.load_censys_ip_import(&import_id).await.unwrap(),
+            Some(imported)
+        );
     }
 }
