@@ -31,6 +31,7 @@ export interface ApiDependencies {
   scopePolicy: ScopePolicy;
   allowedOAuthUserIds?: ReadonlySet<string>;
   webOrigin?: string;
+  browserCookieSecret?: string;
   maxBodyBytes?: number;
 }
 
@@ -167,7 +168,11 @@ export function createChefApi(dependencies: ApiDependencies) {
   const browser =
     dependencies.webOrigin === undefined
       ? undefined
-      : new BrowserSession(dependencies.webOrigin, dependencies.sessions);
+      : new BrowserSession(
+          dependencies.webOrigin,
+          dependencies.sessions,
+          dependencies.browserCookieSecret ?? '',
+        );
   const exchange = async (code: string) => {
     const identity = await dependencies.oauth.exchange(code);
     if (
@@ -238,9 +243,14 @@ export function createChefApi(dependencies: ApiDependencies) {
         }
 
         if (method === 'GET' && path === '/auth/github/callback') {
-          if (browser?.hasState(request)) {
+          const state = queryParam(url, 'state');
+          // Compatibility mode is selected only after verifying the signed CLI purpose.
+          try {
+            dependencies.sessions.verifyNonce(state, OAUTH_STATE_PURPOSE);
+          } catch (failure) {
+            if (!browser) throw failure;
             try {
-              browser.verifyState(request, queryParam(url, 'state'));
+              browser.verifyState(request, state);
               const identity = await exchange(queryParam(url, 'code'));
               browser.finish(response, identity.userId);
             } catch {
@@ -249,8 +259,6 @@ export function createChefApi(dependencies: ApiDependencies) {
             return;
           }
           const code = queryParam(url, 'code');
-          const state = queryParam(url, 'state');
-          dependencies.sessions.verifyNonce(state, OAUTH_STATE_PURPOSE);
           const identity = await exchange(code);
           const userId = identity.userId;
           sendJson(response, 200, {

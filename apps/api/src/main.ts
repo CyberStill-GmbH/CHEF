@@ -147,6 +147,7 @@ async function main(): Promise<void> {
     }),
     scopePolicy,
     webOrigin,
+    browserCookieSecret: required('CHEF_SESSION_SECRET'),
     ...(allowedOAuthUserIds === undefined ? {} : { allowedOAuthUserIds }),
   });
 

@@ -1,4 +1,9 @@
-import { randomBytes } from 'node:crypto';
+import {
+  createCipheriv,
+  createDecipheriv,
+  hkdfSync,
+  randomBytes,
+} from 'node:crypto';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { ChefError } from '../../../packages/domain/src/errors.js';
 import type { SessionService } from '../../../packages/domain/src/ports.js';
@@ -19,10 +24,12 @@ export class BrowserSession {
   private readonly secure: boolean;
   private readonly sessionName: string;
   private readonly stateName: string;
+  private readonly key: Buffer;
 
   constructor(
     origin: string,
     private readonly sessions: SessionService,
+    secret: string,
   ) {
     const url = new URL(origin);
     if (
@@ -39,6 +46,11 @@ export class BrowserSession {
         'CHEF_WEB_ORIGIN must be an HTTPS origin or HTTP loopback origin',
       );
     this.origin = origin;
+    if (secret.length < 32)
+      throw new Error('Browser cookie secret must have at least 32 characters');
+    this.key = Buffer.from(
+      hkdfSync('sha256', secret, '', 'chef-browser-cookie/v1', 32),
+    );
     this.secure = url.protocol === 'https:';
     this.sessionName = this.secure ? '__Host-chef-session' : 'chef-session';
     this.stateName = this.secure ? '__Host-chef-oauth' : 'chef-oauth';
@@ -55,7 +67,54 @@ export class BrowserSession {
   token(request: IncomingMessage): string | undefined {
     const value = cookie(request, this.sessionName);
     if (value !== undefined) this.checkRequest(request);
-    return value;
+    return value === undefined ? undefined : this.open(this.sessionName, value);
+  }
+
+  private seal(name: string, value: string): string {
+    const iv = randomBytes(12);
+    const cipher = createCipheriv('aes-256-gcm', this.key, iv);
+    cipher.setAAD(Buffer.from(`${this.origin}|${name}|b1`));
+    const encrypted = Buffer.concat([
+      cipher.update(value, 'utf8'),
+      cipher.final(),
+    ]);
+    return [
+      'b1',
+      iv.toString('base64url'),
+      encrypted.toString('base64url'),
+      cipher.getAuthTag().toString('base64url'),
+    ].join('.');
+  }
+
+  private open(name: string, value: string): string {
+    try {
+      const [version, ivText, encryptedText, tagText, extra] = value.split('.');
+      if (
+        version !== 'b1' ||
+        extra !== undefined ||
+        value.length > 4096 ||
+        !ivText ||
+        !encryptedText ||
+        !tagText ||
+        ![ivText, encryptedText, tagText].every((part) =>
+          /^[A-Za-z0-9_-]+$/.test(part),
+        )
+      )
+        throw new Error('Invalid cookie');
+      const iv = Buffer.from(ivText, 'base64url'),
+        tag = Buffer.from(tagText, 'base64url');
+      if (iv.length !== 12 || tag.length !== 16)
+        throw new Error('Invalid cookie');
+      const decipher = createDecipheriv('aes-256-gcm', this.key, iv);
+      decipher.setAAD(Buffer.from(`${this.origin}|${name}|b1`));
+      decipher.setAuthTag(tag);
+      return Buffer.concat([
+        decipher.update(Buffer.from(encryptedText, 'base64url')),
+        decipher.final(),
+      ]).toString('utf8');
+    } catch {
+      throw new ChefError('UNAUTHORIZED', 'Invalid browser session');
+    }
   }
 
   private setCookie(
@@ -72,7 +131,7 @@ export class BrowserSession {
         : [String(previous)];
     response.setHeader('set-cookie', [
       ...headers,
-      `${name}=${value}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${this.secure ? '; Secure' : ''}`,
+      `${name}=${value === '' ? '' : this.seal(name, value)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${this.secure ? '; Secure' : ''}`,
     ]);
   }
 
@@ -84,12 +143,11 @@ export class BrowserSession {
     return state;
   }
 
-  hasState(request: IncomingMessage): boolean {
-    return cookie(request, this.stateName) !== undefined;
-  }
-
   verifyState(request: IncomingMessage, state: string): void {
-    const value = cookie(request, this.stateName) ?? '';
+    const value = this.open(
+      this.stateName,
+      cookie(request, this.stateName) ?? '',
+    );
     const separator = value.indexOf('.');
     const nonce = value.slice(0, separator);
     if (!/^[0-9a-f]{48}$/.test(nonce) || value.slice(separator + 1) !== state)

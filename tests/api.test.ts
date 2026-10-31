@@ -74,6 +74,7 @@ function dependencies(maxBodyBytes?: number): ApiDependencies {
     }),
     oauth,
     scopePolicy,
+    browserCookieSecret: 't'.repeat(32),
   };
   return maxBodyBytes === undefined ? base : { ...base, maxBodyBytes };
 }
@@ -493,6 +494,17 @@ describe('browser sessions', () => {
         callback.headers.get('set-cookie') ?? '',
         /chef-session=.*HttpOnly/,
       );
+      const encryptedCookie = cookies(callback)
+        .split('; ')
+        .find((part) => part.startsWith('chef-session='));
+      assert.ok(encryptedCookie?.startsWith('chef-session=b1.'));
+      const altered = await fetch(`${app.base}/auth/session`, {
+        headers: {
+          'x-chef-request': '1',
+          cookie: encryptedCookie?.replace('b1.', 'b1.A') ?? '',
+        },
+      });
+      assert.equal(altered.status, 401);
       const session = await fetch(`${app.base}/auth/session`, {
         headers: { cookie: cookies(callback), 'x-chef-request': '1' },
       });
@@ -533,7 +545,8 @@ describe('browser sessions', () => {
         `${app.base}/auth/github/callback?code=first&state=${encodeURIComponent(state)}`,
         { redirect: 'manual' },
       );
-      assert.equal(noCookie.status, 401);
+      assert.equal(noCookie.status, 303);
+      assert.equal(noCookie.headers.get('location'), `${origin}/?auth=failed`);
       const changed = await fetch(
         `${app.base}/auth/github/callback?code=first&state=wrong`,
         { redirect: 'manual', headers: { cookie: cookies(started) } },

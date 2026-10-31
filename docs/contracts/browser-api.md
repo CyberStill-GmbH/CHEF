@@ -15,6 +15,8 @@ Esquemas y ejemplos: [sesión](browser-session.schema.json), [válido](examples/
 
 Cada inicio usa un nonce aleatorio firmado con propósito específico, ligado a una cookie de ese navegador. Cookies: `Path=/`, `HttpOnly`, `SameSite=Lax`; con origen HTTPS añaden `Secure` y prefijo `__Host-`. El vencimiento del token manda aunque el navegador conserve la cookie. Las escrituras con cookie requieren origen exacto y cabecera de petición; no se habilita CORS abierto. El token no se guarda en `localStorage`, `sessionStorage`, URL ni estado React.
 
+Las cookies de sesión y estado están cifradas con AES-256-GCM (IV aleatorio y etiqueta autenticada). La clave se deriva con HKDF del secreto de sesión y se separa por propósito; el cifrado se liga al origen y nombre de cookie mediante AAD. No se decide omitir una verificación por la presencia de una cookie: primero se verifica el propósito firmado del flujo CLI; el resto debe superar la validación criptográfica del estado del navegador antes de intercambiar el código. Una cookie alterada se rechaza. El cambio invalida cookies de navegador del incremento inicial sin cifrar; los tokens bearer CLI no cambian.
+
 ## Proyectos y resultados
 
 La web llama a `/api/...` en su propio origen. El proxy elimina `/api` antes de llegar al backend:
