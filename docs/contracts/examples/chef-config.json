@@ -16,7 +16,8 @@
       "max_scope_distance": 0
     },
     "modules": {
-      "chef_dns_mutation_hints": false
+      "chef_dns_mutation_hints": false,
+      "chef_git_archive_hints": false
     },
     "sources": {},
     "defectdojo": {

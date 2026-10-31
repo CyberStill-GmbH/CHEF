@@ -68,6 +68,12 @@ const CATALOG: &[ModuleCapability] = &[
         offline_only: true,
     },
     ModuleCapability {
+        id: "chef_git_archive_hints",
+        kind: ModuleCapabilityKind::ImportTransform,
+        state: ModuleCapabilityState::Implemented,
+        offline_only: true,
+    },
+    ModuleCapability {
         id: "chef_ip_range_expansion",
         kind: ModuleCapabilityKind::EventTransform,
         state: ModuleCapabilityState::Implemented,

@@ -16,6 +16,7 @@ use crate::{
 const INPUT_LIMIT: usize = 2 * 1024 * 1024;
 const OBSERVATION_LIMIT: usize = 10_000;
 const EVENT_GRAPH_BYTE_LIMIT: usize = 8 * 1024 * 1024;
+const MAX_GIT_DERIVED_EVENTS: usize = 2048;
 
 pub trait Clock {
     fn now(&self) -> String;
@@ -268,8 +269,21 @@ impl ImportBbotEvidence {
                 "Input exceeds scope byte limit",
             ));
         }
-        let parsed = event_import::parse(bytes, policy.max_observations.min(OBSERVATION_LIMIT))?;
-        let mut event_graph = parsed.event_graph;
+        let git_archive_hints_enabled = config
+            .modules
+            .get("chef_git_archive_hints")
+            .copied()
+            .unwrap_or(false);
+        let parsed = event_import::parse(
+            bytes,
+            policy.max_observations.min(OBSERVATION_LIMIT),
+            git_archive_hints_enabled,
+        )?;
+        let event_import::ParsedBbotEvents {
+            services,
+            mut event_graph,
+            archived_git_hints,
+        } = parsed;
         if config.modules.values().any(|enabled| *enabled) {
             let engine = BbotEventEngine::with_chef_modules(
                 config.runtime.max_events,
@@ -288,6 +302,12 @@ impl ImportBbotEvidence {
                 observer(event)?;
             }
         }
+        let event_count_before_git_hints = event_graph.events.len();
+        append_archived_git_hints(&mut event_graph, &archived_git_hints, config, cancelled)?;
+        for event in &event_graph.events[event_count_before_git_hints..] {
+            check_cancelled(cancelled)?;
+            observer(event)?;
+        }
         let event_count_before_mutations = event_graph.events.len();
         append_dns_mutation_hints(&mut event_graph, config, clock, cancelled)?;
         for event in &event_graph.events[event_count_before_mutations..] {
@@ -298,7 +318,7 @@ impl ImportBbotEvidence {
         let recon_graph = crate::adapt_bbot_to_chef(&event_graph)?;
         let snapshot = ImportServices::execute(
             bytes,
-            parsed.services,
+            services,
             policy,
             clock,
             cancelled,
@@ -311,6 +331,171 @@ impl ImportBbotEvidence {
             recon_graph,
         })
     }
+}
+
+fn append_archived_git_hints(
+    graph: &mut crate::BbotEventGraph,
+    hints: &[event_import::ArchivedGitImportHint],
+    config: &ChefConfig,
+    cancelled: Option<&AtomicBool>,
+) -> ChefResult<()> {
+    if !config
+        .modules
+        .get("chef_git_archive_hints")
+        .copied()
+        .unwrap_or(false)
+    {
+        return Ok(());
+    }
+
+    graph.modules_run = graph.modules_run.saturating_add(1);
+    let parents = graph
+        .events
+        .iter()
+        .map(|event| (event.id.clone(), event.clone()))
+        .collect::<std::collections::BTreeMap<_, _>>();
+    let mut existing_ids = graph
+        .events
+        .iter()
+        .map(|event| event.id.clone())
+        .collect::<std::collections::BTreeSet<_>>();
+    let mut graph_bytes = serde_json::to_vec(graph)
+        .map_err(|_| ChefError::new(ErrorCode::InvalidInput, "Grafo de eventos inválido"))?
+        .len();
+    let mut derived_event_count = 0usize;
+
+    for hint in hints {
+        check_cancelled(cancelled)?;
+        let (parent_event_id, host, derived) = match hint {
+            event_import::ArchivedGitImportHint::ConfigExposure {
+                parent_event_id,
+                host,
+                config_url,
+                repository_directory_url,
+            } => {
+                let finding = crate::BbotEventDraft {
+                    event_type: "FINDING".to_owned(),
+                    data: serde_json::json!({
+                        "kind": "git_config_response",
+                        "title": "Respuesta archivada compatible con .git/config",
+                        "url": config_url,
+                    }),
+                    host: Some(host.clone()),
+                    port: None,
+                    tags: vec![
+                        "chef:derived-git-archive-hint".to_owned(),
+                        "chef:historical-candidate".to_owned(),
+                    ],
+                };
+                let urls = [config_url, repository_directory_url]
+                    .into_iter()
+                    .map(|url| crate::BbotEventDraft {
+                        event_type: "URL_HINT".to_owned(),
+                        data: serde_json::Value::String(url.clone()),
+                        host: Some(host.clone()),
+                        port: None,
+                        tags: vec!["chef:derived-git-archive-hint".to_owned()],
+                    });
+                (
+                    parent_event_id.as_str(),
+                    host.as_str(),
+                    std::iter::once(finding).chain(urls).collect::<Vec<_>>(),
+                )
+            }
+            event_import::ArchivedGitImportHint::DirectoryEntry {
+                parent_event_id,
+                host,
+                url,
+                is_directory,
+            } => (
+                parent_event_id.as_str(),
+                host.as_str(),
+                vec![crate::BbotEventDraft {
+                    event_type: "URL_HINT".to_owned(),
+                    data: serde_json::Value::String(url.clone()),
+                    host: Some(host.clone()),
+                    port: None,
+                    tags: vec![
+                        "chef:derived-git-archive-hint".to_owned(),
+                        if *is_directory {
+                            "chef:git-directory-entry".to_owned()
+                        } else {
+                            "chef:git-file-entry".to_owned()
+                        },
+                    ],
+                }],
+            ),
+        };
+        let Some(parent) = parents.get(parent_event_id) else {
+            continue;
+        };
+        if derived_event_count.saturating_add(derived.len()) > MAX_GIT_DERIVED_EVENTS {
+            break;
+        }
+        let Some(depth) = parent.depth.checked_add(1) else {
+            continue;
+        };
+        if depth > config.runtime.max_depth || parent.scope_distance > 32 {
+            continue;
+        }
+
+        for draft in derived {
+            check_cancelled(cancelled)?;
+            if graph.events.len() >= config.runtime.max_events {
+                break;
+            }
+            let event_type = draft.event_type;
+            let event_data = draft.data;
+            let data = if event_type == "FINDING" {
+                event_data
+            } else {
+                let (safe, _) = crate::event_engine::sanitize_event_data(&event_type, event_data);
+                safe
+            };
+            let mut event = crate::BbotEvent {
+                id: String::new(),
+                source_id: None,
+                source_uuid: None,
+                event_type,
+                data,
+                data_redacted: false,
+                metadata: serde_json::json!({
+                    "assertion": "historical_candidate",
+                    "ruleId": "chef_git_archive_hints",
+                    "ruleVersion": "1",
+                    "sourceEventId": parent.id,
+                }),
+                metadata_redacted: false,
+                host: Some(host.to_owned()),
+                port: None,
+                parent_id: Some(parent.id.clone()),
+                parent_source_id: None,
+                parent_source_uuid: None,
+                timestamp: parent.timestamp.clone(),
+                tags: draft.tags,
+                module: Some("chef_git_archive_hints".to_owned()),
+                locator: format!("rule:chef_git_archive_hints@1;source={}", parent.locator),
+                depth,
+                scope_distance: parent.scope_distance,
+            };
+            event.id = crate::event_engine::event_id(&event)?;
+            if !existing_ids.insert(event.id.clone()) {
+                graph.duplicates_suppressed = graph.duplicates_suppressed.saturating_add(1);
+                continue;
+            }
+            crate::event_engine::validate_event(&event)?;
+            let event_bytes = serde_json::to_vec(&event)
+                .map_err(|_| ChefError::new(ErrorCode::InvalidInput, "Pista Git inválida"))?
+                .len();
+            if graph_bytes.saturating_add(event_bytes).saturating_add(1) > EVENT_GRAPH_BYTE_LIMIT {
+                break;
+            }
+            graph_bytes += event_bytes + 1;
+            graph.events.push(event);
+            derived_event_count += 1;
+        }
+    }
+    Ok(())
 }
 
 fn append_dns_mutation_hints(

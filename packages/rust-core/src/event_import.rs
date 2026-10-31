@@ -16,6 +16,45 @@ use serde_json::{Map, Value};
 const MAX_LINE_BYTES: usize = 128 * 1024;
 const MAX_EVENT_DEPTH: usize = 32;
 const DEFAULT_BBOT_SCOPE_DISTANCE: u16 = 10;
+const MAX_ARCHIVED_GIT_HINTS: usize = 2048;
+
+#[derive(Debug)]
+pub(crate) enum ArchivedGitImportHint {
+    ConfigExposure {
+        parent_event_id: String,
+        host: String,
+        config_url: String,
+        repository_directory_url: String,
+    },
+    DirectoryEntry {
+        parent_event_id: String,
+        host: String,
+        url: String,
+        is_directory: bool,
+    },
+}
+
+#[derive(Debug)]
+enum TransientGitArchiveHint {
+    ConfigExposure {
+        host: String,
+        config_url: String,
+        repository_directory_url: String,
+    },
+    DirectoryEntry {
+        host: String,
+        url: String,
+        is_directory: bool,
+    },
+}
+
+#[derive(Debug)]
+struct TransientHttpResponse {
+    response_event_id: String,
+    response_url: String,
+    status_code: Option<u16>,
+    body: String,
+}
 
 #[derive(Debug, Deserialize)]
 struct RawEvent {
@@ -46,12 +85,21 @@ fn default_bbot_scope_distance() -> u16 {
 pub struct ParsedBbotEvents {
     pub services: Vec<ServiceInput>,
     pub event_graph: BbotEventGraph,
+    pub(crate) archived_git_hints: Vec<ArchivedGitImportHint>,
 }
 
 /// Lee el flujo de eventos BBOT conservando tipos, datos, metadatos y linaje.
 /// Los datos adicionales quedan dentro de `data` cuando la fuente los incluye
 /// allí; los campos reconocidos se normalizan como propiedades del evento.
 pub fn parse_event_graph(bytes: &[u8], max_events: usize) -> ChefResult<BbotEventGraph> {
+    Ok(parse_event_graph_with_hints(bytes, max_events, false)?.event_graph)
+}
+
+fn parse_event_graph_with_hints(
+    bytes: &[u8],
+    max_events: usize,
+    collect_archived_git_hints: bool,
+) -> ChefResult<ParsedBbotEvents> {
     if max_events == 0 {
         return Err(ChefError::new(
             ErrorCode::InvalidInput,
@@ -61,6 +109,7 @@ pub fn parse_event_graph(bytes: &[u8], max_events: usize) -> ChefResult<BbotEven
     let input = std::str::from_utf8(bytes)
         .map_err(|_| ChefError::new(ErrorCode::InvalidInput, "BBOT JSONL debe ser UTF-8"))?;
     let mut events = Vec::new();
+    let mut archived_http_responses = Vec::new();
     let mut source_ids = HashMap::<String, usize>::new();
     let mut source_uuids = HashMap::<String, usize>::new();
 
@@ -107,6 +156,12 @@ pub fn parse_event_graph(bytes: &[u8], max_events: usize) -> ChefResult<BbotEven
             .ok_or_else(|| {
                 ChefError::new(ErrorCode::InvalidInput, "Evento BBOT sin data/data_json")
             })?;
+        let transient_http_response =
+            if collect_archived_git_hints && raw.event_type == "HTTP_RESPONSE" {
+                transient_http_response(&data)
+            } else {
+                None
+            };
         let (host, port) =
             complete_open_port_fields(&raw.event_type, &data, raw.host.take(), raw.port.take())?;
         let (data, data_redacted) = sanitize_event_data(&raw.event_type, data);
@@ -137,6 +192,16 @@ pub fn parse_event_graph(bytes: &[u8], max_events: usize) -> ChefResult<BbotEven
         };
         validate_event(&event)?;
         event.id = event_id(&event)?;
+        if let Some(mut response) = transient_http_response {
+            response.response_event_id = event.id.clone();
+            archived_http_responses.push(response);
+            if archived_http_responses.len() > max_events {
+                return Err(ChefError::new(
+                    ErrorCode::LimitExceeded,
+                    "La importación supera el máximo de respuestas HTTP archivadas",
+                ));
+            }
+        }
         if let Some(source_id) = &event.source_id {
             if source_id.is_empty() || source_id.len() > 256 || source_ids.contains_key(source_id) {
                 return Err(ChefError::new(
@@ -190,11 +255,131 @@ pub fn parse_event_graph(bytes: &[u8], max_events: usize) -> ChefResult<BbotEven
             "BBOT JSONL no contiene eventos",
         ));
     }
-    Ok(BbotEventGraph {
-        events,
-        modules_run: 0,
-        duplicates_suppressed: 0,
+    let mut archived_git_hints = Vec::new();
+    if collect_archived_git_hints {
+        let events_by_id = events
+            .iter()
+            .map(|event| (event.id.as_str(), event))
+            .collect::<HashMap<_, _>>();
+        for response in archived_http_responses {
+            let Some(response_event) = events_by_id.get(response.response_event_id.as_str()) else {
+                continue;
+            };
+            let Some(parent_id) = response_event.parent_id.as_deref() else {
+                continue;
+            };
+            let Some(target_event) = events_by_id.get(parent_id) else {
+                continue;
+            };
+            if target_event.event_type != "URL" {
+                continue;
+            }
+            let Some(target_url) = target_event.data.as_str() else {
+                continue;
+            };
+            for hint in inspect_archived_git_response(
+                target_url,
+                &response.response_url,
+                response.status_code,
+                response.body.as_bytes(),
+            ) {
+                let archived_hint = match hint {
+                    TransientGitArchiveHint::ConfigExposure {
+                        host,
+                        config_url,
+                        repository_directory_url,
+                    } => ArchivedGitImportHint::ConfigExposure {
+                        parent_event_id: response_event.id.clone(),
+                        host,
+                        config_url,
+                        repository_directory_url,
+                    },
+                    TransientGitArchiveHint::DirectoryEntry {
+                        host,
+                        url,
+                        is_directory,
+                    } => ArchivedGitImportHint::DirectoryEntry {
+                        parent_event_id: response_event.id.clone(),
+                        host,
+                        url,
+                        is_directory,
+                    },
+                };
+                archived_git_hints.push(archived_hint);
+                if archived_git_hints.len() > MAX_ARCHIVED_GIT_HINTS {
+                    return Err(ChefError::new(
+                        ErrorCode::LimitExceeded,
+                        "La importación supera el máximo de pistas Git archivadas",
+                    ));
+                }
+            }
+        }
+    }
+    Ok(ParsedBbotEvents {
+        services: Vec::new(),
+        event_graph: BbotEventGraph {
+            events,
+            modules_run: 0,
+            duplicates_suppressed: 0,
+        },
+        archived_git_hints,
     })
+}
+
+fn transient_http_response(data: &Value) -> Option<TransientHttpResponse> {
+    let object = data.as_object()?;
+    let response_url = object.get("url").and_then(Value::as_str)?;
+    let body = object.get("body").and_then(Value::as_str)?;
+    let response_url = crate::url_tools::canonical_http_url(response_url)?;
+    let status_code = object
+        .get("status_code")
+        .and_then(Value::as_u64)
+        .and_then(|status| u16::try_from(status).ok());
+    Some(TransientHttpResponse {
+        response_event_id: String::new(),
+        response_url,
+        status_code,
+        body: body.to_owned(),
+    })
+}
+
+fn inspect_archived_git_response(
+    target_url: &str,
+    response_url: &str,
+    status_code: Option<u16>,
+    body: &[u8],
+) -> Vec<TransientGitArchiveHint> {
+    let Some(host) = url::Url::parse(response_url)
+        .ok()
+        .and_then(|url| url.host_str().map(str::to_owned))
+    else {
+        return Vec::new();
+    };
+    let mut hints = Vec::new();
+
+    if let Some(status_code) = status_code
+        && let Ok(Some(exposure)) =
+            crate::classify_archived_git_config(target_url, response_url, status_code, body)
+    {
+        hints.push(TransientGitArchiveHint::ConfigExposure {
+            host: host.clone(),
+            config_url: exposure.config_url,
+            repository_directory_url: exposure.repository_directory_url,
+        });
+    }
+
+    if status_code == Some(200)
+        && let Ok(Some(listing)) = crate::parse_archived_git_directory_listing(response_url, body)
+    {
+        hints.extend(listing.entries.into_iter().map(|entry| {
+            TransientGitArchiveHint::DirectoryEntry {
+                host: host.clone(),
+                url: entry.url,
+                is_directory: entry.is_directory,
+            }
+        }));
+    }
+    hints
 }
 
 /// BBOT suele serializar `host` y `port` por separado; completa campos ausentes
@@ -301,11 +486,16 @@ fn find_parent(
 
 /// Lee cualquier tipo de evento BBOT; el snapshot CHEF actual solo modela
 /// puertos, por eso los otros tipos permanecen en el grafo de eventos tipado.
-pub fn parse(bytes: &[u8], max_observations: usize) -> ChefResult<ParsedBbotEvents> {
-    let event_graph = parse_event_graph(bytes, max_observations)?;
+pub fn parse(
+    bytes: &[u8],
+    max_observations: usize,
+    collect_archived_git_hints: bool,
+) -> ChefResult<ParsedBbotEvents> {
+    let mut parsed =
+        parse_event_graph_with_hints(bytes, max_observations, collect_archived_git_hints)?;
     let mut services = Vec::new();
 
-    for event in &event_graph.events {
+    for event in &parsed.event_graph.events {
         let protocol = match event.event_type.as_str() {
             "OPEN_TCP_PORT" => "tcp",
             "OPEN_UDP_PORT" => "udp",
@@ -338,8 +528,6 @@ pub fn parse(bytes: &[u8], max_observations: usize) -> ChefResult<ParsedBbotEven
         });
     }
 
-    Ok(ParsedBbotEvents {
-        services,
-        event_graph,
-    })
+    parsed.services = services;
+    Ok(parsed)
 }
