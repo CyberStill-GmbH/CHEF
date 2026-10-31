@@ -29,10 +29,14 @@ function graphReferencesAreValid(graph: ReconGraphDto): boolean {
         (qualification === 'hint' || qualification === 'unresolved')) ||
       (kind === 'ip_address' && qualification === 'hint'),
   );
-  const hasOrganizations = graph.assets.some(({ kind }) => kind === 'organization');
+  const hasOrganizations = graph.assets.some(
+    ({ kind }) => kind === 'organization',
+  );
 
   return (
-    (graph.schemaVersion === '1.3.0' || graph.schemaVersion === '1.4.0' || !hasNewQualifications) &&
+    (graph.schemaVersion === '1.3.0' ||
+      graph.schemaVersion === '1.4.0' ||
+      !hasNewQualifications) &&
     (graph.schemaVersion === '1.4.0' || !hasOrganizations) &&
     graph.evidence.every(
       ({ parentEvidenceId }) =>

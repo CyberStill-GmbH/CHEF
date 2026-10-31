@@ -1,7 +1,11 @@
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::{
+    collections::BTreeMap,
+    sync::atomic::{AtomicBool, Ordering},
+};
 
 use crate::{
-    ChefError, ErrorCode, FixedClock, ImportBbotEvidence, ImportEvidence, ScopePolicy,
+    ChefConfig, ChefError, ChefPreset, ErrorCode, FixedClock, ImportBbotEvidence, ImportEvidence,
+    ModuleCapabilityState, PresetCatalog, ScopePolicy, module_capabilities, module_capability,
     parse_securitytrails_subdomains, parse_subdomaincenter_subdomains,
 };
 
@@ -292,5 +296,49 @@ fn archived_subdomain_parsers_reject_bad_shapes_roots_and_entry_limits() {
             .unwrap_err()
             .code,
         ErrorCode::LimitExceeded
+    );
+}
+
+#[test]
+fn config_rejects_unknown_or_unimplemented_module_toggles() {
+    let mut config = ChefConfig::default();
+    config
+        .modules
+        .insert("chef_dns_parent_hints".to_owned(), true);
+    assert!(config.validate().is_ok());
+
+    config.modules.insert("import_bbot_events".to_owned(), true);
+    assert_eq!(config.validate().unwrap_err().code, ErrorCode::InvalidInput);
+
+    config.modules.remove("import_bbot_events");
+    config
+        .modules
+        .insert("future_network_scanner".to_owned(), false);
+    assert_eq!(config.validate().unwrap_err().code, ErrorCode::InvalidInput);
+}
+
+#[test]
+fn built_in_presets_only_enable_registered_implemented_capabilities() {
+    let catalog = PresetCatalog::built_in();
+    let resolved = catalog
+        .resolve("offline_hints")
+        .expect("built-in preset resolves");
+    assert_eq!(resolved.modules.len(), module_capabilities().len());
+    assert!(resolved.modules.keys().all(|id| {
+        module_capability(id)
+            .is_some_and(|capability| capability.state == ModuleCapabilityState::Implemented)
+    }));
+
+    let preset = ChefPreset {
+        id: "invalid_module".to_owned(),
+        name: "Preset inválido".to_owned(),
+        description: "No debe habilitar una capacidad inexistente".to_owned(),
+        includes: Vec::new(),
+        modules: BTreeMap::from([("future_network_scanner".to_owned(), true)]),
+        sources: BTreeMap::new(),
+    };
+    assert_eq!(
+        PresetCatalog::new([preset]).unwrap_err().code,
+        ErrorCode::InvalidInput
     );
 }

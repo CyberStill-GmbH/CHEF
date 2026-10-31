@@ -7,11 +7,19 @@
       "ip": "2001:db8::1",
       "services": [
         {
-          "http": { "request": { "uri": "https://attacker.example.net/admin?token=synthetic" } },
+          "http": {
+            "request": {
+              "uri": "https://attacker.example.net/admin?token=synthetic"
+            }
+          },
           "tls": {
             "certificates": {
               "leaf_data": {
-                "names": ["2001:db8::2", "bad_label", "https://host.example.net/path"]
+                "names": [
+                  "2001:db8::2",
+                  "bad_label",
+                  "https://host.example.net/path"
+                ]
               }
             }
           }

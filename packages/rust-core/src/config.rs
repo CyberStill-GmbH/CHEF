@@ -131,10 +131,14 @@ impl ChefConfig {
             ));
         }
         for name in self.modules.keys() {
-            if !valid_name(name) {
+            if !valid_name(name)
+                || crate::module_catalog::module_capability(name).is_none_or(|capability| {
+                    capability.state != crate::module_catalog::ModuleCapabilityState::Implemented
+                })
+            {
                 return Err(ChefError::new(
                     ErrorCode::InvalidInput,
-                    "Nombre de módulo CHEF inválido",
+                    "La configuración solicita un módulo CHEF desconocido o no implementado",
                 ));
             }
         }

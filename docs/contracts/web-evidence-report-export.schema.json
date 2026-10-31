@@ -31,7 +31,11 @@
     "contentType": { "const": "text/html; charset=utf-8" },
     "scopeStatus": { "const": "not_asserted" },
     "endpointCount": { "type": "integer", "minimum": 0, "maximum": 20000 },
-    "candidateFindingCount": { "type": "integer", "minimum": 0, "maximum": 40000 },
+    "candidateFindingCount": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 40000
+    },
     "html": { "type": "string", "minLength": 1, "maxLength": 2097152 }
   }
 }

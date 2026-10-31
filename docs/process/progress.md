@@ -273,6 +273,7 @@ Se trasladan los workers Tokio de importación y el lock por clave desde `chef-c
 ## 28-10-2026 — Plan HTTP desde evidencia importada
 
 `HttpRequestPlan` adapta la selección inicial de `modules/http.py`: crea candidatos GET desde `URL`, `URL_UNVERIFIED` y `OPEN_TCP_PORT`; conserva 80→HTTP y 443→HTTPS, prueba ambos esquemas en otros puertos, deduplica por origen y conserva los IDs fuente. El plan elimina rutas, query y fragmentos, y limita solicitudes, redirects y bytes previstos. No resuelve DNS, abre sockets ni ejecuta solicitudes; aún falta el puerto de autorización por destino, protección de redirects, transporte, respuesta saneada y composición Tauri. Se actualizan alcance, arquitectura, plan e inventario. No se ejecutaron pruebas por indicación del propietario.
+
 ## 28-10-2026 — Concesiones HTTP locales revocables
 
 Se añade `HttpAuthorizationRegistry` en el adaptador Rust: permanece vacío al iniciar, solo conserva grants en memoria, los liga a un origen canónico, digest de scope, IPs aprobadas y vencimiento, y permite revocar uno o todos. El control compartido invalida recibos previos y el caso de uso HTTP detiene solicitudes que esperan turno o siguen en transporte. El registro no comprueba consentimiento, scope ni DNS por sí mismo; esa validación corresponde a la composición aún pendiente y el transporte permanece sin invocar. Se actualizan alcance, arquitectura, seguridad y plan/inventario de migración. Pasan `cargo check --offline --locked`, Clippy `--lib`, validadores de documentación/arquitectura y `git diff --check`; no se ejecutaron pruebas por indicación del propietario.
@@ -297,11 +298,9 @@ Se recalculó el estado de las 466 filas del inventario y se corrigieron los tot
 
 `chef_cloud_storage_hints` también observa `STORAGE_BUCKET.url` de eventos ya importados y lo procesa con la misma normalización HTTP(S) saneada que `URL`; conserva el linaje del evento fuente y produce solo `URL_HINT`. Se actualizan alcance, auditoría de fuente, plan e inventario. No se hacen solicitudes, enumeración ni cambios de contrato; el inventario conserva 47 parciales, 389 pendientes y 30 exclusiones. Pasan `cargo fmt --check`, `cargo check --offline --locked`, Clippy `--lib -D warnings`, `npm run check:docs`, `npm run check:architecture` y `git diff --check`. No se ejecutaron pruebas por indicación del propietario; no se modificó la copia fuente.
 
-
 ### 28-10-2026 — Convenciones de almacenamiento adicionales
 
 `chef_cloud_storage_hints` amplía la clasificación offline de hosts ya importados a DigitalOcean Spaces, Hetzner Object Storage y Firebase Realtime Database. Emite `URL_HINT` con linaje y etiqueta de proveedor; Firebase recibe únicamente la ruta sugerida `/.json`. No se enumeran nombres, no se consultan servicios ni se confirma existencia, acceso, permisos o propiedad. El inventario queda en 50 archivos parciales, 386 pendientes y 30 exclusiones justificadas (466 en total). Se actualizaron alcance, auditoría, plan e inventario. Pasan `cargo fmt --manifest-path packages/rust-core/Cargo.toml --all -- --check`, `cargo check --manifest-path packages/rust-core/Cargo.toml --offline --locked`, Clippy `--lib -D warnings`, `npm run check:docs`, `npm run check:architecture` y `git diff --check`. No se ejecutaron pruebas funcionales por indicación del propietario.
-
 
 ### 28-10-2026 — Parser acotado de páginas VirusTotal
 

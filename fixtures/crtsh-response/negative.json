@@ -1,7 +1,10 @@
 {
   "queryDomain": "example.com",
   "response": [
-    { "id": 1, "name_value": "example.com\nexample.com.evil.test\nnotexample.com\n*.example.com" },
+    {
+      "id": 1,
+      "name_value": "example.com\nexample.com.evil.test\nnotexample.com\n*.example.com"
+    },
     { "name_value": "ignored.example.com" },
     { "id": 0, "name_value": "ignored.example.com" }
   ],
