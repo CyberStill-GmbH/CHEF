@@ -351,6 +351,18 @@ assert.ok(
   ),
   JSON.stringify(validateCensysIpImport.errors),
 );
+const urlscanImportSchema = JSON.parse(
+  readFileSync('docs/contracts/urlscan-import.schema.json', 'utf8'),
+);
+const validateUrlScanImport = ajv.compile(urlscanImportSchema);
+assert.ok(
+  validateUrlScanImport(
+    JSON.parse(
+      readFileSync('docs/contracts/examples/urlscan-import.json', 'utf8'),
+    ),
+  ),
+  JSON.stringify(validateUrlScanImport.errors),
+);
 const sources = JSON.parse(readFileSync('docs/research/sources.json', 'utf8'));
 assert.equal(new Set(sources.map((item) => item.id)).size, sources.length);
 for (const source of sources) {
