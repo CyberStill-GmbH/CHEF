@@ -14,29 +14,29 @@ Actualizado 31-10-2026. El NSIS final se instaló en Windows. Se verificaron el 
 
 **Estado de esta revisión: instalación y respuesta básica de ventana aprobadas; renderizado e interacción pendientes.** La comprobación visual de la herramienta de escritorio agotó sus reintentos de enumeración de ventanas. El título y la propiedad `Responding` no prueban que React haya renderizado correctamente ni que los comandos IPC/SurrealDB funcionen.
 
-| Criterio | Given | When | Then |
-| --- | --- | --- | --- |
-| Instalación | Está disponible el NSIS `CHEF_0.1.0_x64-setup.exe` de esta revisión. | Se instala en el perfil local de Windows. | **Aprobado:** salida 0; ejecutable instalado bajo `%LOCALAPPDATA%\Programs\CHEF`. |
-| Arranque | CHEF está instalado. | Se inicia `chef-desktop.exe`. | **Aprobado:** el WebView mostró la interfaz React, el snapshot local con 3 activos y la terminal CHEF. La ventana `CHEF` siguió respondiendo. |
-| Terminal de comandos | CHEF muestra el snapshot local. | Se ejecuta `chef help`. | **Aprobado:** la terminal muestra los comandos CHEF disponibles; no ejecuta una shell del sistema. |
-| Clasificación de URL | CHEF está abierto; se usa `https://example.com/private?token=dummy#test`. | Se ejecuta `chef url <URL>`. | **Aprobado:** Rust clasifica la URL, se omiten query y fragmento, y CHEF informa que no hizo consultas de red. |
-| Informe local | Hay un snapshot cargado. | Se ejecuta `chef report`. | **Aprobado:** se descarga un informe HTML local con nombre saneado; el archivo se verificó en Descargas. |
-| Exploración offline | CHEF muestra el fixture sintético inicial. | Se abre Evidencia y se selecciona un activo. | La lista, el grafo y el inspector muestran datos del fixture y su evidencia; no se atribuyen a un objetivo real. |
-| Importación archivada | Está seleccionado el fixture positivo y el dominio consultado es `example.com`. | Se importa el archivo urlscan desde disco. | La terminal presenta el resultado, el grafo muestra pistas históricas con hash/linaje y el Snapshot permanece separado. |
-| Control negativo | Está disponible el fixture urlscan negativo. | Se procesa con la misma raíz `example.com`. | Los candidatos externos a la raíz no aparecen como activos CHEF. |
+| Criterio              | Given                                                                           | When                                         | Then                                                                                                                                          |
+| --------------------- | ------------------------------------------------------------------------------- | -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Instalación           | Está disponible el NSIS `CHEF_0.1.0_x64-setup.exe` de esta revisión.            | Se instala en el perfil local de Windows.    | **Aprobado:** salida 0; ejecutable instalado bajo `%LOCALAPPDATA%\Programs\CHEF`.                                                             |
+| Arranque              | CHEF está instalado.                                                            | Se inicia `chef-desktop.exe`.                | **Aprobado:** el WebView mostró la interfaz React, el snapshot local con 3 activos y la terminal CHEF. La ventana `CHEF` siguió respondiendo. |
+| Terminal de comandos  | CHEF muestra el snapshot local.                                                 | Se ejecuta `chef help`.                      | **Aprobado:** la terminal muestra los comandos CHEF disponibles; no ejecuta una shell del sistema.                                            |
+| Clasificación de URL  | CHEF está abierto; se usa `https://example.com/private?token=dummy#test`.       | Se ejecuta `chef url <URL>`.                 | **Aprobado:** Rust clasifica la URL, se omiten query y fragmento, y CHEF informa que no hizo consultas de red.                                |
+| Informe local         | Hay un snapshot cargado.                                                        | Se ejecuta `chef report`.                    | **Aprobado:** se descarga un informe HTML local con nombre saneado; el archivo se verificó en Descargas.                                      |
+| Exploración offline   | CHEF muestra el fixture sintético inicial.                                      | Se abre Evidencia y se selecciona un activo. | La lista, el grafo y el inspector muestran datos del fixture y su evidencia; no se atribuyen a un objetivo real.                              |
+| Importación archivada | Está seleccionado el fixture positivo y el dominio consultado es `example.com`. | Se importa el archivo urlscan desde disco.   | La terminal presenta el resultado, el grafo muestra pistas históricas con hash/linaje y el Snapshot permanece separado.                       |
+| Control negativo      | Está disponible el fixture urlscan negativo.                                    | Se procesa con la misma raíz `example.com`.  | Los candidatos externos a la raíz no aparecen como activos CHEF.                                                                              |
 
 Registrar cada criterio como **aprobado**, **fallido** o **no ejecutado**, con fecha, revisión y versión del instalador. En esta pasada, la exploración completa, importación urlscan y control negativo permanecen **no ejecutados**. No inferir éxito en estas rutas a partir de la prueba de terminal.
 
 ## Guion de cinco minutos
 
-| Tiempo | Acción | Evidencia que se puede afirmar |
-| --- | --- | --- |
-| 00:00–00:35 | Presentar CHEF como estación local de evidencia para reconocimiento autorizado. | La app funciona offline; importar datos no autoriza tráfico. |
-| 00:35–01:20 | Abrir la aplicación instalada y revisar el snapshot sintético de inicio. | Mostrar la lista de activos, el mapa de relaciones y la terminal local. Identificar datos sintéticos. |
-| 01:20–02:05 | Seleccionar un activo y abrir su inspector. | Recorrer evidencia y procedencia; distinguir observación de inferencia. No afirmar vulnerabilidad por un puerto o una relación. |
-| 02:05–03:20 | Ir a Importaciones, indicar `example.com`, seleccionar el fixture urlscan positivo y procesarlo. | Mostrar fases en la terminal y guardar el grafo en SurrealDB local. Los resultados son pistas históricas con tiempo fuente desconocido, no DNS actual. |
-| 03:20–04:10 | Revisar el grafo del archivo importado y su hash SHA-256. Si el recorrido es estable, repetir con el fixture negativo. | Los hosts externos a la raíz no se proyectan como candidatos. El Snapshot no se reemplaza con datos históricos de proveedor. |
-| 04:10–05:00 | Volver a Evidencia y resumir límites y siguiente incremento. | La importación URLscan/Censys compone parser Rust, IPC y almacenamiento; fuentes remotas, escaneo activo, recuperación/backup multiplataforma y portado total siguen pendientes. |
+| Tiempo      | Acción                                                                                                                 | Evidencia que se puede afirmar                                                                                                                                                   |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 00:00–00:35 | Presentar CHEF como estación local de evidencia para reconocimiento autorizado.                                        | La app funciona offline; importar datos no autoriza tráfico.                                                                                                                     |
+| 00:35–01:20 | Abrir la aplicación instalada y revisar el snapshot sintético de inicio.                                               | Mostrar la lista de activos, el mapa de relaciones y la terminal local. Identificar datos sintéticos.                                                                            |
+| 01:20–02:05 | Seleccionar un activo y abrir su inspector.                                                                            | Recorrer evidencia y procedencia; distinguir observación de inferencia. No afirmar vulnerabilidad por un puerto o una relación.                                                  |
+| 02:05–03:20 | Ir a Importaciones, indicar `example.com`, seleccionar el fixture urlscan positivo y procesarlo.                       | Mostrar fases en la terminal y guardar el grafo en SurrealDB local. Los resultados son pistas históricas con tiempo fuente desconocido, no DNS actual.                           |
+| 03:20–04:10 | Revisar el grafo del archivo importado y su hash SHA-256. Si el recorrido es estable, repetir con el fixture negativo. | Los hosts externos a la raíz no se proyectan como candidatos. El Snapshot no se reemplaza con datos históricos de proveedor.                                                     |
+| 04:10–05:00 | Volver a Evidencia y resumir límites y siguiente incremento.                                                           | La importación URLscan/Censys compone parser Rust, IPC y almacenamiento; fuentes remotas, escaneo activo, recuperación/backup multiplataforma y portado total siguen pendientes. |
 
 ## Responsabilidades del ensayo
 
