@@ -137,7 +137,8 @@ pub fn adapt_bbot_to_chef(graph: &BbotEventGraph) -> ChefResult<ChefReconGraph> 
             "DNS_NAME_HINT"
                 if crate::dns_mutation_candidates::is_generated_dns_mutation_hint(event)
                     || crate::speculate::is_generated_dns_rdata_hint(event)
-                    || crate::censys_ip_import::is_censys_snapshot_hint(event) =>
+                    || crate::censys_ip_import::is_censys_snapshot_hint(event)
+                    || crate::urlscan_import::is_urlscan_snapshot_hint(event) =>
             {
                 add_named_asset(&mut assets, ReconAssetKind::Domain, event, &evidence_id)
             }
@@ -483,7 +484,8 @@ fn named_asset_qualification(kind: ReconAssetKind, event: &BbotEvent) -> Option<
         ReconAssetKind::Domain
             if crate::dns_mutation_candidates::is_generated_dns_mutation_hint(event)
                 || crate::speculate::is_generated_dns_rdata_hint(event)
-                || crate::censys_ip_import::is_censys_snapshot_hint(event) =>
+                || crate::censys_ip_import::is_censys_snapshot_hint(event)
+                || crate::urlscan_import::is_urlscan_snapshot_hint(event) =>
         {
             Some("hint")
         }

@@ -61,3 +61,23 @@ async fn background_job_reports_scope_failure_without_publishing_partial_snapsho
     ));
     assert_eq!(task.join().await.unwrap_err().code, ErrorCode::OutOfScope);
 }
+
+#[tokio::test]
+async fn archived_urlscan_import_runs_off_the_async_executor_and_preserves_lineage() {
+    let imported = crate::import_urlscan_snapshot(
+        "example.com".to_owned(),
+        include_bytes!("../../../fixtures/urlscan-response/positive.json").to_vec(),
+        "2026-10-31T00:00:00.000Z".to_owned(),
+    )
+    .await
+    .expect("archived response is normalized locally");
+
+    assert_eq!(
+        imported.event_graph.events[0].event_type,
+        "URLSCAN_SEARCH_RESPONSE"
+    );
+    assert!(imported.event_graph.events.iter().skip(1).all(|event| {
+        event.parent_id.as_deref() == Some(imported.event_graph.events[0].id.as_str())
+    }));
+    assert!(!imported.recon_graph.assets.is_empty());
+}

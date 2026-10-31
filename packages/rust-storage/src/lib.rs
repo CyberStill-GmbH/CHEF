@@ -9,7 +9,7 @@ use chef_application::{
 };
 use chef_core::{
     BbotEventGraph, BbotImportResult, CensysIpImportResult, ChefReconGraph, Snapshot,
-    deterministic_id,
+    UrlScanImportResult, deterministic_id,
 };
 use serde_json::{Value, json};
 use surrealdb::{
@@ -67,6 +67,7 @@ impl LocalSnapshotStore {
              DEFINE FIELD IF NOT EXISTS schema_version ON provider_imports TYPE string;
              DEFINE FIELD IF NOT EXISTS provider ON provider_imports TYPE string;
              DEFINE FIELD IF NOT EXISTS target_ip ON provider_imports TYPE string;
+             DEFINE FIELD IF NOT EXISTS query_domain ON provider_imports TYPE string;
              DEFINE FIELD IF NOT EXISTS response_sha256 ON provider_imports TYPE string;
              DEFINE FIELD IF NOT EXISTS imported_at ON provider_imports TYPE string;
              DEFINE FIELD IF NOT EXISTS event_graph ON provider_imports TYPE any;
@@ -215,6 +216,80 @@ impl LocalSnapshotStore {
         }))?;
         validate_censys_ip_import(&result)?;
         if censys_import_id(&result) != import_id
+            || record.get("imported_at").and_then(Value::as_str)
+                != result
+                    .event_graph
+                    .events
+                    .first()
+                    .map(|event| event.timestamp.as_str())
+        {
+            return Err(StorageError::InvalidRecord);
+        }
+        Ok(Some(result))
+    }
+
+    /// Guarda una respuesta urlscan archivada fuera de Snapshot: sus nombres y
+    /// URL son pistas históricas, no observaciones actuales de CHEF.
+    pub async fn save_urlscan_import(
+        &self,
+        result: &UrlScanImportResult,
+    ) -> Result<String, StorageError> {
+        validate_urlscan_import(result)?;
+        let import_id = urlscan_import_id(result);
+        let imported_at = result
+            .event_graph
+            .events
+            .first()
+            .map(|event| event.timestamp.as_str())
+            .ok_or(StorageError::InvalidRecord)?;
+        let payload = json!({
+            "import_id": import_id,
+            "schema_version": PROVIDER_IMPORT_SCHEMA_VERSION,
+            "provider": "urlscan",
+            "query_domain": result.query_domain,
+            "response_sha256": result.response_sha256,
+            "imported_at": imported_at,
+            "event_graph": result.event_graph,
+            "chef_recon_graph": result.recon_graph,
+        });
+        let _: Option<Value> = self
+            .db
+            .upsert((PROVIDER_IMPORT_TABLE, import_id.as_str()))
+            .content(payload)
+            .await?;
+        Ok(import_id)
+    }
+
+    /// Recupera una importación urlscan y vuelve a validar identidad y grafos.
+    pub async fn load_urlscan_import(
+        &self,
+        import_id: &str,
+    ) -> Result<Option<UrlScanImportResult>, StorageError> {
+        if !valid_urlscan_import_id(import_id) {
+            return Err(StorageError::InvalidRecord);
+        }
+        let Some(record) = self
+            .db
+            .select::<Option<Value>>((PROVIDER_IMPORT_TABLE, import_id))
+            .await?
+        else {
+            return Ok(None);
+        };
+        if record.get("import_id").and_then(Value::as_str) != Some(import_id)
+            || record.get("schema_version").and_then(Value::as_str)
+                != Some(PROVIDER_IMPORT_SCHEMA_VERSION)
+            || record.get("provider").and_then(Value::as_str) != Some("urlscan")
+        {
+            return Err(StorageError::InvalidRecord);
+        }
+        let result: UrlScanImportResult = serde_json::from_value(json!({
+            "query_domain": record.get("query_domain").cloned().ok_or(StorageError::InvalidRecord)?,
+            "response_sha256": record.get("response_sha256").cloned().ok_or(StorageError::InvalidRecord)?,
+            "event_graph": record.get("event_graph").cloned().ok_or(StorageError::InvalidRecord)?,
+            "recon_graph": record.get("chef_recon_graph").cloned().ok_or(StorageError::InvalidRecord)?,
+        }))?;
+        validate_urlscan_import(&result)?;
+        if urlscan_import_id(&result) != import_id
             || record.get("imported_at").and_then(Value::as_str)
                 != result
                     .event_graph
@@ -389,6 +464,51 @@ fn censys_import_id(result: &CensysIpImportResult) -> String {
     )
 }
 
+fn validate_urlscan_import(result: &UrlScanImportResult) -> Result<(), StorageError> {
+    let root = result
+        .event_graph
+        .events
+        .first()
+        .ok_or(StorageError::InvalidRecord)?;
+    if result.query_domain.is_empty()
+        || result.response_sha256.len() != 64
+        || !result
+            .response_sha256
+            .bytes()
+            .all(|byte| byte.is_ascii_hexdigit())
+        || root.event_type != "URLSCAN_SEARCH_RESPONSE"
+        || root.data.get("queryDomain").and_then(Value::as_str)
+            != Some(result.query_domain.as_str())
+        || root.data.get("responseSha256").and_then(Value::as_str)
+            != Some(result.response_sha256.as_str())
+        || root.timestamp.is_empty()
+        || result
+            .event_graph
+            .events
+            .iter()
+            .any(|event| event.timestamp != root.timestamp)
+    {
+        return Err(StorageError::InvalidRecord);
+    }
+    chef_core::validate_bbot_event_graph(&result.event_graph)
+        .map_err(|_| StorageError::InvalidRecord)?;
+    chef_core::validate_chef_recon_graph(&result.recon_graph)
+        .map_err(|_| StorageError::InvalidRecord)?;
+    let expected = chef_core::adapt_bbot_to_chef(&result.event_graph)
+        .map_err(|_| StorageError::InvalidRecord)?;
+    if expected != result.recon_graph {
+        return Err(StorageError::InvalidRecord);
+    }
+    Ok(())
+}
+
+fn urlscan_import_id(result: &UrlScanImportResult) -> String {
+    deterministic_id(
+        "urlscan-import",
+        &[&result.query_domain, &result.response_sha256],
+    )
+}
+
 fn valid_provider_import_id(import_id: &str) -> bool {
     import_id
         .strip_prefix("censys-import:")
@@ -397,6 +517,14 @@ fn valid_provider_import_id(import_id: &str) -> bool {
                 && digest
                     .bytes()
                     .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
+        })
+}
+
+fn valid_urlscan_import_id(import_id: &str) -> bool {
+    import_id
+        .strip_prefix("urlscan-import:")
+        .is_some_and(|digest| {
+            digest.len() == 64 && digest.bytes().all(|byte| byte.is_ascii_hexdigit())
         })
 }
 
@@ -569,6 +697,31 @@ mod tests {
         );
         assert!(matches!(
             store.load_censys_ip_import("censys-import:invalid").await,
+            Err(StorageError::InvalidRecord)
+        ));
+    }
+
+    #[tokio::test]
+    async fn persists_archived_urlscan_import_separately_from_snapshot() {
+        let directory = tempfile::tempdir().unwrap();
+        let body = include_bytes!("../../../fixtures/urlscan-response/positive.json");
+        let imported = chef_core::import_urlscan_snapshot(
+            "example.com",
+            body,
+            &chef_core::FixedClock("2026-10-31T00:00:00.000Z".into()),
+        )
+        .unwrap();
+        let store = LocalSnapshotStore::open(directory.path().join("chef-surreal"))
+            .await
+            .unwrap();
+
+        let import_id = store.save_urlscan_import(&imported).await.unwrap();
+        assert_eq!(
+            store.load_urlscan_import(&import_id).await.unwrap(),
+            Some(imported)
+        );
+        assert!(matches!(
+            store.load_urlscan_import("urlscan-import:invalid").await,
             Err(StorageError::InvalidRecord)
         ));
     }

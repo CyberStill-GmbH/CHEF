@@ -1,0 +1,16 @@
+{
+  "Results": [
+    {
+      "Result": {
+        "Paths": [
+          { "Domain": "example.com", "SubDomain": "www" },
+          { "Domain": "api.example.com", "SubDomain": "" },
+          { "Domain": "example.com", "SubDomain": "WWW" },
+          { "Domain": "outside.example.net", "SubDomain": "portal" }
+        ]
+      }
+    }
+  ],
+  "Inbound": [{ "Domain": "shop.example.com" }],
+  "Outbound": [{ "Domain": "api.example.com" }]
+}

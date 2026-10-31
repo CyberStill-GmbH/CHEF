@@ -5,9 +5,10 @@ use std::{
 
 use crate::{
     ChefConfig, ChefError, ChefPreset, ErrorCode, FixedClock, ImportBbotEvidence, ImportEvidence,
-    ModuleCapabilityState, PresetCatalog, ScopePolicy, module_capabilities, module_capability,
-    parse_bufferoverrun_subdomains, parse_leakix_subdomains, parse_securitytrails_subdomains,
-    parse_subdomaincenter_subdomains, parse_urlscan_subdomains,
+    ModuleCapabilityState, PresetCatalog, ScopePolicy, import_urlscan_snapshot,
+    module_capabilities, module_capability, parse_bufferoverrun_subdomains,
+    parse_leakix_subdomains, parse_securitytrails_subdomains, parse_subdomaincenter_subdomains,
+    parse_urlscan_subdomains,
 };
 
 const NMAP: &[u8] = include_bytes!("../../../fixtures/nmap/lab.xml");
@@ -481,5 +482,88 @@ fn urlscan_archived_parser_rejects_invalid_shapes_and_too_many_results() {
             .unwrap_err()
             .code,
         ErrorCode::LimitExceeded
+    );
+}
+
+#[test]
+fn urlscan_archive_import_builds_deterministic_lineage_and_hint_only_projection() {
+    let clock = FixedClock("2026-10-31T00:00:00.000Z".to_owned());
+    let first = import_urlscan_snapshot("example.com", URLSCAN, &clock)
+        .expect("urlscan fixture imports offline");
+    let second = import_urlscan_snapshot("example.com", URLSCAN, &clock)
+        .expect("the same urlscan fixture imports deterministically");
+
+    assert_eq!(first, second);
+    assert_eq!(first.response_sha256.len(), 64);
+    assert_eq!(first.event_graph.events.len(), 5);
+    let root = &first.event_graph.events[0];
+    assert_eq!(root.event_type, "URLSCAN_SEARCH_RESPONSE");
+    assert!(first.event_graph.events.iter().skip(1).all(|event| {
+        event.parent_id.as_deref() == Some(root.id.as_str())
+            && event.timestamp == "2026-10-31T00:00:00.000Z"
+            && event.metadata["temporalQualification"] == "source_time_unknown"
+    }));
+    assert_eq!(
+        first
+            .recon_graph
+            .assets
+            .iter()
+            .filter(|asset| asset.qualification.as_deref() == Some("hint"))
+            .count(),
+        4
+    );
+    assert_eq!(
+        first
+            .recon_graph
+            .unmapped_event_types
+            .get("URLSCAN_SEARCH_RESPONSE"),
+        Some(&1)
+    );
+}
+
+#[test]
+fn builtwith_archived_response_extracts_scoped_domains_and_redirect_hosts() {
+    let parsed = crate::parse_builtwith_subdomains(
+        "example.com",
+        include_bytes!("../../../fixtures/builtwith-response/positive.json"),
+    )
+    .expect("valid archived BuiltWith response");
+
+    assert_eq!(parsed.query_domain, "example.com");
+    assert_eq!(
+        parsed.candidates,
+        vec![
+            "api.example.com".to_owned(),
+            "shop.example.com".to_owned(),
+            "www.example.com".to_owned(),
+        ]
+    );
+}
+
+#[test]
+fn builtwith_archived_response_discards_outside_wildcard_and_invalid_hosts() {
+    let parsed = crate::parse_builtwith_subdomains(
+        "example.com",
+        include_bytes!("../../../fixtures/builtwith-response/negative.json"),
+    )
+    .expect("negative rows are safely discarded");
+
+    assert!(parsed.candidates.is_empty());
+}
+
+#[test]
+fn builtwith_archived_response_rejects_invalid_shape_and_limits() {
+    assert_eq!(
+        crate::parse_builtwith_subdomains("example.com", b"not-json")
+            .unwrap_err()
+            .code,
+        crate::ErrorCode::InvalidInput
+    );
+    let oversized = vec![b' '; 1024 * 1024 + 1];
+    assert_eq!(
+        crate::parse_builtwith_subdomains("example.com", &oversized)
+            .unwrap_err()
+            .code,
+        crate::ErrorCode::LimitExceeded
     );
 }
