@@ -13,7 +13,7 @@
   --chef-dim: #66756a;
   color: var(--chef-text);
   background: var(--chef-bg);
-  font-family: Inter, 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif;
+  font-family: 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif;
   font-size: 14px;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -1089,6 +1089,496 @@ button {
 
   .target-seed-result dd + dt {
     margin-top: 7px;
+  }
+}
+
+/* CHEF workspace refinement: crisp surfaces, compact navigation, no glass effects. */
+:root {
+  --chef-bg: #090c0a;
+  --chef-sidebar: #0c110e;
+  --chef-panel: #0e1410;
+  --chef-panel-strong: #121a14;
+  --chef-line: #202c23;
+  --chef-line-strong: #344538;
+  --chef-green: #83e6a0;
+  --chef-green-soft: #b4f2c3;
+  --chef-text: #e3eee5;
+  --chef-muted: #89988d;
+  --chef-dim: #66756a;
+}
+
+.chef-shell {
+  grid-template-columns: 216px minmax(0, 1fr);
+}
+
+.project-sidebar {
+  padding: 16px 11px 10px;
+  background: #0b100d;
+}
+
+.wordmark {
+  margin-bottom: 14px;
+}
+
+.project-switcher {
+  min-height: 49px;
+  padding: 6px 8px;
+  border-color: #26342a;
+  background: #0f1511;
+}
+
+.project-avatar {
+  width: 30px;
+  height: 30px;
+  border: 0;
+  background: transparent;
+}
+
+.project-avatar img {
+  width: 28px;
+  height: 28px;
+}
+
+.sidebar-label {
+  margin-top: 22px;
+  color: #78877c;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.workspace-nav {
+  gap: 2px;
+}
+
+.nav-item {
+  min-height: 37px;
+  gap: 9px;
+  padding-inline: 9px;
+  color: #a9b5ab;
+  font-size: 12px;
+}
+
+.nav-item.is-active {
+  border: 0;
+  border-left: 2px solid var(--chef-green);
+  background: #142019;
+}
+
+.sidebar-note {
+  max-width: 184px;
+  font-size: 10px;
+}
+
+.sidebar-bottom {
+  padding-top: 9px;
+}
+
+.chef-main {
+  background: #090c0a;
+}
+
+.topbar {
+  min-height: 43px;
+  padding-inline: 20px;
+  background: #0b100d;
+}
+
+.main-content {
+  gap: 12px;
+  padding: 17px clamp(14px, 1.6vw, 24px) 14px;
+}
+
+.page-heading {
+  min-height: 44px;
+  align-items: center;
+}
+
+.page-heading h1 {
+  font-size: 23px;
+  letter-spacing: -0.035em;
+}
+
+.page-description {
+  margin-top: 3px;
+  font-size: 11px;
+}
+
+.workspace-badge {
+  min-height: 24px;
+  border-left: 0;
+  color: #b4c2b7;
+}
+
+.recon-workbench {
+  flex: 1;
+  min-height: 0;
+  grid-template-columns: minmax(340px, 0.85fr) minmax(0, 1.15fr);
+  align-items: stretch;
+  gap: 12px;
+}
+
+.terminal-column,
+.graph-column {
+  min-height: 0;
+  padding: 12px;
+  border: 1px solid #202c23;
+  background: #0d130f;
+}
+
+.terminal-column > h2 {
+  display: flex;
+  min-height: 25px;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 0 8px;
+  color: #dce8de;
+  font-size: 12px;
+}
+
+.terminal-column > h2::after {
+  content: 'LOCAL';
+  color: #829287;
+  font:
+    10px ui-monospace,
+    'Cascadia Code',
+    monospace;
+  letter-spacing: 0.07em;
+}
+
+.scan-log-panel {
+  border-color: #29372d;
+  background: #090e0b;
+}
+
+.scan-log-terminal {
+  height: clamp(280px, 56vh, 520px);
+  min-height: 280px;
+  background: #090e0b;
+}
+
+.scan-log-terminal .xterm-viewport {
+  background: #090e0b !important;
+}
+
+.graph-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.recon-workspace {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+.recon-workspace > .pane-heading {
+  min-height: 34px;
+  margin: 0 0 9px;
+  border-bottom-color: #26342a;
+}
+
+.recon-workspace > .pane-heading h2 {
+  font-size: 12px;
+}
+
+.graph-pane .recon-graph-canvas,
+.recon-graph-canvas {
+  min-height: 280px;
+  height: clamp(280px, 56vh, 520px);
+  flex: 1;
+  margin: 0;
+  border-color: #26342a;
+  background: #090e0b;
+}
+
+.pane-empty {
+  margin: auto;
+  padding: 28px 14px;
+  text-align: center;
+}
+
+.snapshot-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+  padding: 12px 14px;
+  border-color: #202c23;
+  background: #0d130f;
+}
+
+.snapshot-summary h2 {
+  margin: 0;
+  font-size: 12px;
+}
+
+.snapshot-summary dl {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 7px;
+  margin: 0;
+}
+
+.summary-metric {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+  padding: 9px 11px;
+  border-left: 2px solid #486b52;
+  background: #111914;
+}
+
+.summary-metric dt {
+  color: var(--chef-muted);
+  font-size: 10px;
+}
+
+.summary-metric dd {
+  margin: 0;
+  color: #e3eee5;
+  font:
+    17px ui-monospace,
+    'Cascadia Code',
+    monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.export-panel {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid #202c23;
+  background: #0d130f;
+}
+
+.export-panel > h2 {
+  margin: 0;
+  font-size: 13px;
+}
+
+.export-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  border: 1px solid #202c23;
+  background: #202c23;
+}
+
+.export-option {
+  display: flex;
+  min-width: 0;
+  min-height: 112px;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px;
+  background: #0e1410;
+}
+
+.export-option h3 {
+  margin: 0 0 4px;
+  color: #dbe7dd;
+  font-size: 11px;
+}
+
+.export-option p {
+  margin: 0;
+  color: #849287;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.export-option button {
+  min-height: 31px;
+  padding: 5px 8px;
+  font-size: 10px;
+}
+
+.sensitive-export {
+  padding-top: 9px;
+  border-top: 1px solid #202c23;
+  color: #b8c5ba;
+  font-size: 11px;
+}
+
+.sensitive-export summary {
+  cursor: pointer;
+}
+
+.sensitive-export p {
+  max-width: 680px;
+  color: var(--chef-muted);
+  font-size: 11px;
+}
+
+.export-panel > [role='status'] {
+  min-height: 1em;
+  margin: 0;
+  color: var(--chef-green-soft);
+  font-size: 11px;
+}
+
+.event-statistics-panel {
+  display: grid;
+  gap: 9px;
+  padding: 13px 14px;
+  border-color: #202c23;
+  background: #0d130f;
+}
+
+.event-statistics-panel > h2 {
+  margin: 0;
+  font-size: 12px;
+}
+
+.event-statistics-panel > p {
+  margin: 0;
+  color: var(--chef-muted);
+  font-size: 10px;
+}
+
+.event-statistics-panel > dl {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 7px;
+  margin: 0;
+}
+
+.event-statistics-panel > dl dt {
+  color: var(--chef-muted);
+  font-size: 10px;
+}
+
+.event-statistics-panel > dl dd {
+  margin: 4px 0 0;
+  color: var(--chef-text);
+  font:
+    15px ui-monospace,
+    'Cascadia Code',
+    monospace;
+}
+
+.statistics-breakdown {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.statistics-breakdown details {
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid #202c23;
+  background: #0b100d;
+}
+
+.statistics-breakdown summary {
+  color: #c9d7cc;
+  cursor: pointer;
+  font-size: 10px;
+}
+
+.statistics-breakdown ul {
+  display: grid;
+  gap: 5px;
+  margin: 9px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.statistics-breakdown li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: #a8b5aa;
+  font-size: 10px;
+}
+
+.statistics-breakdown code {
+  overflow-wrap: anywhere;
+  color: #c5e6cb;
+}
+
+.statistics-breakdown li span {
+  color: #8f9f93;
+  text-align: right;
+}
+
+@media (max-width: 980px) {
+  .chef-shell {
+    grid-template-columns: 192px minmax(0, 1fr);
+  }
+
+  .recon-workbench {
+    grid-template-columns: minmax(300px, 0.85fr) minmax(0, 1.15fr);
+  }
+}
+
+@media (max-width: 720px) {
+  .chef-shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .project-sidebar {
+    gap: 8px;
+    padding-inline: 8px;
+  }
+
+  .workspace-nav {
+    justify-content: flex-end;
+  }
+
+  .nav-item {
+    min-height: 34px;
+    padding-inline: 6px;
+  }
+
+  .chef-main {
+    height: calc(100dvh - 51px);
+  }
+
+  .main-content {
+    gap: 10px;
+    padding: 12px 10px 16px;
+  }
+
+  .recon-workbench {
+    flex: initial;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .terminal-column,
+  .graph-column {
+    padding: 10px;
+  }
+
+  .scan-log-terminal {
+    height: 260px;
+    min-height: 230px;
+  }
+
+  .recon-graph-canvas,
+  .graph-pane .recon-graph-canvas {
+    height: 330px;
+    min-height: 280px;
+  }
+
+  .snapshot-summary dl {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .event-statistics-panel > dl,
+  .statistics-breakdown {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .export-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .export-option {
+    min-height: 98px;
   }
 }
 

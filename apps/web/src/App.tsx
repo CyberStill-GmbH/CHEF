@@ -383,17 +383,6 @@ export function App({ client = defaultClient }: AppProps) {
             <WorkspaceIcon name="settings" /> Ajustes
           </button>
         </nav>
-        <p className="sidebar-note">
-          Las importaciones se procesan en este equipo. No se inicia tráfico de
-          red desde esta vista.
-        </p>
-        <div className="sidebar-bottom">
-          <span className="avatar-dot">CS</span>
-          <span>
-            <strong>CHEF Desktop</strong>
-            <small>Sesión local</small>
-          </span>
-        </div>
       </aside>
       <main id="workspace" className="chef-main">
         <header className="topbar">
@@ -423,7 +412,15 @@ export function App({ client = defaultClient }: AppProps) {
                       ? 'Importaciones'
                       : 'Configuración'}
               </h1>
-              <p className="page-description">Activos y evidencia local.</p>
+              <p className="page-description">
+                {activeWorkspace === 'recon'
+                  ? 'Escribe un comando y revisa el grafo validado.'
+                  : activeWorkspace === 'evidence'
+                    ? 'Consulta procedencia, relaciones y exportaciones.'
+                    : activeWorkspace === 'sources'
+                      ? 'Importa archivos de evidencia para procesarlos en CHEF.'
+                      : 'Consulta el alcance y el estado de CHEF.'}
+              </p>
             </div>
             <div className="workspace-badge">
               <span className="status-dot" />{' '}
@@ -648,14 +645,22 @@ export function App({ client = defaultClient }: AppProps) {
                 >
                   <h2 id="snapshot-summary-title">Resumen del snapshot</h2>
                   <dl>
-                    <dt>Versión</dt>
-                    <dd>{state.snapshot.schemaVersion}</dd>
-                    <dt>Activos</dt>
-                    <dd>{state.snapshot.assets.length}</dd>
-                    <dt>Observaciones</dt>
-                    <dd>{state.snapshot.observations.length}</dd>
-                    <dt>Evidencias</dt>
-                    <dd>{state.snapshot.evidence.length}</dd>
+                    <div className="summary-metric">
+                      <dt>Versión</dt>
+                      <dd>{state.snapshot.schemaVersion}</dd>
+                    </div>
+                    <div className="summary-metric">
+                      <dt>Activos</dt>
+                      <dd>{state.snapshot.assets.length}</dd>
+                    </div>
+                    <div className="summary-metric">
+                      <dt>Observaciones</dt>
+                      <dd>{state.snapshot.observations.length}</dd>
+                    </div>
+                    <div className="summary-metric">
+                      <dt>Evidencias</dt>
+                      <dd>{state.snapshot.evidence.length}</dd>
+                    </div>
                   </dl>
                 </section>
                 {activeWorkspace === 'evidence' &&

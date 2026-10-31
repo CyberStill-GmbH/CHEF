@@ -47,7 +47,7 @@ export function ScanLogTerminal({ logs, onCommand }: ScanLogTerminalProps) {
       cursorInactiveStyle: 'outline',
       cursorStyle: 'bar',
       fontFamily: "'Cascadia Code', 'SFMono-Regular', Consolas, monospace",
-      fontSize: 13,
+      fontSize: 12,
       lineHeight: 1.35,
       scrollback: 1000,
       screenReaderMode: true,
