@@ -115,6 +115,8 @@ La fuente `chef-engine/modules/builtwith.py` ofrece dos extracciones: dominios d
 
 `packages/rust-core/src/security_contact_hints.rs::parse_archived_security_contacts` obtiene pistas de correo y URL de contenido que cumple la forma mínima de `security.txt` y descarta contactos fuera del dominio raíz y la URL canónica del propio documento. El módulo está registrado en el core y tiene tres pruebas inline escritas, aún no ejecutadas. No descarga el documento ni valida contactos actuales.
 
+`chef_security_contact_url_hints` enlaza ese parser al importador offline para el path canónico `/.well-known/security.txt`, estado 200 y origen exacto del evento padre. Emite solo URLs de contacto del mismo origen como `URL_UNVERIFIED`, con evidencia y linaje; omite los correos derivados por la frontera de privacidad de exportación. No completa el transporte HTTP de BBOT ni valida disponibilidad. El caso positivo, los controles negativos y la equivalencia con los eventos Python siguen pendientes de pruebas.
+
 ### Huellas de servicios JSONL archivadas (parcial)
 
 `packages/rust-core/src/service_fingerprint_hints.rs::parse_archived_service_fingerprints` valida registros JSONL archivados y genera pistas de host, protocolo, puerto, banner saneado y URL HTTP(S) candidata. El módulo está registrado en el core y tiene tres pruebas inline escritas, aún no ejecutadas. No crea sockets, lanza sondas ni convierte los datos importados en observaciones actuales.

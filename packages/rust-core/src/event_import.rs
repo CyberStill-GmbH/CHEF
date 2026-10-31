@@ -20,6 +20,7 @@ const MAX_ARCHIVED_GIT_HINTS: usize = 2048;
 const MAX_ARCHIVED_ROBOTS_HINTS: usize = 4096;
 const MAX_ARCHIVED_WEB_PARAMETER_HINTS: usize = 4096;
 const MAX_ARCHIVED_WEB_MARKER_HINTS: usize = 2048;
+const MAX_ARCHIVED_SECURITY_CONTACT_HINTS: usize = 2048;
 
 #[derive(Debug)]
 pub(crate) enum ArchivedGitImportHint {
@@ -67,6 +68,13 @@ pub(crate) enum ArchivedWebMarkerHint {
         title: &'static str,
         markers: Vec<String>,
     },
+}
+
+#[derive(Debug)]
+pub(crate) struct ArchivedSecurityContactHint {
+    pub parent_event_id: String,
+    pub host: String,
+    pub url: String,
 }
 
 #[derive(Debug)]
@@ -139,13 +147,17 @@ pub struct ParsedBbotEvents {
     pub(crate) archived_robots_hints: Vec<ArchivedRobotsImportHint>,
     pub(crate) archived_web_parameter_hints: Vec<ArchivedWebParameterHint>,
     pub(crate) archived_web_marker_hints: Vec<ArchivedWebMarkerHint>,
+    pub(crate) archived_security_contact_hints: Vec<ArchivedSecurityContactHint>,
 }
 
 /// Lee el flujo de eventos BBOT conservando tipos, datos, metadatos y linaje.
 /// Los datos adicionales quedan dentro de `data` cuando la fuente los incluye
 /// allí; los campos reconocidos se normalizan como propiedades del evento.
 pub fn parse_event_graph(bytes: &[u8], max_events: usize) -> ChefResult<BbotEventGraph> {
-    Ok(parse_event_graph_with_hints(bytes, max_events, false, false, false, false)?.event_graph)
+    Ok(
+        parse_event_graph_with_hints(bytes, max_events, false, false, false, false, false)?
+            .event_graph,
+    )
 }
 
 fn parse_event_graph_with_hints(
@@ -155,6 +167,7 @@ fn parse_event_graph_with_hints(
     collect_archived_robots_hints: bool,
     collect_archived_web_parameter_hints: bool,
     collect_archived_web_marker_hints: bool,
+    collect_archived_security_contact_hints: bool,
 ) -> ChefResult<ParsedBbotEvents> {
     if max_events == 0 {
         return Err(ChefError::new(
@@ -233,7 +246,8 @@ fn parse_event_graph_with_hints(
         };
         let transient_http_response = if (collect_archived_git_hints
             || collect_archived_robots_hints
-            || collect_archived_web_marker_hints)
+            || collect_archived_web_marker_hints
+            || collect_archived_security_contact_hints)
             && raw.event_type == "HTTP_RESPONSE"
         {
             transient_http_response(&data)
@@ -351,9 +365,11 @@ fn parse_event_graph_with_hints(
     let mut archived_git_hints = Vec::new();
     let mut archived_robots_hints = Vec::new();
     let mut archived_web_marker_hints = Vec::new();
+    let mut archived_security_contact_hints = Vec::new();
     if collect_archived_git_hints
         || collect_archived_robots_hints
         || collect_archived_web_marker_hints
+        || collect_archived_security_contact_hints
     {
         let events_by_id = events
             .iter()
@@ -479,6 +495,43 @@ fn parse_event_graph_with_hints(
                     }
                 }
             }
+            if collect_archived_security_contact_hints
+                && response.status_code == Some(200)
+                && let Some(origin) =
+                    archived_security_txt_origin(target_url, &response.response_url)
+                && let Ok(parsed) =
+                    crate::parse_archived_security_contacts(&response.body, &response.response_url)
+            {
+                let Some(host) = url::Url::parse(&origin)
+                    .ok()
+                    .and_then(|url| url.host_str().map(str::to_owned))
+                else {
+                    continue;
+                };
+                let origin_url = url::Url::parse(&origin).ok();
+                for candidate in parsed.url_hints {
+                    let Ok(candidate_url) = url::Url::parse(&candidate) else {
+                        continue;
+                    };
+                    if !origin_url
+                        .as_ref()
+                        .is_some_and(|base| candidate_url.origin() == base.origin())
+                    {
+                        continue;
+                    }
+                    archived_security_contact_hints.push(ArchivedSecurityContactHint {
+                        parent_event_id: response_event.id.clone(),
+                        host: host.clone(),
+                        url: candidate,
+                    });
+                    if archived_security_contact_hints.len() > MAX_ARCHIVED_SECURITY_CONTACT_HINTS {
+                        return Err(ChefError::new(
+                            ErrorCode::LimitExceeded,
+                            "La importación supera el máximo de pistas de contacto security.txt",
+                        ));
+                    }
+                }
+            }
         }
     }
     Ok(ParsedBbotEvents {
@@ -492,7 +545,22 @@ fn parse_event_graph_with_hints(
         archived_robots_hints,
         archived_web_parameter_hints,
         archived_web_marker_hints,
+        archived_security_contact_hints,
     })
+}
+
+fn archived_security_txt_origin(target_url: &str, response_url: &str) -> Option<String> {
+    let target = url::Url::parse(target_url).ok()?;
+    let response = url::Url::parse(response_url).ok()?;
+    if !matches!(target.scheme(), "http" | "https")
+        || !target.username().is_empty()
+        || target.password().is_some()
+        || target.origin() != response.origin()
+        || response.path() != "/.well-known/security.txt"
+    {
+        return None;
+    }
+    Some(target.origin().ascii_serialization())
 }
 
 fn archived_robots_origin(target_url: &str, response_url: &str) -> Option<String> {
@@ -757,6 +825,7 @@ pub fn parse(
     collect_archived_robots_hints: bool,
     collect_archived_web_parameter_hints: bool,
     collect_archived_web_marker_hints: bool,
+    collect_archived_security_contact_hints: bool,
 ) -> ChefResult<ParsedBbotEvents> {
     let mut parsed = parse_event_graph_with_hints(
         bytes,
@@ -765,6 +834,7 @@ pub fn parse(
         collect_archived_robots_hints,
         collect_archived_web_parameter_hints,
         collect_archived_web_marker_hints,
+        collect_archived_security_contact_hints,
     )?;
     let mut services = Vec::new();
 
