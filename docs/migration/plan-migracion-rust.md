@@ -80,11 +80,13 @@ La integración local también incluye un puerto de aplicación para consultar h
 
 Dado cada elemento del inventario de origen, cuando finaliza la migración, entonces tiene implementación Rust CHEF con prueba equivalente o una exclusión justificada y documentada; el estado parcial actual no se presenta como portado completo. Un motor activo solo se ejecuta tras el gate de autorización independiente. Cada tarea incluye prueba, documentación, procedencia y verificación dentro de CHEF.
 
-El README principal conserva la referencia de uso y procedencia. El árbol fuente local permanece intacto; la atribución y las obligaciones AGPL-3.0 se registran en los avisos de terceros. Según el inventario actualizado, 71 archivos están parciales, 365 siguen pendientes y 30 se excluyeron con motivo documentado, de 466 listados; cada capacidad debe implementarse, adaptarse o excluirse con motivo CHEF documentado.
+El README principal conserva la referencia de uso y procedencia. El árbol fuente local permanece intacto; la atribución y las obligaciones AGPL-3.0 se registran en los avisos de terceros. Según el inventario actualizado, 73 archivos están parciales, 363 siguen pendientes y 30 se excluyeron con motivo documentado, de 466 listados; cada capacidad debe implementarse, adaptarse o excluirse con motivo CHEF documentado.
 
 ### Parsers pasivos archivados adicionales
 
 `parse_leakix_subdomains` y `parse_bufferoverrun_subdomains` normalizan respectivamente el campo `subdomain` de JSON y el quinto campo de cada fila `Results` del formato BufferOverrun. Ambos operan sobre respuestas archivadas, requieren una raíz registrable ICANN, canonicalizan y limitan la salida a 512 candidatos. No leen API keys ni realizan transporte, DNS o afirmaciones sobre resolución actual. Las filas correspondientes pasan a parcial; integrar transporte autorizado y eventos CHEF con linaje, además de completar pruebas de equivalencia, sigue pendiente.
+
+`parse_urlscan_subdomains` adapta offline los campos `task` y `page` de resultados urlscan, incluyendo el host de URL HTTP(S). Devuelve hostnames candidatos y `URL_HINT` reducidos a origen; descarta path, query, fragmento, credenciales, wildcard y hosts fuera de la raíz. Limita respuesta a 2 MiB, 2 048 resultados, 8 192 campos y 512 candidatos. Son datos históricos no verificados y no se consulta urlscan ni DNS.
 
 ### Salida HTML de evidencia web
 

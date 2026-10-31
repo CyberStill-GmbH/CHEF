@@ -1,5 +1,9 @@
 # Registro de trabajo
 
+## 31-10-2026 — Parser offline de urlscan
+
+Se añadió `parse_urlscan_subdomains` para normalizar respuestas JSON archivadas. Recorre `task.domain`, `task.url`, `page.domain` y `page.url`, convierte los hosts HTTP(S) en candidatos DNS y `URL_HINT` con solo el origen; rechaza rutas externas, wildcard e información con credenciales y nunca conserva path, query o fragmento. Requiere raíz registrable ICANN y limita 2 MiB/2 048 resultados/8 192 campos/512 candidatos. Incluye fixtures sintéticos positivos/negativos y pruebas de forma y límites. No consulta urlscan ni DNS ni emite observaciones actuales; faltan transporte autorizado, eventos con linaje e integración Tauri.
+
 ## 31-10-2026 — Parsers offline de LeakIX y BufferOverrun
 
 Se adaptaron a Rust los normalizadores de los módulos `leakix.py` y `bufferoverrun.py`. `parse_leakix_subdomains` lee el campo `subdomain` de JSON archivado; `parse_bufferoverrun_subdomains` extrae la quinta columna de las cadenas en `Results`. Ambos requieren una raíz registrable ICANN, canonicalizan, deduplican y filtran descendientes; aplican límites de 1 MiB, 2 048 filas y 512 candidatos, sin claves, HTTP ni DNS. Los nombres son candidatos históricos, no observaciones actuales. Se añadieron fixtures sintéticos y pruebas para formatos, filtro de raíz y límites. El código fuente local permanece intacto. Quedan pendientes transporte autorizado, términos del proveedor, emisión de eventos con linaje e integración Tauri.

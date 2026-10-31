@@ -225,7 +225,7 @@ chef-engine/modules/trajan.py,272,Módulo de reconocimiento,"Adaptador Rust CHEF
 chef-engine/modules/trickest.py,39,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
 chef-engine/modules/trufflehog.py,220,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
 chef-engine/modules/url_manipulation.py,117,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
-chef-engine/modules/urlscan.py,84,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
+chef-engine/modules/urlscan.py,84,Módulo de reconocimiento,"Parcial: parse_urlscan_subdomains consume JSON archivado task/page; extrae dominios y hosts, devuelve URL_HINT con solo origen HTTP(S), elimina rutas/credenciales, filtra descendientes de raíz ICANN; límite 2 MiB/2 048 resultados/8 192 campos/512 candidatos; sin HTTP/DNS",Parcial
 chef-engine/modules/viewdns.py,72,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
 chef-engine/modules/virtualhost.py,1029,Módulo de reconocimiento,"Adaptador Rust CHEF tipado; decidir utilidad, evidencia y permiso por módulo",Pendiente
 chef-engine/modules/virustotal.py,30,Módulo de reconocimiento,"Parcial: parser Rust de respuesta paginada VirusTotal; límite 1 MiB/256 registros, dominio raíz ICANN, subdominios canonicalizados y deduplicados, cursor opaco sin seguir URL next. No consulta API ni DNS; la API pública no se puede usar en productos o servicios comerciales, por lo que CHEF no incluye ni usa claves públicas. Cliente remoto sujeto a verificar licencia/cuenta privada o premium y términos; consentimiento, credenciales seguras, cuota, linaje y pruebas pendientes",Parcial
@@ -446,7 +446,7 @@ chef-engine/test/test_step_2/module_tests/test_module_trufflehog.py,1398,Pruebas
 chef-engine/test/test_step_2/module_tests/test_module_txt.py,8,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
 chef-engine/test/test_step_2/module_tests/test_module_unarchive.py,357,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
 chef-engine/test/test_step_2/module_tests/test_module_url_manipulation.py,40,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
-chef-engine/test/test_step_2/module_tests/test_module_urlscan.py,58,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
+chef-engine/test/test_step_2/module_tests/test_module_urlscan.py,58,Pruebas de origen,"Parcial: fixtures sintéticos y pruebas Rust cubren task/page, host URL, filtro de raíz, credenciales, formas y límites; falta reconstruir el resto de casos de origen",Parcial
 chef-engine/test/test_step_2/module_tests/test_module_viewdns.py,151,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
 chef-engine/test/test_step_2/module_tests/test_module_virtualhost.py,1128,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente
 chef-engine/test/test_step_2/module_tests/test_module_virustotal.py,51,Pruebas de origen,Reconstruir como fixtures y pruebas Rust CHEF; no traducir mecánicamente,Pendiente

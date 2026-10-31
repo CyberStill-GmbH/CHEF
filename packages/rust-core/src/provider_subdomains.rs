@@ -11,6 +11,8 @@ const MAX_RESPONSE_BYTES: usize = 1024 * 1024;
 const MAX_HOST_TOKENS: usize = 16_384;
 const MAX_CANDIDATES: usize = 512;
 const MAX_JSON_ENTRIES: usize = 2_048;
+const MAX_URLSCAN_RESPONSE_BYTES: usize = 2 * 1024 * 1024;
+const MAX_URLSCAN_VALUES: usize = 8_192;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ProviderSubdomainPage {
@@ -25,6 +27,130 @@ pub type SecurityTrailsSubdomainPage = ProviderSubdomainPage;
 pub type SubdomainCenterPage = ProviderSubdomainPage;
 pub type LeakIxSubdomainPage = ProviderSubdomainPage;
 pub type BufferOverrunSubdomainPage = ProviderSubdomainPage;
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UrlScanSubdomainPage {
+    pub query_domain: String,
+    pub candidates: Vec<String>,
+    /// Orígenes URL no verificados, sin path, query ni fragmento.
+    pub url_hints: Vec<String>,
+}
+
+/// Adapta offline los resultados `task` y `page` de una búsqueda urlscan archivada.
+///
+/// Solo devuelve hosts bajo la raíz declarada. Las URL se reducen a un origen
+/// `URL_HINT`; CHEF no conserva paths, consulta el proveedor ni valida disponibilidad.
+pub fn parse_urlscan_subdomains(
+    query_domain: &str,
+    response: &[u8],
+) -> ChefResult<UrlScanSubdomainPage> {
+    if response.len() > MAX_URLSCAN_RESPONSE_BYTES {
+        return Err(ChefError::new(
+            ErrorCode::LimitExceeded,
+            "La respuesta urlscan supera el límite de bytes CHEF",
+        ));
+    }
+    let query_domain = canonical_query_domain(query_domain)?;
+    let document: serde_json::Value = serde_json::from_slice(response).map_err(|_| {
+        ChefError::new(
+            ErrorCode::InvalidInput,
+            "La respuesta urlscan no contiene JSON válido",
+        )
+    })?;
+    let results = document
+        .as_object()
+        .and_then(|object| object.get("results"))
+        .and_then(serde_json::Value::as_array)
+        .ok_or(ChefError::new(
+            ErrorCode::InvalidInput,
+            "La respuesta urlscan no contiene una lista results válida",
+        ))?;
+    if results.len() > MAX_JSON_ENTRIES {
+        return Err(ChefError::new(
+            ErrorCode::LimitExceeded,
+            "La respuesta urlscan supera el límite CHEF de resultados",
+        ));
+    }
+
+    let suffix = format!(".{query_domain}");
+    let mut candidates = BTreeSet::new();
+    let mut url_hints = BTreeSet::new();
+    let mut values_seen = 0;
+    for result in results {
+        let Some(result) = result.as_object() else {
+            continue;
+        };
+        for section_name in ["task", "page"] {
+            let Some(section) = result
+                .get(section_name)
+                .and_then(serde_json::Value::as_object)
+            else {
+                continue;
+            };
+            for (key, value) in section {
+                if key != "domain" && key != "url" {
+                    continue;
+                }
+                let Some(value) = value.as_str() else {
+                    continue;
+                };
+                values_seen += 1;
+                if values_seen > MAX_URLSCAN_VALUES {
+                    return Err(ChefError::new(
+                        ErrorCode::LimitExceeded,
+                        "La respuesta urlscan supera el límite CHEF de campos",
+                    ));
+                }
+                let (host, origin) = if key == "url" {
+                    let Ok(url) = url::Url::parse(value) else {
+                        continue;
+                    };
+                    if !matches!(url.scheme(), "http" | "https")
+                        || !url.username().is_empty()
+                        || url.password().is_some()
+                    {
+                        continue;
+                    }
+                    let Some(host) = url.host_str() else {
+                        continue;
+                    };
+                    let mut origin = format!("{}://{host}", url.scheme());
+                    if let Some(port) = url.port() {
+                        origin.push(':');
+                        origin.push_str(&port.to_string());
+                    }
+                    (host.to_owned(), Some(origin))
+                } else {
+                    (value.to_owned(), None)
+                };
+                let host = host.trim().trim_end_matches('.');
+                if host.len() > 253 || host.contains('*') || !valid_ascii_hostname(host) {
+                    continue;
+                }
+                let Some(host) = crate::host::canonical_domain(host) else {
+                    continue;
+                };
+                if host != query_domain && host.ends_with(&suffix) {
+                    candidates.insert(host);
+                    if let Some(origin) = origin {
+                        url_hints.insert(origin);
+                    }
+                    if candidates.len() > MAX_CANDIDATES {
+                        return Err(ChefError::new(
+                            ErrorCode::LimitExceeded,
+                            "La respuesta urlscan supera el límite CHEF de subdominios",
+                        ));
+                    }
+                }
+            }
+        }
+    }
+    Ok(UrlScanSubdomainPage {
+        query_domain,
+        candidates: candidates.into_iter().collect(),
+        url_hints: url_hints.into_iter().collect(),
+    })
+}
 
 /// Adapta offline la lista `subdomain` archivada de LeakIX.
 ///

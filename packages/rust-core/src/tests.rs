@@ -7,7 +7,7 @@ use crate::{
     ChefConfig, ChefError, ChefPreset, ErrorCode, FixedClock, ImportBbotEvidence, ImportEvidence,
     ModuleCapabilityState, PresetCatalog, ScopePolicy, module_capabilities, module_capability,
     parse_bufferoverrun_subdomains, parse_leakix_subdomains, parse_securitytrails_subdomains,
-    parse_subdomaincenter_subdomains,
+    parse_subdomaincenter_subdomains, parse_urlscan_subdomains,
 };
 
 const NMAP: &[u8] = include_bytes!("../../../fixtures/nmap/lab.xml");
@@ -18,6 +18,8 @@ const BUFFEROVERRUN: &[u8] =
     include_bytes!("../../../fixtures/bufferoverrun-response/positive.json");
 const BUFFEROVERRUN_NEGATIVE: &[u8] =
     include_bytes!("../../../fixtures/bufferoverrun-response/negative.json");
+const URLSCAN: &[u8] = include_bytes!("../../../fixtures/urlscan-response/positive.json");
+const URLSCAN_NEGATIVE: &[u8] = include_bytes!("../../../fixtures/urlscan-response/negative.json");
 
 fn policy() -> ScopePolicy {
     serde_json::from_str(SCOPE).expect("fixture scope is valid")
@@ -431,5 +433,53 @@ fn archived_leakix_and_bufferoverrun_negative_fixtures_emit_no_external_or_inval
             .expect("valid BufferOverrun negative fixture")
             .candidates
             .is_empty()
+    );
+}
+
+#[test]
+fn urlscan_archived_domains_and_url_hosts_become_scoped_candidates() {
+    let page =
+        parse_urlscan_subdomains("example.com", URLSCAN).expect("valid archived urlscan response");
+    assert_eq!(page.query_domain, "example.com");
+    assert_eq!(
+        page.candidates
+            .iter()
+            .map(String::as_str)
+            .collect::<Vec<_>>(),
+        ["api.example.com", "www.example.com"]
+    );
+    assert_eq!(
+        page.url_hints
+            .iter()
+            .map(String::as_str)
+            .collect::<Vec<_>>(),
+        ["https://api.example.com", "https://www.example.com"]
+    );
+}
+
+#[test]
+fn urlscan_archived_negative_fixture_drops_external_credentials_and_wildcards() {
+    assert!(
+        parse_urlscan_subdomains("example.com", URLSCAN_NEGATIVE)
+            .expect("valid urlscan negative fixture")
+            .candidates
+            .is_empty()
+    );
+}
+
+#[test]
+fn urlscan_archived_parser_rejects_invalid_shapes_and_too_many_results() {
+    assert_eq!(
+        parse_urlscan_subdomains("example.com", br#"{"results":{}}"#)
+            .unwrap_err()
+            .code,
+        ErrorCode::InvalidInput
+    );
+    let oversized = format!("{{\"results\":[{}]}}", vec!["{}"; 2_049].join(","));
+    assert_eq!(
+        parse_urlscan_subdomains("example.com", oversized.as_bytes())
+            .unwrap_err()
+            .code,
+        ErrorCode::LimitExceeded
     );
 }

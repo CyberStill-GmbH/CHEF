@@ -113,9 +113,10 @@ pub use presets::{ChefPreset, PresetCatalog, ResolvedPreset};
 pub use provider_subdomains::{
     BufferOverrunSubdomainPage, DnsDumpsterSubdomainPage, HackerTargetSubdomainPage,
     LeakIxSubdomainPage, ProviderSubdomainPage, RapidDnsSubdomainPage, SecurityTrailsSubdomainPage,
-    SubdomainCenterPage, parse_bufferoverrun_subdomains, parse_dnsdumpster_subdomains,
-    parse_hackertarget_subdomains, parse_leakix_subdomains, parse_provider_subdomains,
-    parse_rapiddns_subdomains, parse_securitytrails_subdomains, parse_subdomaincenter_subdomains,
+    SubdomainCenterPage, UrlScanSubdomainPage, parse_bufferoverrun_subdomains,
+    parse_dnsdumpster_subdomains, parse_hackertarget_subdomains, parse_leakix_subdomains,
+    parse_provider_subdomains, parse_rapiddns_subdomains, parse_securitytrails_subdomains,
+    parse_subdomaincenter_subdomains, parse_urlscan_subdomains,
 };
 pub use rate_limit::RateLimiter;
 pub use recon::{
