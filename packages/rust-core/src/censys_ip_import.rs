@@ -4,6 +4,7 @@
 //! fuente no aporta una fecha fiable, los datos se califican como pistas de
 //! snapshot y no como observaciones actuales.
 
+use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
 use crate::{
@@ -16,7 +17,7 @@ const MAX_GRAPH_BYTES: usize = 8 * 1024 * 1024;
 const MODULE: &str = "chef_censys_ip_snapshot";
 const SNAPSHOT_TAG: &str = "chef:provider-snapshot-hint";
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct CensysIpImportResult {
     pub target_ip: String,
     pub response_sha256: String,

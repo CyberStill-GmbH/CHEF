@@ -11,6 +11,7 @@ import type { NmapEvidenceExportDto } from '../contracts/nmap-evidence-export';
 import type { AssetInventoryExportDto } from '../contracts/asset-inventory-export';
 import type { WebEvidenceReportExportDto } from '../contracts/web-evidence-report-export';
 import type { ObservedEmailExportDto } from '../contracts/observed-email-export';
+import type { CensysIpImportSummaryDto } from '../contracts/censys-ip-import';
 
 export interface ApiClient {
   loadSnapshot(options?: { signal?: AbortSignal }): Promise<SnapshotDto>;
@@ -59,6 +60,15 @@ export interface ApiClient {
       onPhase?: (phase: ScanLogPhase) => void;
     },
   ): Promise<SnapshotDto>;
+  importCensysIpResponse?(
+    targetIp: string,
+    responseJson: string,
+    options?: { onPhase?: (phase: ScanLogPhase) => void },
+  ): Promise<CensysIpImportSummaryDto>;
+  loadCensysIpReconGraph?(
+    importId: string,
+    options?: { signal?: AbortSignal },
+  ): Promise<ReconGraphDto>;
   listenScanLogs?(
     listener: (event: ScanLogDto) => void,
     options?: { signal?: AbortSignal },

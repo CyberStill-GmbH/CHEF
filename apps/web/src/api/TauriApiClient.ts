@@ -13,6 +13,7 @@ import { decodeNmapEvidenceExport } from '../contracts/decodeNmapEvidenceExport'
 import { decodeAssetInventoryExport } from '../contracts/decodeAssetInventoryExport';
 import { decodeWebEvidenceReportExport } from '../contracts/decodeWebEvidenceReportExport';
 import { decodeObservedEmailExport } from '../contracts/decodeObservedEmailExport';
+import { decodeCensysIpImport } from '../contracts/decodeCensysIpImport';
 import type { ScanLogDto } from '../contracts/scan-log';
 import type { ScopePolicyDto } from '../contracts/snapshot';
 import type { ApiClient } from './ApiClient';
@@ -87,6 +88,46 @@ export class TauriApiClient implements ApiClient {
       options?.signal?.removeEventListener('abort', onAbort);
       unlisten();
     }
+  }
+
+  async importCensysIpResponse(
+    targetIp: string,
+    responseJson: string,
+    options?: { onPhase?: (phase: ScanLogDto['phase']) => void },
+  ) {
+    const requestId = crypto.randomUUID();
+    const unlisten = await listen<unknown>('scan-log', ({ payload }) => {
+      try {
+        const event = decodeScanLog(payload);
+        if (event.requestId === requestId) options?.onPhase?.(event.phase);
+      } catch {
+        // Ignorar mensajes IPC que no cumplan el contrato CHEF.
+      }
+    });
+    try {
+      const summary = decodeCensysIpImport(
+        await invoke<unknown>('import_censys_host_response', {
+          requestId,
+          targetIp,
+          responseJson,
+        }),
+      );
+      return summary;
+    } finally {
+      unlisten();
+    }
+  }
+
+  async loadCensysIpReconGraph(
+    importId: string,
+    options?: { signal?: AbortSignal },
+  ) {
+    options?.signal?.throwIfAborted();
+    const graph = await invoke<unknown>('load_censys_ip_recon_graph', {
+      importId,
+    });
+    options?.signal?.throwIfAborted();
+    return decodeReconGraph(graph);
   }
 
   async loadConfig(options?: { signal?: AbortSignal }) {

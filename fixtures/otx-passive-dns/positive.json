@@ -2,14 +2,20 @@
   "queryDomain": "example.com",
   "response": {
     "passive_dns": [
-      { "hostname": "api.example.com", "address": "192.0.2.10", "first": "2025-01-01", "last": "2025-02-01" },
-      { "hostname": "www.example.com.", "address": "192.0.2.11", "record_type": "A" },
+      {
+        "hostname": "api.example.com",
+        "address": "192.0.2.10",
+        "first": "2025-01-01",
+        "last": "2025-02-01"
+      },
+      {
+        "hostname": "www.example.com.",
+        "address": "192.0.2.11",
+        "record_type": "A"
+      },
       { "hostname": "api.example.com", "address": "192.0.2.10" },
       { "hostname": "outside.example.net", "address": "192.0.2.12" }
     ]
   },
-  "expectedCandidates": [
-    "api.example.com",
-    "www.example.com"
-  ]
+  "expectedCandidates": ["api.example.com", "www.example.com"]
 }

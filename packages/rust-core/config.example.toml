@@ -14,7 +14,6 @@ allowed_protocols = ["tcp"]
 max_scope_distance = 0
 
 [modules]
-import_bbot_events = true
 chef_org_stub_hints = false
 chef_dns_mutation_hints = false
 

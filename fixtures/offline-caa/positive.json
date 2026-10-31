@@ -1,7 +1,10 @@
 {
   "host": "example.com",
   "records": [
-    { "type": "CAA", "answer": "0 issue \"ca.example.net; cansignhttpexchanges=yes\"" },
+    {
+      "type": "CAA",
+      "answer": "0 issue \"ca.example.net; cansignhttpexchanges=yes\""
+    },
     { "type": "CAA", "answer": "0 iodef \"mailto:security@example.com\"" },
     { "type": "CAA", "answer": "0 contactemail \"owner@example.com\"" }
   ]

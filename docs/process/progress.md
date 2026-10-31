@@ -1,5 +1,13 @@
 # Registro de trabajo
 
+## 31-10-2026 — Parsers offline de LeakIX y BufferOverrun
+
+Se adaptaron a Rust los normalizadores de los módulos `leakix.py` y `bufferoverrun.py`. `parse_leakix_subdomains` lee el campo `subdomain` de JSON archivado; `parse_bufferoverrun_subdomains` extrae la quinta columna de las cadenas en `Results`. Ambos requieren una raíz registrable ICANN, canonicalizan, deduplican y filtran descendientes; aplican límites de 1 MiB, 2 048 filas y 512 candidatos, sin claves, HTTP ni DNS. Los nombres son candidatos históricos, no observaciones actuales. Se añadieron fixtures sintéticos y pruebas para formatos, filtro de raíz y límites. El código fuente local permanece intacto. Quedan pendientes transporte autorizado, términos del proveedor, emisión de eventos con linaje e integración Tauri.
+
+## 30-10-2026 — Portado offline de SecurityTrails y Subdomain Center
+
+Se añadieron al core Rust dos parsers de respuestas archivadas que estaban pendientes en el inventario: `parse_securitytrails_subdomains` combina `subdomains[]` con la raíz consultada; `parse_subdomaincenter_subdomains` filtra una lista JSON de FQDN por esa raíz. Ambos exigen dominio registrable ICANN, procesan como máximo 1 MiB, 2 048 entradas y 512 candidatos, canonicalizan y deduplican con orden estable. Entradas JSON malformadas o fuera de forma se rechazan completas; entradas inválidas o externas no se convierten en candidatos. No se consultan APIs, no se leen credenciales ni se afirma resolución DNS actual. Se ejecutaron tres pruebas Rust nuevas para normalización, filtro de raíz, forma, dominio inválido y límite de entradas; pasan junto con las 10 pruebas actuales de `rust-core`. El transporte, términos, autorización por proyecto y persistencia de linaje permanecen pendientes. La fuente local en `C:\projects\CHEF` no se modificó. El inventario ahora registra 67 elementos parciales, 369 pendientes y 30 exclusiones justificadas (466 en total).
+
 ## 29-09-2026 — Preparación de CHEF
 
 Inventario: checkout main vacío con .git, sin código ni trabajo ajeno. Cuenta GitHub CyberStill-GmbH verificada. gh CLI ausente; git credential manager disponible. Node24 y Python disponibles; JRE8 no permite compilar Montoya.
@@ -269,6 +277,7 @@ Se trasladan los workers Tokio de importación y el lock por clave desde `chef-c
 ## 28-10-2026 — Plan HTTP desde evidencia importada
 
 `HttpRequestPlan` adapta la selección inicial de `modules/http.py`: crea candidatos GET desde `URL`, `URL_UNVERIFIED` y `OPEN_TCP_PORT`; conserva 80→HTTP y 443→HTTPS, prueba ambos esquemas en otros puertos, deduplica por origen y conserva los IDs fuente. El plan elimina rutas, query y fragmentos, y limita solicitudes, redirects y bytes previstos. No resuelve DNS, abre sockets ni ejecuta solicitudes; aún falta el puerto de autorización por destino, protección de redirects, transporte, respuesta saneada y composición Tauri. Se actualizan alcance, arquitectura, plan e inventario. No se ejecutaron pruebas por indicación del propietario.
+
 ## 28-10-2026 — Concesiones HTTP locales revocables
 
 Se añade `HttpAuthorizationRegistry` en el adaptador Rust: permanece vacío al iniciar, solo conserva grants en memoria, los liga a un origen canónico, digest de scope, IPs aprobadas y vencimiento, y permite revocar uno o todos. El control compartido invalida recibos previos y el caso de uso HTTP detiene solicitudes que esperan turno o siguen en transporte. El registro no comprueba consentimiento, scope ni DNS por sí mismo; esa validación corresponde a la composición aún pendiente y el transporte permanece sin invocar. Se actualizan alcance, arquitectura, seguridad y plan/inventario de migración. Pasan `cargo check --offline --locked`, Clippy `--lib`, validadores de documentación/arquitectura y `git diff --check`; no se ejecutaron pruebas por indicación del propietario.
@@ -293,11 +302,9 @@ Se recalculó el estado de las 466 filas del inventario y se corrigieron los tot
 
 `chef_cloud_storage_hints` también observa `STORAGE_BUCKET.url` de eventos ya importados y lo procesa con la misma normalización HTTP(S) saneada que `URL`; conserva el linaje del evento fuente y produce solo `URL_HINT`. Se actualizan alcance, auditoría de fuente, plan e inventario. No se hacen solicitudes, enumeración ni cambios de contrato; el inventario conserva 47 parciales, 389 pendientes y 30 exclusiones. Pasan `cargo fmt --check`, `cargo check --offline --locked`, Clippy `--lib -D warnings`, `npm run check:docs`, `npm run check:architecture` y `git diff --check`. No se ejecutaron pruebas por indicación del propietario; no se modificó la copia fuente.
 
-
 ### 28-10-2026 — Convenciones de almacenamiento adicionales
 
 `chef_cloud_storage_hints` amplía la clasificación offline de hosts ya importados a DigitalOcean Spaces, Hetzner Object Storage y Firebase Realtime Database. Emite `URL_HINT` con linaje y etiqueta de proveedor; Firebase recibe únicamente la ruta sugerida `/.json`. No se enumeran nombres, no se consultan servicios ni se confirma existencia, acceso, permisos o propiedad. El inventario queda en 50 archivos parciales, 386 pendientes y 30 exclusiones justificadas (466 en total). Se actualizaron alcance, auditoría, plan e inventario. Pasan `cargo fmt --manifest-path packages/rust-core/Cargo.toml --all -- --check`, `cargo check --manifest-path packages/rust-core/Cargo.toml --offline --locked`, Clippy `--lib -D warnings`, `npm run check:docs`, `npm run check:architecture` y `git diff --check`. No se ejecutaron pruebas funcionales por indicación del propietario.
-
 
 ### 28-10-2026 — Parser acotado de páginas VirusTotal
 
@@ -356,3 +363,7 @@ Se añadió `parse_censys_ip_host_response` para normalizar una respuesta archiv
 ### 28-10-2026 — Importación Censys al grafo CHEF
 
 Se añadió `import_censys_ip_snapshot` en Rust para convertir una respuesta Censys archivada en `CENSYS_HOST_RESPONSE` y eventos hijos con IDs deterministas, SHA-256 del cuerpo y referencias padre. La respuesta normalizada crea pistas DNS, servicios TCP/UDP y endpoints URL en `recon-graph 1.4.0`; la IP asociada queda calificada como `hint`, sin enlaces automáticos de SAN/reverse DNS a esa IP. Tecnología y protocolo continúan en los eventos fuente, contabilizados como tipos no proyectados. Los eventos anotan `source_time_unknown`: el timestamp es el de importación, no el del proveedor. La función no usa red y aún no está compuesta en Tauri ni conectada a SurrealDB. Pasaron `cargo fmt --check`, `cargo check --offline --locked` de `chef-core` y `chef-application`, Clippy del core y `npm run check:docs`; no se ejecutaron pruebas funcionales, aplazadas por el propietario.
+
+### 28-10-2026 — Importación local y persistencia de evidencia Censys
+
+La aplicación recibe desde Tauri una respuesta Censys archivada como JSON local, limita su tamaño a 2 MiB, la normaliza en un worker bloqueante y persiste los eventos fuente y el grafo por separado del Snapshot en `provider_imports`. El ID es determinista por IP objetivo y SHA-256; al cargar se validan versión, hash, raíz, timestamps, grafos y proyección CHEF. React muestra el resumen, la actividad `scan-log` y el grafo. Se añadieron el DTO IPC `censys-ip-import 1.0.0`, esquema y ejemplo; `check:docs` valida su forma y compatibilidad. El flujo procesa el archivo seleccionado: no consulta API, DNS, HTTP ni ejecuta reconocimiento. `cargo check` de Tauri pasó; en `npm run check` pasaron lint, tipos, 12 pruebas TypeScript, 7 pruebas core, 4 pruebas de almacenamiento (incluido round-trip de Censys y reapertura real en procesos separados), 34 pruebas web, documentación, arquitectura, Clippy y build web. El gate completo termina con fallo solo en `format:check`, que reporta 28 archivos: los cinco TS de esta rama se formatearon; persisten documentos/fixtures heredados, varios no modificados por esta rama. La verificación manual en WebView sigue pendiente. Se corrigió además la cancelación de `useSnapshot` cuando no hay suscripción opcional. La contribución sigue en `develop/chef-censys-local-import` y requiere PR, checks verdes, aprobación independiente y squash merge conforme a la protección de ramas.

@@ -54,9 +54,14 @@ impl PresetCatalog {
                 || preset
                     .includes
                     .iter()
-                    .chain(preset.modules.keys())
                     .chain(preset.sources.keys())
                     .any(|name| !valid_name(name))
+                || preset.modules.keys().any(|name| {
+                    crate::module_catalog::module_capability(name).is_none_or(|capability| {
+                        capability.state
+                            != crate::module_catalog::ModuleCapabilityState::Implemented
+                    })
+                })
                 || catalog.presets.insert(preset.id.clone(), preset).is_some()
             {
                 return Err(ChefError::new(
@@ -98,11 +103,7 @@ impl PresetCatalog {
                 name: "Importación local".to_owned(),
                 description: "Importa fixtures Nmap o JSONL BBOT y prepara el grafo de evidencia CHEF sin red.".to_owned(),
                 includes: Vec::new(),
-                modules: BTreeMap::from([
-                    ("nmap_import".to_owned(), true),
-                    ("bbot_jsonl_import".to_owned(), true),
-                    ("recon_projection".to_owned(), true),
-                ]),
+                modules: BTreeMap::new(),
                 sources: BTreeMap::new(),
             },
             ChefPreset {
@@ -110,7 +111,7 @@ impl PresetCatalog {
                 name: "Revisión de evidencia".to_owned(),
                 description: "Abre evidencia importada, conserva procedencia y separa observaciones de candidatos.".to_owned(),
                 includes: vec!["offline_import".to_owned()],
-                modules: BTreeMap::from([("candidate_review".to_owned(), true)]),
+                modules: BTreeMap::new(),
                 sources: BTreeMap::new(),
             },
             ChefPreset {

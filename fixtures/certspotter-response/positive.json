@@ -5,8 +5,5 @@
     { "id": 200, "dns_names": ["api.example.com", "outside.example.net"] },
     { "id": 300 }
   ],
-  "expectedCandidates": [
-    "api.example.com",
-    "www.example.com"
-  ]
+  "expectedCandidates": ["api.example.com", "www.example.com"]
 }

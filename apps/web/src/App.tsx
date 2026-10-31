@@ -15,6 +15,9 @@ import type { BbotEventStatisticsDto } from './contracts/event-statistics';
 import { EventStatisticsPanel } from './components/EventStatisticsPanel';
 import { EvidenceImportPanel } from './components/EvidenceImportPanel';
 import { TargetSeedPanel } from './components/TargetSeedPanel';
+import { CensysIpImportPanel } from './components/CensysIpImportPanel';
+import type { CensysIpImportSummaryDto } from './contracts/censys-ip-import';
+import type { ReconGraphDto } from './contracts/recon-graph';
 
 const ScanLogTerminal = lazy(async () => {
   const module = await import('./components/ScanLogTerminal');
@@ -34,6 +37,10 @@ export function App({ client = defaultClient }: AppProps) {
   const [scanLogs, setScanLogs] = useState<ScanLogDto[]>([]);
   const [eventStatistics, setEventStatistics] =
     useState<BbotEventStatisticsDto | null>(null);
+  const [censysImport, setCensysImport] = useState<{
+    summary: CensysIpImportSummaryDto;
+    graph: ReconGraphDto;
+  } | null>(null);
   const onScanLog = useCallback((event: ScanLogDto) => {
     setScanLogs((current) => [...current.slice(-499), event]);
   }, []);
@@ -102,6 +109,12 @@ export function App({ client = defaultClient }: AppProps) {
     },
     [client, showSnapshot],
   );
+  const handleCensysImported = useCallback(
+    (summary: CensysIpImportSummaryDto, graph: ReconGraphDto) => {
+      setCensysImport({ summary, graph });
+    },
+    [],
+  );
 
   return (
     <main>
@@ -145,15 +158,60 @@ export function App({ client = defaultClient }: AppProps) {
       >
         <ScanLogTerminal logs={scanLogs} />
       </Suspense>
-      {state.status === 'loading' && <LoadingState />}
-      {state.status === 'empty' && <EmptyState />}
-      {state.status === 'error' && (
+      {client.importCensysIpResponse !== undefined &&
+        client.loadCensysIpReconGraph !== undefined && (
+          <CensysIpImportPanel
+            client={client}
+            onImported={handleCensysImported}
+          />
+        )}
+      {censysImport !== null && (
+        <section aria-labelledby="censys-import-result-title">
+          <h2 id="censys-import-result-title">Evidencia Censys guardada</h2>
+          <dl>
+            <dt>IP consultada en el archivo</dt>
+            <dd>{censysImport.summary.targetIp}</dd>
+            <dt>SHA-256 de la respuesta</dt>
+            <dd>{censysImport.summary.responseSha256}</dd>
+            <dt>Eventos con linaje</dt>
+            <dd>{censysImport.summary.eventCount}</dd>
+            <dt>Activos / relaciones</dt>
+            <dd>
+              {censysImport.summary.assetCount} /{' '}
+              {censysImport.summary.relationshipCount}
+            </dd>
+            <dt>Tipos aún sin proyección</dt>
+            <dd>
+              {Object.keys(censysImport.summary.unprojectedEventTypes)
+                .length === 0
+                ? 'Ninguno'
+                : Object.entries(censysImport.summary.unprojectedEventTypes)
+                    .map(([eventType, count]) => `${eventType}: ${count}`)
+                    .join(', ')}
+            </dd>
+          </dl>
+          <p>
+            Las relaciones y activos de esta importación son pistas de un
+            snapshot histórico; no representan estado actual.
+          </p>
+          <button type="button" onClick={() => setCensysImport(null)}>
+            Volver al snapshot local
+          </button>
+          <ReconGraphPanel graph={censysImport.graph} />
+        </section>
+      )}
+      {censysImport === null && state.status === 'loading' && <LoadingState />}
+      {censysImport === null && state.status === 'empty' && <EmptyState />}
+      {censysImport === null && state.status === 'error' && (
         <ErrorState message={state.message} onRetry={retry} />
       )}
-      {state.status === 'success' && (
+      {state.status === 'success' && censysImport === null && (
         <>
           {client.importBbotJsonl !== undefined && (
-            <EvidenceImportPanel client={client} onImported={handleBbotImported} />
+            <EvidenceImportPanel
+              client={client}
+              onImported={handleBbotImported}
+            />
           )}
           <section aria-labelledby="snapshot-summary-title">
             <h2 id="snapshot-summary-title">Resumen del snapshot</h2>

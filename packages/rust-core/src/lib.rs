@@ -33,6 +33,7 @@ mod evidence_csv;
 mod fullhunt;
 mod host;
 mod identity;
+mod module_catalog;
 mod nmap;
 mod nmap_export;
 mod otx;
@@ -101,14 +102,20 @@ pub use evidence_csv::{ChefEvidenceCsvExport, export_evidence_csv};
 pub use fullhunt::{FullHuntSubdomainPage, parse_fullhunt_subdomains};
 pub use host::dns_parent_zones;
 pub use identity::{digest as digest_bytes, id as deterministic_id};
+pub use module_catalog::{
+    ModuleCapability, ModuleCapabilityKind, ModuleCapabilityState, module_capabilities,
+    module_capability,
+};
 pub use nmap_export::{ChefNmapEvidenceExport, export_nmap_evidence_xml};
 pub use otx::{OtxPassiveDnsPage, parse_otx_passive_dns};
 pub use port_spec::parse_port_string;
 pub use presets::{ChefPreset, PresetCatalog, ResolvedPreset};
 pub use provider_subdomains::{
-    DnsDumpsterSubdomainPage, HackerTargetSubdomainPage, ProviderSubdomainPage,
-    RapidDnsSubdomainPage, parse_dnsdumpster_subdomains, parse_hackertarget_subdomains,
-    parse_provider_subdomains, parse_rapiddns_subdomains,
+    BufferOverrunSubdomainPage, DnsDumpsterSubdomainPage, HackerTargetSubdomainPage,
+    LeakIxSubdomainPage, ProviderSubdomainPage, RapidDnsSubdomainPage, SecurityTrailsSubdomainPage,
+    SubdomainCenterPage, parse_bufferoverrun_subdomains, parse_dnsdumpster_subdomains,
+    parse_hackertarget_subdomains, parse_leakix_subdomains, parse_provider_subdomains,
+    parse_rapiddns_subdomains, parse_securitytrails_subdomains, parse_subdomaincenter_subdomains,
 };
 pub use rate_limit::RateLimiter;
 pub use recon::{
