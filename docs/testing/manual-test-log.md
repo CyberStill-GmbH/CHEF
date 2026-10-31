@@ -39,3 +39,19 @@ Entorno de las pruebas ejecutadas: Windows 11, Node.js v26.12.1 (el proyecto dec
 3. Registrar resultado esperado y observado por separado.
 4. Adjuntar evidencia mínima (salida, captura redactada o digest). No adjuntar XML real ni cookies.
 5. Si falla: dejarlo como fallo abierto con causa y siguiente paso; no marcarlo como “pendiente” para ocultarlo.
+
+## Actualización de operaciones — 30-10-2026
+
+Esta sección complementa el registro histórico anterior. Entorno: Windows, Node 24.18.0, Docker Desktop y PostgreSQL 16. Referencia de código: rama `feature/db-operations-deploy`, sobre `77ef3f3`. No se modificaron los contenedores `chef-main-api-1` ni `chef-main-db-1`.
+
+| Área                         | Comando / prueba                                              | Resultado observado                                                                                                                      |
+| ---------------------------- | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Prisma/PostgreSQL            | `npm run db:verify`                                           | Migración aplicada dos veces; tres tablas de aplicación presentes; dos usuarios/proyectos; importación y snapshot correctos.             |
+| Persistencia                 | Reinicio de la API durante `db:verify`                        | El mismo snapshot continúa disponible; el puerto efímero se vuelve a consultar tras reiniciar.                                           |
+| Aislamiento                  | Usuario B consulta/importa el proyecto A                      | HTTP 404 antes y después de la recuperación.                                                                                             |
+| Backup/restore desde Windows | Scripts con conexión a un puerto local temporal y modo `auto` | Selección de Docker sin cliente nativo; `.dump` y SHA-256 generados; fila sintética recuperada.                                          |
+| Recuperación separada        | Restore en `chef_restored` temporal                           | Mismo fingerprint de filas y mismo snapshot leído por HTTP.                                                                              |
+| Controles negativos          | Sin `--yes`, dump alterado y fallo DDL inducido               | Rechazo sin modificación; rollback transaccional conserva los datos del destino.                                                         |
+| Herramientas de despliegue   | Railway CLI 5.71.0 y Vercel CLI 65.9.0                        | Ejecutables verificados en el entorno del agente; la terminal del usuario no los detectó y se indicó instalación desde su propia sesión. |
+
+Evidencia sintética: `artifacts/db-verification/*/verification.json` y `artifacts/backup-host-probe/`. Los dumps no se suben a Git. Las pruebas usan sesiones HMAC sintéticas: OAuth real, cuentas de hosting y aceptación en despliegue siguen pendientes. Las filas históricas sobre ausencia de Docker/Go/PostgreSQL describen el entorno anterior, no este incremento.

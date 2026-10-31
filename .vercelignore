@@ -1,0 +1,13 @@
+.git
+.agents
+.github
+.env
+.env.*
+node_modules
+dist
+artifacts
+.tools
+coverage
+engine
+extensions
+apps/web/dist

@@ -12,7 +12,7 @@ import { SessionTokenService } from './dist/packages/adapters/src/session-token.
 const xml = readFileSync(0);
 const secret = 'offline-container-smoke-test-secret';
 const api = spawn(process.execPath, ['dist/apps/api/src/main.js'], {
-  env: { ...process.env, CHEF_SESSION_SECRET: secret, GITHUB_CLIENT_ID: 'offline',
+  env: { ...process.env, NODE_ENV: 'development', CHEF_SESSION_SECRET: secret, GITHUB_CLIENT_ID: 'offline',
     GITHUB_CLIENT_SECRET: 'offline', GITHUB_REDIRECT_URI: 'http://localhost/callback' },
   stdio: ['ignore', 'ignore', 'inherit'],
 });
