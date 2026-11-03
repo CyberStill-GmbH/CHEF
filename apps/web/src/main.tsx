@@ -5,6 +5,7 @@ import { App } from './App.tsx';
 import './styles.css';
 import './styles/workbench.css';
 import './styles/terminal-first.css';
+import './styles/about.css';
 
 const rootElement = document.getElementById('root');
 

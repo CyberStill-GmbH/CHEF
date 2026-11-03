@@ -1,0 +1,376 @@
+/* Pestaña "Acerca de": presentación del proyecto. */
+
+.about-page {
+  display: grid;
+  gap: 72px;
+  width: min(1040px, 100%);
+  margin: 0 auto;
+  padding: 24px 0 40px;
+}
+
+.about-page [data-reveal] {
+  opacity: 0;
+  transform: translateY(22px);
+  transition:
+    opacity 0.7s var(--chef-ease),
+    transform 0.7s var(--chef-ease);
+}
+
+.about-page [data-reveal].is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+.about-eyebrow {
+  margin: 0 0 10px;
+  color: var(--chef-green-soft);
+  font-family: var(--chef-mono);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.about-page h1,
+.about-page h2,
+.about-page h3 {
+  color: var(--chef-text);
+}
+
+/* Portada */
+.about-hero {
+  display: grid;
+  justify-items: start;
+  gap: 4px;
+  padding-top: 28px;
+}
+
+.about-logo {
+  width: 76px;
+  height: 76px;
+  margin-bottom: 18px;
+  border-radius: 18px;
+  box-shadow: 0 10px 40px hsl(var(--chef-hue) 90% 50% / 0.35);
+  animation: chef-rise 0.7s var(--chef-ease) both;
+}
+
+.about-hero .about-eyebrow {
+  animation: chef-rise 0.7s var(--chef-ease) 0.08s both;
+}
+
+.about-hero h1 {
+  max-width: 17ch;
+  margin: 0;
+  font-size: clamp(34px, 5vw, 58px);
+  font-weight: 650;
+  line-height: 1.06;
+  letter-spacing: -0.03em;
+  animation: chef-rise 0.8s var(--chef-ease) 0.16s both;
+}
+
+.about-hero h1 em {
+  color: var(--chef-green);
+  font-style: normal;
+}
+
+.about-lead {
+  max-width: 60ch;
+  margin: 18px 0 0;
+  color: var(--chef-muted);
+  font-size: 18px;
+  line-height: 1.6;
+  animation: chef-rise 0.8s var(--chef-ease) 0.26s both;
+}
+
+.about-lead strong {
+  color: var(--chef-text);
+  font-weight: 600;
+}
+
+.about-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 28px;
+  animation: chef-rise 0.8s var(--chef-ease) 0.36s both;
+}
+
+.about-button {
+  min-height: 44px;
+  padding: 0 22px;
+  border: 1px solid var(--chef-glass-line);
+  border-radius: 10px;
+  background: var(--chef-glass);
+  color: var(--chef-text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    transform 0.25s var(--chef-ease),
+    border-color 0.25s,
+    background 0.25s;
+}
+
+.about-button:hover {
+  border-color: hsl(var(--chef-hue) 70% 58% / 0.7);
+  transform: translateY(-2px);
+}
+
+.about-button.is-primary {
+  border-color: transparent;
+  background: var(--chef-green);
+  color: #160a04;
+}
+
+.about-button.is-primary:hover {
+  background: var(--chef-green-soft);
+}
+
+/* Secciones */
+.about-section h2 {
+  max-width: 24ch;
+  margin: 0 0 16px;
+  font-size: clamp(24px, 3vw, 34px);
+  font-weight: 620;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.about-copy {
+  max-width: 64ch;
+  margin: 0 0 24px;
+  color: var(--chef-muted);
+  line-height: 1.65;
+}
+
+.about-section h3 {
+  margin: 0 0 6px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.about-section li p {
+  margin: 0;
+  color: var(--chef-muted);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+/* Cómo funciona */
+.about-steps {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 16px;
+  margin: 24px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.about-steps li {
+  position: relative;
+  padding: 20px;
+  border: 1px solid var(--chef-glass-line);
+  border-radius: 14px;
+  background: var(--chef-glass);
+  backdrop-filter: blur(14px);
+}
+
+.about-step-number {
+  display: inline-grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  margin-bottom: 14px;
+  border: 1px solid hsl(var(--chef-hue) 70% 58% / 0.6);
+  border-radius: 50%;
+  color: var(--chef-green);
+  font-family: var(--chef-mono);
+  font-size: 13px;
+}
+
+/* Tres niveles de certeza */
+.about-levels {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.about-levels li {
+  padding: 22px;
+  border: 1px solid var(--chef-glass-line);
+  border-top: 3px solid hsl(var(--chef-hue) 40% 30%);
+  border-radius: 14px;
+  background: var(--chef-glass);
+  backdrop-filter: blur(14px);
+}
+
+.about-levels li[data-level='2'] {
+  border-top-color: hsl(var(--chef-hue) 80% 52%);
+}
+
+.about-levels li[data-level='3'] {
+  border-top-color: var(--chef-amber);
+}
+
+.about-page .about-levels .about-example {
+  margin-bottom: 10px;
+  color: var(--chef-text);
+  font-family: var(--chef-mono);
+  font-size: 13px;
+}
+
+/* Capacidades */
+.about-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.about-grid li {
+  padding: 20px 22px;
+  border: 1px solid var(--chef-glass-line);
+  border-radius: 14px;
+  background: var(--chef-glass);
+  backdrop-filter: blur(14px);
+  transition:
+    transform 0.3s var(--chef-ease),
+    border-color 0.3s;
+}
+
+.about-grid li:hover {
+  border-color: hsl(var(--chef-hue) 60% 50% / 0.55);
+  transform: translateY(-3px);
+}
+
+/* Arquitectura */
+.about-layers {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 30px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.about-layers li {
+  position: relative;
+  display: grid;
+  gap: 6px;
+  padding: 18px 20px;
+  border: 1px solid var(--chef-glass-line);
+  border-radius: 12px;
+  background: var(--chef-glass);
+  backdrop-filter: blur(14px);
+}
+
+.about-layers li:not(:last-child)::after {
+  position: absolute;
+  top: 50%;
+  right: -23px;
+  color: var(--chef-green);
+  content: '→';
+  font-size: 18px;
+  transform: translateY(-50%);
+}
+
+.about-layers strong {
+  color: var(--chef-text);
+  font-size: 15px;
+}
+
+.about-layers span {
+  color: var(--chef-muted);
+  font-family: var(--chef-mono);
+  font-size: 12px;
+}
+
+.about-note {
+  margin: 20px 0 0;
+  color: var(--chef-muted);
+  font-size: 14px;
+}
+
+/* Principios */
+.about-principles {
+  display: grid;
+  gap: 12px;
+  max-width: 70ch;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.about-principles li {
+  position: relative;
+  padding-left: 30px;
+  color: var(--chef-text);
+  line-height: 1.55;
+}
+
+.about-principles li::before {
+  position: absolute;
+  top: 0.5em;
+  left: 4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  background: var(--chef-green);
+  content: '';
+}
+
+/* Estado */
+.about-status {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.about-status > div {
+  padding: 22px;
+  border: 1px solid var(--chef-glass-line);
+  border-radius: 14px;
+  background: var(--chef-glass);
+  backdrop-filter: blur(14px);
+}
+
+.about-status p {
+  margin: 0;
+  color: var(--chef-muted);
+  line-height: 1.6;
+}
+
+/* Créditos */
+.about-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 22px;
+  margin: 0;
+}
+
+.about-links a {
+  color: var(--chef-green-soft);
+}
+
+@media (max-width: 760px) {
+  .about-page {
+    gap: 52px;
+  }
+
+  .about-layers li:not(:last-child)::after {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .about-page [data-reveal] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}

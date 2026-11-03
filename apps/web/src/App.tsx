@@ -18,6 +18,7 @@ import {
   auroraTone,
   type AuroraPreset,
 } from './components/AuroraBackground';
+import { AboutPage } from './components/AboutPage';
 import { AssetList } from './components/AssetList';
 import { CountUp } from './components/CountUp';
 import { GlobeSpacer, GlobeStage } from './components/GlobeFooter';
@@ -103,7 +104,7 @@ export function App({ client = defaultClient }: AppProps) {
   }, []);
   const { state, retry, showSnapshot } = useSnapshot(client, onScanLog);
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
-  const [activeWorkspace, setActiveWorkspace] = useState('recon');
+  const [activeWorkspace, setActiveWorkspace] = useState('about');
   const [ambient, setAmbient] = useState<AuroraPreset>(readAmbient);
   const accentHue = auroraTone(ambient).hue;
 
@@ -420,6 +421,16 @@ export function App({ client = defaultClient }: AppProps) {
           <nav className="workspace-nav" aria-label="Vistas del proyecto">
             <button
               className={
+                activeWorkspace === 'about' ? 'nav-item is-active' : 'nav-item'
+              }
+              type="button"
+              aria-current={activeWorkspace === 'about' ? 'page' : undefined}
+              onClick={() => navigateTo('about', 'about-title')}
+            >
+              <WorkspaceIcon name="about" /> Acerca de
+            </button>
+            <button
+              className={
                 activeWorkspace === 'recon' ? 'nav-item is-active' : 'nav-item'
               }
               type="button"
@@ -535,7 +546,21 @@ export function App({ client = defaultClient }: AppProps) {
                 : 'main-content'
             }
           >
-            <section className="page-heading" id="overview">
+            {activeWorkspace === 'about' && (
+              <AboutPage
+                onNavigate={(workspace) =>
+                  navigateTo(
+                    workspace,
+                    workspace === 'recon' ? 'overview' : 'source-imports',
+                  )
+                }
+              />
+            )}
+            <section
+              className="page-heading"
+              id="overview"
+              hidden={activeWorkspace === 'about'}
+            >
               <div>
                 <h1>
                   {activeWorkspace === 'recon'
@@ -928,9 +953,15 @@ function safeDownloadName(value: string) {
 function WorkspaceIcon({
   name,
 }: {
-  name: 'recon' | 'evidence' | 'sources' | 'settings';
+  name: 'about' | 'recon' | 'evidence' | 'sources' | 'settings';
 }) {
   const paths = {
+    about: (
+      <>
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 11v5.5M12 7.6v.1" />
+      </>
+    ),
     recon: (
       <>
         <circle cx="10.5" cy="10.5" r="6.5" />
