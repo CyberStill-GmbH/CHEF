@@ -13,7 +13,7 @@ interface ScanLogTerminalProps {
 
 const MAX_COMMAND_CHARS = 8192;
 const MAX_HISTORY = 100;
-const PROMPT = '\x1b[38;2;128;227;154mchef>\x1b[0m ';
+const PROMPT = '\x1b[1;38;2;91;227;160mchef>\x1b[0m ';
 
 export function ScanLogTerminal({ logs, onCommand }: ScanLogTerminalProps) {
   const hostRef = useRef<HTMLDivElement>(null);
@@ -46,21 +46,26 @@ export function ScanLogTerminal({ logs, onCommand }: ScanLogTerminalProps) {
       cursorBlink: true,
       cursorInactiveStyle: 'outline',
       cursorStyle: 'bar',
-      fontFamily: "'Cascadia Code', 'SFMono-Regular', Consolas, monospace",
-      fontSize: 12,
-      lineHeight: 1.35,
+      fontFamily:
+        "'JetBrains Mono', 'Cascadia Code', 'SFMono-Regular', Consolas, monospace",
+      fontSize: 13,
+      lineHeight: 1.55,
       scrollback: 1000,
       screenReaderMode: true,
       theme: {
-        background: '#0b100e',
-        foreground: '#d6e4d9',
-        cursor: '#80e39a',
-        cursorAccent: '#0b100e',
-        selectionBackground: '#315a3d',
-        black: '#101713',
-        brightBlack: '#66736a',
-        green: '#80e39a',
-        brightGreen: '#a9f2b8',
+        background: '#070809',
+        foreground: '#e4e6e8',
+        cursor: '#5be3a0',
+        cursorAccent: '#070809',
+        selectionBackground: '#1f3a2d',
+        black: '#0f1113',
+        brightBlack: '#8b9097',
+        green: '#5be3a0',
+        brightGreen: '#8ff0bd',
+        yellow: '#f2b35a',
+        brightYellow: '#f7c987',
+        blue: '#7dd3fc',
+        brightBlue: '#a5e0fd',
         red: '#ff8e87',
         brightRed: '#ffaaa4',
       },

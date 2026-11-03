@@ -1,0 +1,248 @@
+/*
+ * Capa de diseño "terminal-first".
+ * Carga después de styles.css y workbench.css: redefine tokens y el layout del
+ * workbench para que la terminal sea la protagonista y la procedencia (grafo)
+ * quede a la derecha. No cambia el comportamiento, solo presentación.
+ */
+
+:root {
+  --chef-bg: #070809;
+  --chef-sidebar: #0a0b0d;
+  --chef-panel: #0f1113;
+  --chef-panel-strong: #14161a;
+  --chef-line: #17191c;
+  --chef-line-strong: #24282c;
+  --chef-green: #5be3a0;
+  --chef-green-soft: #8ff0bd;
+  --chef-amber: #f2b35a;
+  --chef-text: #e4e6e8;
+  --chef-muted: #8b9097;
+  --chef-dim: #6b7078;
+  --chef-mono:
+    'JetBrains Mono', 'Cascadia Code', 'SFMono-Regular', Consolas, monospace;
+  font-family: 'Inter', 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif;
+  scrollbar-color: #2a2f34 #0a0b0d;
+}
+
+::selection {
+  color: #070809;
+  background: var(--chef-green);
+}
+
+/* Rail lateral */
+.chef-shell {
+  grid-template-columns: 272px minmax(0, 1fr);
+}
+
+.project-sidebar {
+  gap: 0;
+  padding: 18px 14px 14px;
+  border-right: 1px solid var(--chef-line);
+  background: var(--chef-sidebar);
+}
+
+.wordmark span {
+  color: var(--chef-text);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.project-switcher {
+  border-color: var(--chef-line-strong);
+  border-radius: 10px;
+  background: var(--chef-panel);
+}
+
+.sidebar-label {
+  margin: 24px 0 8px 4px;
+  color: var(--chef-muted);
+  font-family: var(--chef-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.nav-item {
+  min-height: 38px;
+  border-radius: 8px;
+  color: var(--chef-muted);
+}
+
+.nav-item:hover {
+  background: var(--chef-panel-strong);
+  color: var(--chef-text);
+}
+
+.nav-item.is-active {
+  border-color: var(--chef-line-strong);
+  border-left-color: var(--chef-line-strong);
+  background: var(--chef-panel-strong);
+  color: var(--chef-text);
+}
+
+.command-rail ul {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.command-rail li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 4px;
+  font-size: 12px;
+}
+
+.command-rail code {
+  color: var(--chef-green);
+  font-family: var(--chef-mono);
+  font-size: 13px;
+}
+
+.command-rail li span {
+  color: var(--chef-muted);
+}
+
+.rail-note {
+  margin: 10px 4px 0;
+  color: var(--chef-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* Barra superior */
+.topbar {
+  border-bottom-color: var(--chef-line);
+  background: var(--chef-sidebar);
+}
+
+.backend-status {
+  border-radius: 999px;
+  border-color: var(--chef-line-strong);
+  background: var(--chef-panel);
+  color: var(--chef-muted);
+}
+
+.backend-status.is-demo {
+  border-color: #3a2f1a;
+  background: #17130a;
+  color: var(--chef-amber);
+}
+
+.backend-status.is-ready {
+  border-color: #1f3a2d;
+  background: #0d1712;
+  color: var(--chef-green);
+}
+
+/* Encabezado de página más sobrio */
+.page-heading h1 {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.workspace-badge {
+  border-color: var(--chef-line-strong);
+  border-radius: 999px;
+  background: var(--chef-panel);
+}
+
+/* Workbench: terminal al centro, procedencia a la derecha */
+.recon-workbench {
+  grid-template-columns: minmax(0, 1fr) 460px;
+  grid-template-rows: minmax(0, 1fr);
+  gap: 0;
+  overflow: hidden;
+  border: 1px solid var(--chef-line-strong);
+  border-radius: 12px;
+  background: var(--chef-bg);
+}
+
+.terminal-column {
+  grid-column: 1;
+  grid-row: 1;
+  padding: 0;
+  border: 0;
+  border-right: 1px solid var(--chef-line);
+  background: var(--chef-bg);
+}
+
+.terminal-column > h2 {
+  margin: 0;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--chef-line);
+  background: var(--chef-sidebar);
+  color: var(--chef-muted);
+  font-family: var(--chef-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+#activity-terminal {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+#activity-terminal > .scan-log-panel {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  background: var(--chef-bg);
+}
+
+.graph-column {
+  grid-column: 2;
+  grid-row: 1;
+  padding: 16px;
+  border: 0;
+  background: var(--chef-sidebar);
+  scrollbar-color: #2a2f34 #0a0b0d;
+}
+
+.graph-column .recon-graph-canvas,
+.graph-column .graph-pane .recon-graph-canvas {
+  height: clamp(300px, 44vh, 480px);
+  min-height: 300px;
+  margin: 0 0 12px;
+  border-color: var(--chef-line-strong);
+  border-radius: 10px;
+  background: var(--chef-panel);
+}
+
+.recon-workspace > .pane-heading h2 {
+  font-family: var(--chef-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--chef-muted);
+}
+
+@media (max-width: 1180px) {
+  .recon-workbench {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(420px, 1fr) minmax(320px, auto);
+  }
+
+  .terminal-column {
+    grid-column: 1;
+    grid-row: 1;
+    border-right: 0;
+    border-bottom: 1px solid var(--chef-line);
+  }
+
+  .graph-column {
+    grid-column: 1;
+    grid-row: 2;
+  }
+}

@@ -1,9 +1,9 @@
 .scan-log-terminal {
   width: 100%;
-  height: min(58vh, 520px);
-  min-height: 320px;
+  height: 100%;
+  min-height: 420px;
   overflow: hidden;
-  background: #0c110e;
+  background: #070809;
 }
 
 .scan-log-terminal .xterm {
@@ -12,8 +12,8 @@
 }
 
 .scan-log-terminal .xterm-viewport {
-  background: #0c110e !important;
-  scrollbar-color: #3a4b3e #0c110e;
+  background: #070809 !important;
+  scrollbar-color: #3a4b3e #070809;
   scrollbar-width: thin;
 }
 

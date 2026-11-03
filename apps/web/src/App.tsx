@@ -383,6 +383,34 @@ export function App({ client = defaultClient }: AppProps) {
             <WorkspaceIcon name="settings" /> Ajustes
           </button>
         </nav>
+        <section className="command-rail" aria-label="Comandos de la terminal">
+          <p className="sidebar-label">Comandos</p>
+          <ul>
+            <li>
+              <code>chef help</code>
+              <span>ayuda</span>
+            </li>
+            <li>
+              <code>chef status</code>
+              <span>estado</span>
+            </li>
+            <li>
+              <code>chef url</code>
+              <span>clasifica</span>
+            </li>
+            <li>
+              <code>chef report</code>
+              <span>informe</span>
+            </li>
+            <li>
+              <code>clear</code>
+              <span>limpiar</span>
+            </li>
+          </ul>
+          <p className="rail-note">
+            chef url clasifica la URL localmente; no consulta la red.
+          </p>
+        </section>
       </aside>
       <main id="workspace" className="chef-main">
         <header className="topbar">
