@@ -23,8 +23,10 @@ import {
 import { AboutPage } from './components/AboutPage';
 import { AssetList } from './components/AssetList';
 import { CountUp } from './components/CountUp';
+import { FlowStage } from './components/FlowStage';
 import { FurnaceSpacer, FurnaceStage } from './components/FurnaceStage';
 import { GlobeSpacer, GlobeStage } from './components/GlobeFooter';
+import { InstrumentStage } from './components/InstrumentStage';
 import { SidebarPlanet } from './components/SidebarPlanet';
 import { StarfieldStage } from './components/StarfieldStage';
 import { EmptyState } from './components/EmptyState';
@@ -442,6 +444,10 @@ export function App({ client = defaultClient }: AppProps) {
           <FurnaceStage progressRef={furnaceProgress} preset={ambient} />
         ) : activeWorkspace === 'evidence' ? (
           <StarfieldStage preset={ambient} />
+        ) : activeWorkspace === 'sources' ? (
+          <FlowStage preset={ambient} />
+        ) : activeWorkspace === 'settings' ? (
+          <InstrumentStage preset={ambient} />
         ) : (
           <AuroraBackground preset={ambient} />
         )}
