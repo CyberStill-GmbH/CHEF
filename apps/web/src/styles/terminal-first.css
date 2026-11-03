@@ -688,6 +688,111 @@
   }
 }
 
+/*
+ * Superficies unificadas. Todas las vistas usan los mismos tres niveles, para
+ * que no se mezclen tonos de marrón ni esquinas rectas con redondeadas:
+ *   1. tarjeta de vidrio (paneles grandes),
+ *   2. bloque interior (opciones, métricas),
+ *   3. control (botones, campos).
+ */
+:root {
+  --surface-inset: hsl(var(--chef-hue) 20% 85% / 0.04);
+  --surface-inset-line: hsl(var(--chef-hue) 20% 85% / 0.09);
+  --surface-control: hsl(var(--chef-hue) 20% 85% / 0.06);
+  --surface-control-hover: hsl(var(--chef-hue) 20% 85% / 0.11);
+}
+
+/* Nivel 1: tarjeta de vidrio */
+.snapshot-summary,
+.export-panel,
+.event-statistics-panel,
+.explorer-pane,
+.target-seed-panel,
+.config-strip,
+.imports-workspace > section,
+.legal-notice {
+  border: 1px solid var(--chef-glass-line);
+  border-radius: 14px;
+  background: var(--chef-glass);
+  backdrop-filter: blur(16px);
+}
+
+.legal-notice {
+  border-radius: 10px;
+}
+
+/* El contenedor del explorador ya no pinta líneas entre paneles: cada panel es
+   su propia tarjeta. */
+.explorer-grid {
+  gap: 16px;
+  border: 0;
+  background: transparent;
+}
+
+/* Nivel 2: bloque interior */
+.export-option,
+.summary-metric {
+  border: 1px solid var(--surface-inset-line);
+  border-radius: 10px;
+  background: var(--surface-inset);
+}
+
+.export-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.export-option {
+  padding: 16px 18px;
+}
+
+/* Nivel 3: controles */
+.main-content button,
+.main-content input,
+.main-content select {
+  border-color: var(--chef-glass-line);
+  border-radius: 8px;
+  background: var(--surface-control);
+  color: var(--chef-text);
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.main-content button:hover:not(:disabled),
+.main-content input:hover,
+.main-content select:hover {
+  border-color: hsl(var(--chef-hue) 60% 60% / 0.45);
+  background: var(--surface-control-hover);
+}
+
+.main-content button:disabled {
+  background: hsl(var(--chef-hue) 20% 85% / 0.03);
+  color: var(--chef-muted);
+  opacity: 0.7;
+}
+
+/* Resumen del snapshot: título arriba y las cuatro métricas en una fila pareja
+   (antes la cuarta caía a otra fila ocupando la columna ancha). */
+.snapshot-summary {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 14px;
+}
+
+.snapshot-summary dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+
+.summary-metric {
+  padding: 12px 14px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .chef-shell *,
   .chef-shell *::before,
