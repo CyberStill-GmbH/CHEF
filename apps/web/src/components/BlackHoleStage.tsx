@@ -13,8 +13,8 @@ import {
 } from './blackHole';
 import { useScrollProgress } from './scrollProgress';
 
-const COLUMNS = 400;
-const ROWS = 240;
+const COLUMNS = 560;
+const ROWS = 336;
 const STAR_COUNT = 720;
 /** Radio (px) del clic dentro del cual las estrellas se encienden. */
 const CLICK_RADIUS = 160;
@@ -116,7 +116,7 @@ export function BlackHoleStage({
     const draw = (seconds: number) => {
       const progress = Math.min(Math.max(progressRef.current, 0), 1);
       const eased = progress * progress * (3 - 2 * progress);
-      const scale = 1 + 0.75 * eased;
+      const scale = 1.25 + 0.5 * eased;
       const unit = Math.min(Math.max(height * 0.021, 14), 28) * scale;
       const centerX = width * 0.87;
       const centerY = height * 0.58;
@@ -204,8 +204,8 @@ export function BlackHoleStage({
         centerY,
         shadow * 3.2,
       );
-      halo.addColorStop(0, `rgba(150, 44, 8, ${0.2 * appear})`);
-      halo.addColorStop(1, 'rgba(150, 44, 8, 0)');
+      halo.addColorStop(0, `rgba(130, 56, 28, ${0.24 * appear})`);
+      halo.addColorStop(1, 'rgba(130, 56, 28, 0)');
       context.fillStyle = halo;
       context.fillRect(0, 0, width, height);
       context.imageSmoothingEnabled = true;
@@ -248,7 +248,7 @@ export function BlackHoleStage({
       } else {
         tick += 1;
         // El disco gira a ~30 cuadros por segundo; las estrellas, a pantalla completa.
-        if (finishedAt !== null && tick % 2 === 0) paintHole(seconds);
+        if (finishedAt !== null && tick % 3 === 0) paintHole(seconds);
         draw(seconds);
         for (let index = pulses.length - 1; index >= 0; index -= 1) {
           const pulse = pulses[index];

@@ -24,7 +24,7 @@ export const SHADOW_RADIUS = 5.196;
 
 const INNER_RADIUS = 6;
 const OUTER_RADIUS = 22;
-const STEP = 0.035;
+const STEP = 0.04;
 const MAX_SWEEP = Math.PI * 3.2;
 const ORDERS = 3;
 /** Inclinación respecto del eje del disco: 78° (casi de canto, como Gargantúa). */
@@ -123,7 +123,7 @@ export function advanceTrace(trace: BlackHoleTrace, maxMs: number): boolean {
           const emissivity = Math.pow(INNER_RADIUS / r, 2.3) * edge;
           const slot = order;
           (trace.intensity[slot] as Float32Array)[index] =
-            Math.pow(g, 3.2) * emissivity;
+            Math.pow(g, 2.4) * emissivity;
           (trace.radius[slot] as Float32Array)[index] = r;
           (trace.azimuth[slot] as Float32Array)[index] = Math.atan2(py, px);
           any = true;
@@ -144,11 +144,12 @@ export function advanceTrace(trace: BlackHoleTrace, maxMs: number): boolean {
 /** Tabla de color tipo cuerpo negro: brasa oscura → naranja → blanco cálido. */
 export function buildPalette(): Uint8ClampedArray {
   const stops: ReadonlyArray<readonly [number, number, number, number]> = [
-    [0, 6, 2, 1],
-    [0.22, 96, 20, 4],
-    [0.45, 226, 82, 10],
-    [0.7, 255, 164, 48],
-    [1, 255, 238, 176],
+    [0, 4, 2, 2],
+    [0.2, 66, 22, 12],
+    [0.4, 168, 72, 38],
+    [0.62, 238, 142, 88],
+    [0.82, 255, 206, 154],
+    [1, 255, 246, 230],
   ];
   const palette = new Uint8ClampedArray(256 * 3);
   for (let i = 0; i < 256; i += 1) {
@@ -166,6 +167,37 @@ export function buildPalette(): Uint8ClampedArray {
   }
   return palette;
 }
+
+const STREAK_SIZE = 1024;
+
+/** Ruido de valor 1D suave y determinista. */
+function valueNoise(x: number, seed: number): number {
+  const hash = (n: number) => {
+    const v = Math.sin(n * 127.1 + seed * 311.7) * 43758.5453;
+    return v - Math.floor(v);
+  };
+  const i = Math.floor(x);
+  const f = x - i;
+  const u = f * f * (3 - 2 * f);
+  return hash(i) * (1 - u) + hash(i + 1) * u;
+}
+
+/**
+ * Filamentos finos del disco: una tabla de brillo según el radio, irregular y
+ * con muchas líneas delgadas, como las bandas de la imagen de referencia.
+ */
+const STREAKS = (() => {
+  const table = new Float32Array(STREAK_SIZE);
+  for (let i = 0; i < STREAK_SIZE; i += 1) {
+    const r = i * 0.09;
+    const raw =
+      0.5 * valueNoise(r * 1.1, 1) +
+      0.3 * valueNoise(r * 2.9, 2) +
+      0.2 * valueNoise(r * 7.3, 3);
+    table[i] = Math.pow(Math.min(Math.max(raw, 0), 1), 1.9);
+  }
+  return table;
+})();
 
 /**
  * Pinta el brillo del disco en `image` (RGBA) para el instante `time` (s). El
@@ -188,18 +220,22 @@ export function paintTrace(
       const r = (trace.radius[order] as Float32Array)[index] ?? 0;
       const psi = (trace.azimuth[order] as Float32Array)[index] ?? 0;
       const turn = psi - spin * Math.pow(r, -1.5) * 6;
-      // Turbulencia suave: armónicos azimutales que barren en espiral al girar,
-      // sin términos de radio de alta frecuencia (que dibujarían anillos finos).
-      const texture =
-        0.74 +
-        0.14 * Math.sin(2 * turn + 0.18 * r) +
-        0.12 * Math.sin(3 * turn + 1.1 + 0.3 * r) +
-        0.09 * Math.sin(5 * turn + 2.3 + 0.42 * r) +
-        0.07 * Math.sin(7 * turn - 0.6 + 0.55 * r) +
-        0.05 * Math.sin(r * 0.9);
+      // Azimut: manchas suaves que giran; radio: filamentos finos y desiguales.
+      const patch =
+        0.78 +
+        0.12 * Math.sin(2 * turn + 0.18 * r) +
+        0.1 * Math.sin(3 * turn + 1.1 + 0.3 * r);
+      const line = Math.min(
+        STREAK_SIZE - 1,
+        Math.max(0, Math.floor((r - INNER_RADIUS) / 0.09)),
+      );
+      const filament =
+        0.3 +
+        1.5 * (STREAKS[line] ?? 0) * (0.8 + 0.2 * Math.sin(4 * turn + r * 1.7));
+      const texture = patch * filament;
       total += base * texture;
     }
-    const value = 1 - Math.exp(-total * 1.7 * (trace.fade[index] ?? 0));
+    const value = 1 - Math.exp(-total * 2.3 * (trace.fade[index] ?? 0));
     const level = Math.min(255, Math.max(0, Math.round(value * 255)));
     const offset = index * 4;
     data[offset] = palette[level * 3] ?? 0;
