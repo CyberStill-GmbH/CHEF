@@ -22,9 +22,9 @@ import {
 import { AboutPage } from './components/AboutPage';
 import { AssetList } from './components/AssetList';
 import { CountUp } from './components/CountUp';
-import { BlackHoleProbe, BlackHoleStage } from './components/BlackHoleStage';
 import { FurnaceSpacer, FurnaceStage } from './components/FurnaceStage';
 import { GlobeSpacer, GlobeStage } from './components/GlobeFooter';
+import { StarfieldStage } from './components/StarfieldStage';
 import { EmptyState } from './components/EmptyState';
 import { ErrorState } from './components/ErrorState';
 import { EvidencePanel } from './components/EvidencePanel';
@@ -121,8 +121,6 @@ export function App({ client = defaultClient }: AppProps) {
   const planetProgress = useRef(0);
   // Calor (0..1) del fondo de Inicio según el scroll.
   const furnaceProgress = useRef(0);
-  // Tamaño (0..1) del agujero negro de Evidencia según el scroll.
-  const holeProgress = useRef(0);
   // Cambio de vista: la actual sale rápido y la nueva entra con su propia animación.
   const [transition, setTransition] = useState<{
     phase: 'out' | 'in';
@@ -435,7 +433,7 @@ export function App({ client = defaultClient }: AppProps) {
         {activeWorkspace === 'about' ? (
           <FurnaceStage progressRef={furnaceProgress} />
         ) : activeWorkspace === 'evidence' ? (
-          <BlackHoleStage progressRef={holeProgress} />
+          <StarfieldStage />
         ) : (
           <AuroraBackground preset={ambient} />
         )}
@@ -991,9 +989,6 @@ export function App({ client = defaultClient }: AppProps) {
             )}
             {activeWorkspace === 'about' && (
               <FurnaceSpacer progressRef={furnaceProgress} />
-            )}
-            {activeWorkspace === 'evidence' && (
-              <BlackHoleProbe progressRef={holeProgress} />
             )}
           </div>
         </main>
