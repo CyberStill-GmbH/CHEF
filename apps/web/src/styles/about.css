@@ -374,3 +374,38 @@
     transition: none;
   }
 }
+
+/* Fondo de horno: lienzo fijo bajo toda la pantalla (también bajo la barra). */
+.furnace-stage {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background: #060403;
+  pointer-events: none;
+}
+
+.furnace-stage {
+  overflow: hidden;
+}
+
+.furnace-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Las llamas se difuminan: el filtro CSS es barato y las vuelve volutas. */
+.furnace-flames {
+  bottom: -40px;
+  height: calc(100% + 40px);
+  filter: blur(7px) saturate(1.15);
+}
+
+/* Franja final libre: el brillo y las brasas quedan debajo, sin tapar texto. */
+.furnace-spacer {
+  height: clamp(260px, 42vh, 460px);
+  flex: none;
+}

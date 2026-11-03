@@ -21,6 +21,7 @@ import {
 import { AboutPage } from './components/AboutPage';
 import { AssetList } from './components/AssetList';
 import { CountUp } from './components/CountUp';
+import { FurnaceSpacer, FurnaceStage } from './components/FurnaceStage';
 import { GlobeSpacer, GlobeStage } from './components/GlobeFooter';
 import { EmptyState } from './components/EmptyState';
 import { ErrorState } from './components/ErrorState';
@@ -114,6 +115,8 @@ export function App({ client = defaultClient }: AppProps) {
   }, [accentHue]);
   // Avance (0..1) con el que el planeta final se asoma según el scroll.
   const planetProgress = useRef(0);
+  // Calor (0..1) del fondo de Inicio según el scroll.
+  const furnaceProgress = useRef(0);
   const [consoleOpen, setConsoleOpen] = useState(true);
 
   useEffect(() => {
@@ -392,7 +395,11 @@ export function App({ client = defaultClient }: AppProps) {
   return (
     <AmbientHueContext.Provider value={accentHue}>
       <div className="chef-shell">
-        <AuroraBackground preset={ambient} />
+        {activeWorkspace === 'about' ? (
+          <FurnaceStage progressRef={furnaceProgress} />
+        ) : (
+          <AuroraBackground preset={ambient} />
+        )}
         {activeWorkspace === 'recon' && (
           <GlobeStage preset={ambient} progressRef={planetProgress} />
         )}
@@ -933,6 +940,9 @@ export function App({ client = defaultClient }: AppProps) {
             </footer>
             {activeWorkspace === 'recon' && (
               <GlobeSpacer progressRef={planetProgress} />
+            )}
+            {activeWorkspace === 'about' && (
+              <FurnaceSpacer progressRef={furnaceProgress} />
             )}
           </div>
         </main>
