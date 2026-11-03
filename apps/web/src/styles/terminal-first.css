@@ -598,29 +598,16 @@
 }
 
 /*
- * El planeta vive en un escenario fijo al fondo de TODA la pantalla, por debajo
- * de la barra lateral (que es de vidrio y lo deja ver) y del contenido. Solo se
- * muestra cuando el espacio reservado al final del contenido está a la vista.
+ * El escenario es un lienzo fijo que cubre TODA la pantalla, por debajo de la
+ * barra lateral (de vidrio) y del contenido: las estrellas se ven en todo el
+ * fondo y los arcos del planeta nunca se recortan. El planeta sube desde abajo
+ * según el scroll (ver GlobeSpacer).
  */
 .globe-stage {
   position: fixed;
-  right: 0;
-  bottom: 0;
-  left: 0;
+  inset: 0;
   z-index: 0;
-  height: var(--globe-height);
-  background: linear-gradient(to bottom, transparent, rgba(5, 4, 3, 0.94) 38%);
-  opacity: 0;
   pointer-events: none;
-  transform: translateY(60px);
-  transition:
-    opacity 0.9s var(--chef-ease),
-    transform 1.1s var(--chef-ease);
-}
-
-.globe-stage.is-revealed {
-  opacity: 1;
-  transform: none;
 }
 
 .globe-canvas {

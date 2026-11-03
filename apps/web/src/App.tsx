@@ -103,7 +103,8 @@ export function App({ client = defaultClient }: AppProps) {
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
   const [activeWorkspace, setActiveWorkspace] = useState('recon');
   const [ambient, setAmbient] = useState<AuroraPreset>(readAmbient);
-  const [planetActive, setPlanetActive] = useState(false);
+  // Avance (0..1) con el que el planeta final se asoma según el scroll.
+  const planetProgress = useRef(0);
 
   useEffect(() => {
     try {
@@ -382,7 +383,7 @@ export function App({ client = defaultClient }: AppProps) {
     <div className="chef-shell">
       <AuroraBackground preset={ambient} />
       {activeWorkspace === 'recon' && (
-        <GlobeStage preset={ambient} active={planetActive} />
+        <GlobeStage preset={ambient} progressRef={planetProgress} />
       )}
       <aside className="project-sidebar" aria-label="Navegación de CHEF">
         <a className="wordmark" href="#workspace" aria-label="CHEF, inicio">
@@ -868,7 +869,7 @@ export function App({ client = defaultClient }: AppProps) {
             </details>
           </footer>
           {activeWorkspace === 'recon' && (
-            <GlobeSpacer onActiveChange={setPlanetActive} />
+            <GlobeSpacer progressRef={planetProgress} />
           )}
         </div>
       </main>

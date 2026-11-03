@@ -14,7 +14,9 @@ const LONG_ARC_MAX = 0.95;
 const MAX_ARCS = 34;
 const PACKET_COUNT = 10;
 const ARC_STEPS = 28;
-const STAR_COUNT = 150;
+const STAR_COUNT = 280;
+/** Alto del tramo de planeta visible; coincide con --globe-height del CSS. */
+const PLANET_HEIGHT = 460;
 
 interface Link {
   a: Vec;
@@ -191,7 +193,7 @@ function buildTexels(): Texel[] {
 function buildStars(random: () => number): Star[] {
   return Array.from({ length: STAR_COUNT }, () => ({
     x: random(),
-    y: random() * 0.62,
+    y: random(),
     size: random() < 0.12 ? 2 : 1,
     phase: random() * Math.PI * 2,
   }));
@@ -208,18 +210,16 @@ function buildStars(random: () => number): Star[] {
  */
 export function GlobeStage({
   preset,
-  active,
+  progressRef,
 }: {
   preset: AuroraPreset;
-  active: boolean;
+  /** 0 = planeta oculto … 1 = totalmente a la vista (lo escribe GlobeSpacer). */
+  progressRef: { current: number };
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const toneRef = useRef(auroraTone(preset));
   toneRef.current = auroraTone(preset);
-  const controllerRef = useRef<{ setActive(active: boolean): void } | null>(
-    null,
-  );
 
   useEffect(() => {
     const root = rootRef.current;
@@ -257,8 +257,8 @@ export function GlobeStage({
     let height = 0;
     let offsetX = 0;
     let frame = 0;
-    let visible = false;
-    let revealedAt = 0;
+    let drawnProgress = -1;
+    let dirty = true;
     let last = 0;
     const pointer = { x: 0, y: 0, sx: 0, sy: 0 };
 
@@ -287,13 +287,13 @@ export function GlobeStage({
       // El progreso se acota a [0, 1]: el primer fotograma puede llegar con una
       // marca de tiempo anterior a la del instante de revelado, y un valor
       // negativo daría radios negativos (el canvas lanzaría un error).
-      const progress = Math.min(Math.max((time - revealedAt) / 1600, 0), 1);
-      const eased = reduced ? 1 : 1 - Math.pow(1 - progress, 3);
+      const progress = Math.min(Math.max(progressRef.current, 0), 1);
+      const eased = progress * progress * (3 - 2 * progress);
 
-      const radius = Math.max(width * 0.72, height * 1.25);
+      const radius = Math.max(width * 0.72, PLANET_HEIGHT * 1.25);
       const centerX = width / 2 + offsetX / 2;
-      const top = height * 0.5;
-      const centerY = top + radius + (1 - eased) * height * 0.3;
+      const top = height - PLANET_HEIGHT * 0.5;
+      const centerY = top + radius + (1 - eased) * PLANET_HEIGHT * 1.15;
       const yaw = reduced ? 0.9 : time * 0.00011 + pointer.sx * 0.25;
       const pitch = 1.12 + pointer.sy * 0.05;
 
@@ -305,9 +305,13 @@ export function GlobeStage({
         const twinkle = reduced
           ? 0.6
           : 0.35 + 0.5 * (0.5 + 0.5 * Math.sin(time * 0.0014 + star.phase));
-        context.fillStyle = hsl(twinkle * eased, 38, 0);
+        const depth = 0.35 + 0.65 * star.y;
+        context.fillStyle = hsl(twinkle * depth * (0.5 + 0.5 * eased), 38, 0);
         context.fillRect(star.x * width, star.y * height, star.size, star.size);
       }
+
+      // Mientras el planeta no ha empezado a asomar solo se ven las estrellas.
+      if (eased < 0.01) return;
 
       // Atmósfera detrás del planeta.
       const atmosphere = context.createRadialGradient(
@@ -468,22 +472,23 @@ export function GlobeStage({
       last = now;
       pointer.sx += (pointer.x - pointer.sx) * 0.05;
       pointer.sy += (pointer.y - pointer.sy) * 0.05;
-      for (const packet of packets) {
-        packet.progress += packet.speed * step;
-        if (packet.progress >= 1) {
-          packet.progress = 0;
-          packet.link =
-            (packet.link + 5 + (Math.floor(now) % 7)) %
-            Math.max(arcs.length, 1);
+      if (!reduced) {
+        for (const packet of packets) {
+          packet.progress += packet.speed * step;
+          if (packet.progress >= 1) {
+            packet.progress = 0;
+            packet.link =
+              (packet.link + 5 + (Math.floor(now) % 7)) %
+              Math.max(arcs.length, 1);
+          }
         }
       }
-      draw(now);
-      frame = visible ? window.requestAnimationFrame(tick) : 0;
-    };
-
-    const start = () => {
-      if (frame !== 0 || reduced) return;
-      last = 0;
+      // Con movimiento reducido solo se redibuja cuando cambia algo.
+      if (!reduced || dirty || progressRef.current !== drawnProgress) {
+        draw(now);
+        drawnProgress = progressRef.current;
+        dirty = false;
+      }
       frame = window.requestAnimationFrame(tick);
     };
 
@@ -492,43 +497,23 @@ export function GlobeStage({
       pointer.y = (event.clientY / window.innerHeight - 0.5) * 2;
     };
 
-    controllerRef.current = {
-      setActive(next: boolean) {
-        if (next === visible) return;
-        visible = next;
-        if (next) {
-          root.classList.add('is-revealed');
-          revealedAt = performance.now();
-          if (reduced) draw(revealedAt);
-          else start();
-        } else {
-          root.classList.remove('is-revealed');
-        }
-      },
-    };
-
     resize();
     const resizeObserver = new ResizeObserver(() => {
       resize();
-      if (visible && reduced) draw(performance.now());
+      dirty = true;
     });
     resizeObserver.observe(canvas);
     if (!reduced) {
       window.addEventListener('pointermove', onPointer, { passive: true });
     }
+    frame = window.requestAnimationFrame(tick);
 
     return () => {
-      visible = false;
-      controllerRef.current = null;
       window.cancelAnimationFrame(frame);
       resizeObserver.disconnect();
       window.removeEventListener('pointermove', onPointer);
     };
-  }, []);
-
-  useEffect(() => {
-    controllerRef.current?.setActive(active);
-  }, [active]);
+  }, [progressRef]);
 
   return (
     <div ref={rootRef} className="globe-stage" aria-hidden="true">
@@ -539,39 +524,48 @@ export function GlobeStage({
 
 /**
  * Espacio al final del contenido: reserva la altura del planeta, lleva el texto
- * y avisa cuándo está a la vista para que el escenario se revele (y se oculte
- * al volver a subir).
+ * y calcula cuánto de él se ha asomado según el scroll. El planeta sube y se
+ * enciende de forma progresiva al bajar hacia el final, y se retira al subir.
  */
 export function GlobeSpacer({
-  onActiveChange,
+  progressRef,
 }: {
-  onActiveChange: (active: boolean) => void;
+  progressRef: { current: number };
 }) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const element = ref.current;
     if (element === null) return;
-    if (typeof IntersectionObserver === 'undefined') {
+    const scroller = element.closest<HTMLElement>('.main-content');
+    if (scroller === null) {
       element.classList.add('is-revealed');
-      onActiveChange(true);
-      return () => onActiveChange(false);
+      progressRef.current = 1;
+      return () => {
+        progressRef.current = 0;
+      };
     }
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const entry = entries[0];
-        if (entry === undefined) return;
-        element.classList.toggle('is-revealed', entry.isIntersecting);
-        onActiveChange(entry.isIntersecting);
-      },
-      { threshold: 0.2 },
-    );
-    observer.observe(element);
-    return () => {
-      observer.disconnect();
-      onActiveChange(false);
+    const update = () => {
+      const area = element.getBoundingClientRect();
+      const container = scroller.getBoundingClientRect();
+      const shown = Math.min(
+        Math.max(container.bottom - area.top, 0),
+        area.height,
+      );
+      const next =
+        area.height > 0 ? Math.min(shown / (area.height * 0.85), 1) : 0;
+      progressRef.current = next;
+      element.classList.toggle('is-revealed', next > 0.5);
     };
-  }, [onActiveChange]);
+    update();
+    scroller.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update);
+    return () => {
+      scroller.removeEventListener('scroll', update);
+      window.removeEventListener('resize', update);
+      progressRef.current = 0;
+    };
+  }, [progressRef]);
 
   return (
     <div ref={ref} className="globe-spacer">
