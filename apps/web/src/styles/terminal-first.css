@@ -84,19 +84,6 @@
   }
 }
 
-@keyframes chef-beat {
-  0%,
-  100% {
-    opacity: 0.55;
-    box-shadow: 0 0 0 0 hsl(var(--chef-hue) 85% 62% / 0);
-  }
-
-  50% {
-    opacity: 1;
-    box-shadow: 0 0 10px 1px hsl(var(--chef-hue) 85% 62% / 0.55);
-  }
-}
-
 /* Fondo vivo */
 .chef-shell {
   position: relative;
@@ -263,7 +250,6 @@
   border-radius: 50%;
   background: var(--chef-green);
   content: '';
-  animation: chef-beat 2.4s ease-in-out infinite;
 }
 
 .nav-item.is-active .workspace-icon {
@@ -322,11 +308,11 @@
   color: var(--chef-green);
   font-family: var(--chef-mono);
   font-size: 13px;
-  transition: text-shadow 0.25s ease;
+  transition: color 0.25s ease;
 }
 
 .command-rail li:hover code {
-  text-shadow: 0 0 10px hsl(var(--chef-hue) 85% 62% / 0.6);
+  color: var(--chef-green-soft);
 }
 
 .command-rail li span {
@@ -470,7 +456,6 @@
   border-radius: 50%;
   background: var(--chef-green);
   content: '';
-  animation: chef-beat 2.4s ease-in-out infinite;
 }
 
 #activity-terminal {

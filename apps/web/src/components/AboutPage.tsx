@@ -96,30 +96,40 @@ const PRINCIPLES = [
   'Toda conclusión se puede seguir hasta su evidencia de origen.',
 ] as const;
 
-/** Muestra cada bloque con una entrada suave al llegar a la pantalla. */
+/**
+ * Entrada suave de los bloques que quedan bajo el pliegue. El contenido es
+ * visible por defecto: el efecto solo atenúa un poco lo que aún no se ha
+ * alcanzado, así que si falla nada queda oculto.
+ */
 function useReveal() {
   const ref = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     const root = ref.current;
-    if (root === null) return;
+    if (
+      root === null ||
+      typeof IntersectionObserver === 'undefined' ||
+      prefersReducedMotion()
+    )
+      return;
     const items = Array.from(
       root.querySelectorAll<HTMLElement>('[data-reveal]'),
     );
-    if (typeof IntersectionObserver === 'undefined' || prefersReducedMotion()) {
-      for (const item of items) item.classList.add('is-visible');
-      return;
-    }
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
           if (!entry.isIntersecting) continue;
-          entry.target.classList.add('is-visible');
+          entry.target.classList.remove('is-pending');
           observer.unobserve(entry.target);
         }
       },
-      { threshold: 0.15 },
+      { threshold: 0.12 },
     );
-    for (const item of items) observer.observe(item);
+    for (const item of items) {
+      if (item.getBoundingClientRect().top > window.innerHeight * 0.9) {
+        item.classList.add('is-pending');
+      }
+      observer.observe(item);
+    }
     return () => observer.disconnect();
   }, []);
   return ref;
@@ -137,15 +147,15 @@ export function AboutPage({ onNavigate }: AboutPageProps) {
           width="76"
           height="76"
         />
-        <p className="about-eyebrow">Centro Cultural de Ciberseguridad</p>
         <h1 id="about-title">
           Evidencia clara para entender una{' '}
           <em>superficie de ataque autorizada</em>.
         </h1>
         <p className="about-lead">
-          CHEF reduce el trabajo manual del reconocimiento: reúne resultados
-          activos y señales pasivas, quita duplicados sin perder la procedencia
-          y muestra <strong>por qué</strong> dos observaciones se relacionan.
+          CHEF, un proyecto del Centro Cultural de Ciberseguridad, reduce el
+          trabajo manual del reconocimiento: reúne resultados activos y señales
+          pasivas, quita duplicados sin perder la procedencia y muestra{' '}
+          <strong>por qué</strong> dos observaciones se relacionan.
         </p>
         <div className="about-actions">
           <button
@@ -170,7 +180,6 @@ export function AboutPage({ onNavigate }: AboutPageProps) {
         aria-labelledby="about-flow"
         data-reveal
       >
-        <p className="about-eyebrow">Cómo funciona</p>
         <h2 id="about-flow">
           De los resultados sueltos a una imagen explicable
         </h2>
@@ -190,7 +199,6 @@ export function AboutPage({ onNavigate }: AboutPageProps) {
         aria-labelledby="about-levels"
         data-reveal
       >
-        <p className="about-eyebrow">La idea que distingue a CHEF</p>
         <h2 id="about-levels">Una observación no es una vulnerabilidad</h2>
         <p className="about-copy">
           CHEF mantiene separados tres niveles de certeza para que nadie
@@ -212,7 +220,6 @@ export function AboutPage({ onNavigate }: AboutPageProps) {
         aria-labelledby="about-features"
         data-reveal
       >
-        <p className="about-eyebrow">Qué ofrece</p>
         <h2 id="about-features">Capacidades</h2>
         <ul className="about-grid">
           {CAPABILITIES.map((item) => (
@@ -229,7 +236,6 @@ export function AboutPage({ onNavigate }: AboutPageProps) {
         aria-labelledby="about-architecture"
         data-reveal
       >
-        <p className="about-eyebrow">Por dentro</p>
         <h2 id="about-architecture">Arquitectura</h2>
         <p className="about-copy">
           El dominio no depende de la red, del sistema de archivos ni de ningún
@@ -255,7 +261,6 @@ export function AboutPage({ onNavigate }: AboutPageProps) {
         aria-labelledby="about-principles"
         data-reveal
       >
-        <p className="about-eyebrow">Cómo trabajamos</p>
         <h2 id="about-principles">Principios</h2>
         <ul className="about-principles">
           {PRINCIPLES.map((text) => (
@@ -269,7 +274,6 @@ export function AboutPage({ onNavigate }: AboutPageProps) {
         aria-labelledby="about-status"
         data-reveal
       >
-        <p className="about-eyebrow">Dónde estamos</p>
         <h2 id="about-status">Estado del proyecto</h2>
         <div className="about-status">
           <div>
@@ -294,7 +298,6 @@ export function AboutPage({ onNavigate }: AboutPageProps) {
         aria-labelledby="about-credits"
         data-reveal
       >
-        <p className="about-eyebrow">Créditos</p>
         <h2 id="about-credits">Licencia y atribución</h2>
         <p className="about-copy">
           CHEF se distribuye bajo AGPL-3.0 y adapta capacidades de BBOT, de
