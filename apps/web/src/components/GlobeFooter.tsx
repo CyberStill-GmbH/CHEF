@@ -279,7 +279,7 @@ export function GlobeFooter({ preset }: { preset: AuroraPreset }) {
       const centerX = width / 2;
       const top = height * 0.4;
       const centerY = top + radius + (1 - eased) * height * 0.3;
-      const yaw = reduced ? 0.9 : time * 0.00005 + pointer.sx * 0.25;
+      const yaw = reduced ? 0.9 : time * 0.00011 + pointer.sx * 0.25;
       const pitch = 1.12 + pointer.sy * 0.05;
 
       context.clearRect(0, 0, width, height);
@@ -329,14 +329,14 @@ export function GlobeFooter({ preset }: { preset: AuroraPreset }) {
         if (x < -4 || x > width + 4 || y < top - 6 || y > height + 4) continue;
         buckets[texel.level]?.push(x, y);
       }
-      const levels = [0.1, 0.22, 0.4, 0.7];
+      const levels = [0.16, 0.34, 0.58, 0.9];
       buckets.forEach((coordinates, level) => {
         context.fillStyle = hsl(
           (levels[level] ?? 0.1) * eased,
-          level * 7,
+          level * 9,
           level === 3 ? 8 : 0,
         );
-        const size = level === 3 ? 1.9 : 1.4;
+        const size = level === 3 ? 2.1 : 1.6;
         for (let index = 0; index < coordinates.length; index += 2) {
           context.fillRect(
             coordinates[index] ?? 0,

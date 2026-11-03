@@ -596,15 +596,18 @@
 .globe-footer {
   position: relative;
   display: flex;
-  min-height: 600px;
+  /* A sangre: ocupa todo el ancho y el fondo de la página, sin tarjeta. */
+  min-height: max(560px, 66vh);
+  margin: 12px calc(-1 * clamp(18px, 2.2vw, 32px)) -14px;
   align-items: flex-start;
   justify-content: center;
   overflow: hidden;
-  border: 1px solid var(--chef-glass-line);
-  border-radius: 14px;
+  border: 0;
+  border-top: 1px solid var(--chef-glass-line);
+  border-radius: 0;
   background: #050403;
   opacity: 0;
-  transform: translateY(44px) scale(0.97);
+  transform: translateY(60px);
   transition:
     opacity 0.9s var(--chef-ease),
     transform 1.1s var(--chef-ease);

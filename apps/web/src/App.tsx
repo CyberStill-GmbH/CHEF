@@ -845,7 +845,6 @@ export function App({ client = defaultClient }: AppProps) {
                 </div>
               </>
             )}
-          {activeWorkspace === 'recon' && <GlobeFooter preset={ambient} />}
           <footer className="legal-notice" aria-label="Licencia y atribución">
             <details>
               <summary>Licencia y avisos</summary>
@@ -864,6 +863,7 @@ export function App({ client = defaultClient }: AppProps) {
               </p>
             </details>
           </footer>
+          {activeWorkspace === 'recon' && <GlobeFooter preset={ambient} />}
         </div>
       </main>
     </div>
