@@ -488,3 +488,17 @@
   height: 1px;
   flex: none;
 }
+
+/*
+ * En Evidencia las tarjetas son de vidrio más claro y con poco desenfoque: se
+ * adivinan las estrellas y el resplandor del agujero sin que su forma compita
+ * con el texto.
+ */
+.main-content.evidence-content .snapshot-summary,
+.main-content.evidence-content .export-panel,
+.main-content.evidence-content .event-statistics-panel,
+.main-content.evidence-content .explorer-pane,
+.main-content.evidence-content .legal-notice {
+  background: hsl(var(--chef-hue) 12% 6% / 0.4);
+  backdrop-filter: blur(3px);
+}

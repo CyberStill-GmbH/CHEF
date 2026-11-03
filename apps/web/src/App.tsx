@@ -591,6 +591,7 @@ export function App({ client = defaultClient }: AppProps) {
               activeWorkspace === 'recon'
                 ? 'main-content recon-content'
                 : 'main-content',
+              activeWorkspace === 'evidence' ? 'evidence-content' : '',
               transition?.phase === 'out' ? 'is-leaving' : '',
               transition?.phase === 'in'
                 ? `is-entering enter-${transition.target}`
