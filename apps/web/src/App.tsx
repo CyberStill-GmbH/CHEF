@@ -113,6 +113,7 @@ export function App({ client = defaultClient }: AppProps) {
   }, [accentHue]);
   // Avance (0..1) con el que el planeta final se asoma según el scroll.
   const planetProgress = useRef(0);
+  const [consoleOpen, setConsoleOpen] = useState(true);
 
   useEffect(() => {
     try {
@@ -566,8 +567,87 @@ export function App({ client = defaultClient }: AppProps) {
               className="recon-workbench"
               hidden={activeWorkspace !== 'recon'}
             >
-              <div className="terminal-column">
-                <h2>Consola</h2>
+              <div className="graph-column">
+                {streamedGraph !== null && (
+                  <p role="status" className="graph-status">
+                    Mostrando el grafo ya validado y guardado · cargando su
+                    representación
+                  </p>
+                )}
+                {state.status === 'success' &&
+                  (streamedGraph ?? state.reconGraph) !== undefined &&
+                  ((streamedGraph ?? state.reconGraph)!.assets.length > 0 ? (
+                    <ReconGraphPanel
+                      variant="open"
+                      key={
+                        streamedGraphRequestId ??
+                        `snapshot:${state.snapshot.run.id}`
+                      }
+                      graph={streamedGraph ?? state.reconGraph!}
+                    />
+                  ) : (
+                    <p className="pane-empty">
+                      Aún no hay activos proyectados.
+                    </p>
+                  ))}
+                {state.status === 'success' &&
+                  streamedGraph === null &&
+                  state.reconGraph === undefined && (
+                    <p className="pane-empty">
+                      El snapshot no contiene una proyección de grafo.
+                    </p>
+                  )}
+                {censysImport === null &&
+                  urlscanImport === null &&
+                  state.status === 'loading' && <LoadingState />}
+                {censysImport === null &&
+                  urlscanImport === null &&
+                  state.status === 'empty' && <EmptyState />}
+                {censysImport === null &&
+                  urlscanImport === null &&
+                  state.status === 'error' && (
+                    <ErrorState message={state.message} onRetry={retry} />
+                  )}
+                {reconStats.length > 0 && (
+                  <aside className="summary-rail" aria-label="Resumen del mapa">
+                    <ul>
+                      {reconStats.map((stat, index) => (
+                        <li key={stat.label} className="stat-card">
+                          <span>{stat.label}</span>
+                          <strong>
+                            {typeof stat.value === 'number' ? (
+                              <CountUp
+                                value={stat.value}
+                                delay={260 + index * 110}
+                              />
+                            ) : (
+                              stat.value
+                            )}
+                          </strong>
+                        </li>
+                      ))}
+                    </ul>
+                  </aside>
+                )}
+              </div>
+              <div
+                className={
+                  consoleOpen
+                    ? 'terminal-column'
+                    : 'terminal-column is-collapsed'
+                }
+              >
+                <h2>
+                  <button
+                    type="button"
+                    className="console-toggle"
+                    aria-expanded={consoleOpen}
+                    aria-controls="activity-terminal"
+                    onClick={() => setConsoleOpen((open) => !open)}
+                  >
+                    Consola
+                  </button>
+                </h2>
                 <Suspense
                   fallback={
                     <section
@@ -586,80 +666,6 @@ export function App({ client = defaultClient }: AppProps) {
                   </div>
                 </Suspense>
               </div>
-              <div className="graph-column">
-                <section
-                  className="recon-workspace"
-                  aria-labelledby="graph-title"
-                >
-                  <header className="pane-heading">
-                    <h2 id="graph-title">Mapa de relaciones</h2>
-                    <span className="pane-meta">
-                      Proyección validada por CHEF
-                    </span>
-                  </header>
-                  {streamedGraph !== null && (
-                    <p role="status">
-                      Mostrando el grafo ya validado y guardado · cargando su
-                      representación
-                    </p>
-                  )}
-                  {state.status === 'success' &&
-                    (streamedGraph ?? state.reconGraph) !== undefined &&
-                    ((streamedGraph ?? state.reconGraph)!.assets.length > 0 ? (
-                      <ReconGraphPanel
-                        key={
-                          streamedGraphRequestId ??
-                          `snapshot:${state.snapshot.run.id}`
-                        }
-                        graph={streamedGraph ?? state.reconGraph!}
-                      />
-                    ) : (
-                      <p className="pane-empty">
-                        Aún no hay activos proyectados.
-                      </p>
-                    ))}
-                  {state.status === 'success' &&
-                    streamedGraph === null &&
-                    state.reconGraph === undefined && (
-                      <p className="pane-empty">
-                        El snapshot no contiene una proyección de grafo.
-                      </p>
-                    )}
-                </section>
-                {censysImport === null &&
-                  urlscanImport === null &&
-                  state.status === 'loading' && <LoadingState />}
-                {censysImport === null &&
-                  urlscanImport === null &&
-                  state.status === 'empty' && <EmptyState />}
-                {censysImport === null &&
-                  urlscanImport === null &&
-                  state.status === 'error' && (
-                    <ErrorState message={state.message} onRetry={retry} />
-                  )}
-              </div>
-              {reconStats.length > 0 && (
-                <aside className="summary-rail" aria-label="Resumen del mapa">
-                  <p className="rail-title">Resumen</p>
-                  <ul>
-                    {reconStats.map((stat, index) => (
-                      <li key={stat.label} className="stat-card">
-                        <span>{stat.label}</span>
-                        <strong>
-                          {typeof stat.value === 'number' ? (
-                            <CountUp
-                              value={stat.value}
-                              delay={260 + index * 110}
-                            />
-                          ) : (
-                            stat.value
-                          )}
-                        </strong>
-                      </li>
-                    ))}
-                  </ul>
-                </aside>
-              )}
             </div>
             <section
               aria-labelledby="chef-config-title"

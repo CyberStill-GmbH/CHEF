@@ -560,7 +560,13 @@ export function GlobeSpacer({
     update();
     scroller.addEventListener('scroll', update, { passive: true });
     window.addEventListener('resize', update);
+    const layoutObserver =
+      typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(update);
+    for (const child of Array.from(scroller.children)) {
+      layoutObserver?.observe(child);
+    }
     return () => {
+      layoutObserver?.disconnect();
       scroller.removeEventListener('scroll', update);
       window.removeEventListener('resize', update);
       progressRef.current = 0;

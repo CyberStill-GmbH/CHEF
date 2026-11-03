@@ -6,6 +6,8 @@ import { AmbientHueContext, hslToHex } from '../ambient';
 import { prefersReducedMotion } from '../motion';
 
 interface ReconGraphPanelProps {
+  /** 'open' = mapa sin caja con paneles flotantes (Reconocimiento); 'embedded' = caja apilada. */
+  variant?: 'open' | 'embedded';
   graph: ReconGraphDto;
 }
 
@@ -36,6 +38,78 @@ const ASSERTION_LABELS: Record<string, string> = {
   observed_open: 'reportado abierto',
 };
 
+/**
+ * Dispone el mapa: el grupo con relaciones usa un layout de fuerzas y los nodos
+ * sueltos (sin relaciones) se ordenan en una cuadrícula aparte. Con un único
+ * layout de fuerzas, los nodos sueltos salen disparados lejísimos y, al
+ * encuadrar, todo queda diminuto. Si el lienzo es ancho y el grupo sale alto, se
+ * gira a horizontal para aprovechar el espacio.
+ */
+function arrangeGraph(cy: Core, aspect: number) {
+  const connected = cy.nodes().filter((node) => node.degree(false) > 0);
+  const lonely = cy.nodes().filter((node) => node.degree(false) === 0);
+  if (connected.length > 0) {
+    connected
+      .union(connected.connectedEdges())
+      .layout({
+        name: 'cose',
+        animate: false,
+        fit: false,
+        padding: 30,
+        nodeOverlap: 40,
+        componentSpacing: 80,
+        gravity: 0.5,
+        nodeRepulsion: 9000,
+        idealEdgeLength: 150,
+      })
+      .run();
+    const grown = connected.boundingBox({});
+    if (aspect > 1.2 && grown.h > grown.w * 1.1) {
+      const cx = (grown.x1 + grown.x2) / 2;
+      const cy0 = (grown.y1 + grown.y2) / 2;
+      connected.positions((node) => ({
+        x: cx + (node.position('y') - cy0),
+        y: cy0 + (node.position('x') - cx),
+      }));
+    }
+  }
+  if (lonely.length === 0) return;
+  const box = connected.length > 0 ? connected.boundingBox({}) : null;
+  const width = box === null ? 0 : box.w;
+  const columns = Math.max(3, Math.min(6, Math.floor(width / 196) + 1));
+  const startX = box === null ? 0 : box.x1;
+  const startY = box === null ? 0 : box.y2 + 120;
+  lonely.forEach((node, index) => {
+    node.position({
+      x: startX + (index % columns) * 196,
+      y: startY + Math.floor(index / columns) * 86,
+    });
+  });
+}
+
+/**
+ * Estira el layout en horizontal hasta acercarlo a la proporción del lienzo.
+ * El layout de fuerzas suele salir como un tronco alto y estrecho; en un mapa
+ * ancho eso deja los nodos diminutos y mucho espacio sin usar.
+ */
+function spreadToAspect(cy: Core, width: number, height: number) {
+  const box = cy.nodes().boundingBox({});
+  if (box.w < 1 || box.h < 1 || height < 1) return;
+  const target = width / height;
+  const factorX = Math.min(Math.max(target / (box.w / box.h), 1), 3.2);
+  const stretched = (box.w * factorX) / box.h;
+  // Si aun estirado queda demasiado alto, se comprime un poco en vertical.
+  const factorY =
+    stretched < target * 0.85 ? Math.max(0.65, stretched / (target * 0.85)) : 1;
+  if (factorX <= 1.05 && factorY >= 0.97) return;
+  const centerX = (box.x1 + box.x2) / 2;
+  const centerY = (box.y1 + box.y2) / 2;
+  cy.nodes().positions((node) => ({
+    x: centerX + (node.position('x') - centerX) * factorX,
+    y: centerY + (node.position('y') - centerY) * factorY,
+  }));
+}
+
 /** Hoja de estilo del grafo: el acento sale del matiz del ambiente activo. */
 function graphStyle(hue: number): StylesheetJson {
   return [
@@ -45,15 +119,15 @@ function graphStyle(hue: number): StylesheetJson {
         label: 'data(label)',
         'text-wrap': 'wrap',
         'text-max-width': '140px',
-        'font-size': 11,
+        'font-size': 13,
         'font-family': "'JetBrains Mono', 'Cascadia Code', Consolas, monospace",
         color: '#e4e6e8',
         'text-valign': 'center',
         'text-halign': 'center',
-        width: 156,
-        height: 54,
+        width: 176,
+        height: 60,
         shape: 'round-rectangle',
-        'background-color': '#0f1113',
+        'background-color': hslToHex(hue, 14, 7),
         'border-width': 1.5,
         'border-color': hslToHex(hue, 45, 32),
       },
@@ -90,8 +164,8 @@ function graphStyle(hue: number): StylesheetJson {
         'text-background-padding': '2px',
         'curve-style': 'bezier',
         'target-arrow-shape': 'triangle',
-        'line-color': '#2e3338',
-        'target-arrow-color': '#2e3338',
+        'line-color': hslToHex(hue, 14, 34),
+        'target-arrow-color': hslToHex(hue, 14, 34),
         width: 1.5,
       },
     },
@@ -113,10 +187,14 @@ function graphStyle(hue: number): StylesheetJson {
     },
   ];
 }
-export function ReconGraphPanel({ graph }: ReconGraphPanelProps) {
+export function ReconGraphPanel({
+  graph,
+  variant = 'embedded',
+}: ReconGraphPanelProps) {
+  const [assetsOpen, setAssetsOpen] = useState(false);
   const [filter, setFilter] = useState('');
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(
-    graph.assets[0]?.id ?? null,
+    variant === 'open' ? null : (graph.assets[0]?.id ?? null),
   );
   const graphRef = useRef<Core | null>(null);
   const latestGraphRef = useRef(graph);
@@ -154,26 +232,23 @@ export function ReconGraphPanel({ graph }: ReconGraphPanelProps) {
       cy = cytoscape({
         container,
         elements: graphElements(initialGraph),
-        layout: {
-          name: 'cose',
-          animate: false,
-          fit: true,
-          padding: 36,
-          spacingFactor: 1.2,
-          nodeRepulsion: 7200,
-          idealEdgeLength: 170,
-        },
+        layout: { name: 'preset' },
         minZoom: 0.2,
         maxZoom: 3,
         style: graphStyle(hueRef.current),
       });
       graphRef.current = cy;
+      arrangeGraph(
+        cy,
+        container.clientWidth / Math.max(container.clientHeight, 1),
+      );
       if (selectedAssetIdRef.current !== null) {
         cy.getElementById(selectedAssetIdRef.current).select();
       }
       if (container.clientWidth > 0 && container.clientHeight > 0) {
+        spreadToAspect(cy, container.clientWidth, container.clientHeight);
         cy.resize();
-        cy.fit(undefined, 24);
+        cy.fit(undefined, 28);
       }
       cy.on('tap', 'node', (event) => setSelectedAssetId(event.target.id()));
 
@@ -209,7 +284,7 @@ export function ReconGraphPanel({ graph }: ReconGraphPanelProps) {
                     complete: () => {
                       if (cy?.destroyed()) return;
                       cy?.animate(
-                        { fit: { eles: cy.elements(), padding: 24 } },
+                        { fit: { eles: cy.elements(), padding: 28 } },
                         { duration: 450, easing: 'ease-out-cubic' },
                       );
                     },
@@ -286,15 +361,21 @@ export function ReconGraphPanel({ graph }: ReconGraphPanelProps) {
   }, [selectedAssetId]);
 
   useEffect(() => {
-    if (selectedAssetId === null && graph.assets.length > 0) {
+    if (
+      selectedAssetId === null &&
+      graph.assets.length > 0 &&
+      variant !== 'open'
+    ) {
       setSelectedAssetId(graph.assets[0]?.id ?? null);
     } else if (
       selectedAssetId !== null &&
       !graph.assets.some(({ id }) => id === selectedAssetId)
     ) {
-      setSelectedAssetId(graph.assets[0]?.id ?? null);
+      setSelectedAssetId(
+        variant === 'open' ? null : (graph.assets[0]?.id ?? null),
+      );
     }
-  }, [graph.assets, selectedAssetId]);
+  }, [graph.assets, selectedAssetId, variant]);
 
   const filteredAssets = useMemo(() => {
     const normalizedFilter = filter.trim().toLocaleLowerCase();
@@ -319,6 +400,273 @@ export function ReconGraphPanel({ graph }: ReconGraphPanelProps) {
       fromAssetId === selectedAssetId || toAssetId === selectedAssetId,
   );
 
+  const zoomBy = (factor: number) => {
+    const cy = graphRef.current;
+    if (cy === null) return;
+    cy.animate(
+      {
+        zoom: {
+          level: Math.min(
+            Math.max(cy.zoom() * factor, cy.minZoom()),
+            cy.maxZoom(),
+          ),
+          renderedPosition: { x: cy.width() / 2, y: cy.height() / 2 },
+        },
+      },
+      { duration: 220 },
+    );
+  };
+  const fitView = () => {
+    const cy = graphRef.current;
+    if (cy === null) return;
+    cy.animate(
+      { fit: { eles: cy.elements(), padding: 28 } },
+      { duration: 320 },
+    );
+  };
+
+  if (variant === 'open') {
+    return (
+      <div
+        className="graph-open"
+        role="region"
+        aria-labelledby="recon-graph-title"
+      >
+        <div
+          id="recon-graph-canvas"
+          className="recon-graph-canvas"
+          role="img"
+          aria-label="Diagrama de activos y relaciones. Usa la lista de activos para seleccionar uno y consultar su evidencia."
+        />
+
+        <div className="graph-hud graph-hud-left">
+          <h2 id="recon-graph-title">Mapa de relaciones</h2>
+          <p className="graph-counts">
+            {graph.assets.length} activos · {graph.relationships.length}{' '}
+            relaciones · {graph.evidence.length} evidencias
+          </p>
+          <div className="graph-tools">
+            <label className="graph-sr-only" htmlFor="recon-asset-filter">
+              Filtrar activos
+            </label>
+            <input
+              id="recon-asset-filter"
+              type="search"
+              placeholder="Filtrar activos…"
+              value={filter}
+              onChange={(event) => setFilter(event.currentTarget.value)}
+            />
+            <button
+              type="button"
+              aria-expanded={assetsOpen}
+              aria-controls="recon-asset-panel"
+              onClick={() => setAssetsOpen((open) => !open)}
+            >
+              Activos · {filteredAssets.matchingCount}
+            </button>
+          </div>
+          <div
+            id="recon-asset-panel"
+            className="graph-assets"
+            hidden={!assetsOpen}
+          >
+            {filteredAssets.matchingCount === 0 ? (
+              <p>No hay activos que coincidan con el filtro.</p>
+            ) : (
+              <>
+                <ul className="recon-asset-list">
+                  {filteredAssets.visible.map((asset) => (
+                    <li key={asset.id}>
+                      <button
+                        type="button"
+                        aria-pressed={asset.id === selectedAssetId}
+                        onClick={() => setSelectedAssetId(asset.id)}
+                      >
+                        <span>{KIND_LABELS[asset.kind]}</span>
+                        <strong>{asset.key}</strong>
+                        {asset.qualification !== null && (
+                          <span>
+                            Estado:{' '}
+                            {ASSERTION_LABELS[asset.qualification] ??
+                              asset.qualification}
+                          </span>
+                        )}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+                {filteredAssets.matchingCount > MAX_VISIBLE_ASSETS && (
+                  <p>
+                    Mostrando {MAX_VISIBLE_ASSETS} de{' '}
+                    {filteredAssets.matchingCount}; ajusta el filtro para
+                    encontrar otros activos.
+                  </p>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+
+        <aside
+          className="graph-hud graph-inspector"
+          hidden={selectedAsset === undefined}
+          aria-label="Detalle del activo seleccionado"
+        >
+          {selectedAsset === undefined ? (
+            <p className="graph-hint">
+              Selecciona un nodo para revisar su evidencia y relaciones.
+            </p>
+          ) : (
+            <>
+              <button
+                type="button"
+                className="inspector-close"
+                aria-label="Cerrar detalle"
+                onClick={() => setSelectedAssetId(null)}
+              >
+                ✕
+              </button>
+              <p className="inspector-kind">
+                {KIND_LABELS[selectedAsset.kind]}
+              </p>
+              <h3 id="recon-selection-title" className="inspector-key">
+                {selectedAsset.key}
+              </h3>
+              <dl className="inspector-facts">
+                <div>
+                  <dt>Identificador CHEF</dt>
+                  <dd>{selectedAsset.id}</dd>
+                </div>
+                <div>
+                  <dt>Observado por primera vez</dt>
+                  <dd>{selectedAsset.firstSeen}</dd>
+                </div>
+                <div>
+                  <dt>Observado por última vez</dt>
+                  <dd>{selectedAsset.lastSeen}</dd>
+                </div>
+              </dl>
+              <details className="inspector-group" open>
+                <summary>
+                  Evidencia de origen <span>{selectedEvidence.length}</span>
+                </summary>
+                {selectedEvidence.length === 0 ? (
+                  <p>No hay evidencia asociada a este activo.</p>
+                ) : (
+                  selectedEvidence.map((item) => (
+                    <details key={item.id} className="inspector-item">
+                      <summary>{item.eventType}</summary>
+                      <dl>
+                        <dt>Fecha</dt>
+                        <dd>{item.observedAt}</dd>
+                        <dt>Localizador</dt>
+                        <dd>{item.locator}</dd>
+                        <dt>Módulo de origen</dt>
+                        <dd>{item.module ?? 'No indicado'}</dd>
+                        <dt>Redactado</dt>
+                        <dd>{item.redacted ? 'Sí' : 'No'}</dd>
+                      </dl>
+                    </details>
+                  ))
+                )}
+              </details>
+              <details className="inspector-group">
+                <summary>
+                  Relaciones sustentadas{' '}
+                  <span>{connectedRelationships.length}</span>
+                </summary>
+                {connectedRelationships.length === 0 ? (
+                  <p>No hay relaciones sustentadas para este activo.</p>
+                ) : (
+                  connectedRelationships.map((relationship) => {
+                    const from = graph.assets.find(
+                      ({ id }) => id === relationship.fromAssetId,
+                    );
+                    const to = graph.assets.find(
+                      ({ id }) => id === relationship.toAssetId,
+                    );
+                    return (
+                      <details key={relationship.id} className="inspector-item">
+                        <summary>
+                          {from?.key ?? relationship.fromAssetId} →{' '}
+                          {to?.key ?? relationship.toAssetId}
+                        </summary>
+                        <dl>
+                          <dt>Tipo</dt>
+                          <dd>
+                            {RELATIONSHIP_LABELS[relationship.kind] ??
+                              relationship.kind}
+                          </dd>
+                          <dt>Afirmación</dt>
+                          <dd>
+                            {ASSERTION_LABELS[relationship.assertion] ??
+                              relationship.assertion}
+                          </dd>
+                        </dl>
+                      </details>
+                    );
+                  })
+                )}
+              </details>
+            </>
+          )}
+        </aside>
+
+        <ul className="graph-hud graph-legend" aria-label="Leyenda del mapa">
+          <li>
+            <i className="legend-dot is-observed" />
+            Observado
+          </li>
+          <li>
+            <i className="legend-dot is-candidate" />
+            Candidato
+          </li>
+          <li>
+            <i className="legend-dot is-hint" />
+            Pista
+          </li>
+          <li>
+            <i className="legend-dot is-unresolved" />
+            Sin resolver
+          </li>
+        </ul>
+
+        <div
+          className="graph-hud graph-zoom"
+          role="group"
+          aria-label="Controles del mapa"
+        >
+          <button
+            type="button"
+            aria-label="Acercar"
+            onClick={() => zoomBy(1.3)}
+          >
+            +
+          </button>
+          <button
+            type="button"
+            aria-label="Alejar"
+            onClick={() => zoomBy(1 / 1.3)}
+          >
+            −
+          </button>
+          <button
+            type="button"
+            aria-label="Encuadrar todo el mapa"
+            onClick={fitView}
+          >
+            ⤢
+          </button>
+        </div>
+
+        <p className="graph-disclaimer">
+          Haz clic en un nodo para ver su evidencia. La animación organiza
+          evidencia importada; no representa tráfico en vivo. Los candidatos y
+          las pistas no son vulnerabilidades confirmadas.
+        </p>
+      </div>
+    );
+  }
   return (
     <section aria-labelledby="recon-graph-title">
       <header className="graph-summary">

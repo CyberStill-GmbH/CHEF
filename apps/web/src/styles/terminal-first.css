@@ -667,27 +667,6 @@
   font-size: 14px;
 }
 
-@media (max-width: 1180px) {
-  .recon-workbench {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: minmax(420px, 1fr) 280px auto;
-  }
-
-  .summary-rail {
-    grid-column: 1;
-    grid-row: 3;
-  }
-
-  .summary-rail ul {
-    flex-direction: row;
-    flex-wrap: wrap;
-  }
-
-  .stat-card {
-    flex: 1 1 150px;
-  }
-}
-
 /*
  * Superficies unificadas. Todas las vistas usan los mismos tres niveles, para
  * que no se mezclen tonos de marrón ni esquinas rectas con redondeadas:
@@ -791,6 +770,454 @@
 
 .summary-metric {
   padding: 12px 14px;
+}
+
+/*
+ * Mapa de relaciones "al aire": el lienzo ocupa todo el ancho, sin caja, sobre
+ * el fondo con estrellas. Todo lo demás (título, filtro, resumen, detalle,
+ * leyenda y zoom) son paneles de vidrio flotantes encima del mapa; la consola
+ * pasa a un panel plegable debajo.
+ */
+/* max-content: cada fila mide lo que su contenido; con filas "auto" y un
+   contenedor de altura fija, el grid las comprimía y el contenido se solapaba. */
+.main-content.recon-content {
+  grid-template-rows: max-content max-content max-content max-content;
+}
+
+.recon-workbench {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: max-content max-content;
+  gap: 16px;
+}
+
+.graph-column {
+  position: relative;
+  grid-column: 1;
+  grid-row: 1;
+  padding: 0;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  backdrop-filter: none;
+}
+
+.graph-open {
+  position: relative;
+  height: clamp(540px, 76vh, 820px);
+}
+
+/* Franja libre arriba (paneles) y abajo (leyenda y zoom): ningún nodo queda debajo. */
+.graph-open .recon-graph-canvas {
+  position: absolute;
+  inset: 150px 0 60px;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.graph-hud {
+  position: absolute;
+  z-index: 2;
+  border: 1px solid var(--chef-glass-line);
+  border-radius: 14px;
+  background: var(--chef-glass);
+  backdrop-filter: blur(16px);
+}
+
+.graph-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.graph-hud-left {
+  top: 16px;
+  left: 16px;
+  width: min(340px, calc(100% - 32px));
+  max-height: calc(100% - 32px);
+  padding: 14px 16px;
+  overflow: auto;
+}
+
+.graph-hud-left h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.graph-hint-line {
+  margin: 0 0 12px;
+  color: var(--chef-muted);
+  font-size: 12px;
+}
+
+.graph-counts {
+  margin: 2px 0 12px;
+  color: var(--chef-muted);
+  font-size: 12px;
+}
+
+.graph-tools {
+  display: flex;
+  gap: 8px;
+}
+
+.graph-tools input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.graph-assets {
+  max-height: 38vh;
+  margin-top: 12px;
+  overflow: auto;
+}
+
+.graph-assets .recon-asset-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.graph-assets .recon-asset-list button {
+  display: block;
+  width: 100%;
+  padding: 8px 10px;
+  text-align: left;
+}
+
+.graph-assets .recon-asset-list button span {
+  display: block;
+  color: var(--chef-muted);
+  font-size: 11px;
+}
+
+.graph-assets .recon-asset-list button strong {
+  display: block;
+  font-family: var(--chef-mono);
+  font-size: 12px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.graph-assets .recon-asset-list button[aria-pressed='true'] {
+  border-color: hsl(var(--chef-hue) 70% 58% / 0.7);
+  background: hsl(var(--chef-hue) 60% 50% / 0.12);
+}
+
+.graph-inspector {
+  top: 92px;
+  right: 16px;
+  width: min(360px, calc(100% - 32px));
+  max-height: calc(100% - 92px - 68px);
+  padding: 16px;
+  overflow: auto;
+  animation: chef-slide-right 0.7s var(--chef-ease) 0.5s both;
+}
+
+.graph-hint {
+  margin: 0;
+  color: var(--chef-muted);
+  font-size: 13px;
+}
+
+.graph-inspector .inspector-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 28px;
+  min-height: 28px;
+  padding: 0;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.inspector-kind {
+  margin: 0 0 4px;
+  color: hsl(var(--chef-hue) 80% 66%);
+  font-family: var(--chef-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.main-content .inspector-key {
+  margin: 0 0 12px;
+  font-family: var(--chef-mono);
+  font-size: 16px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.inspector-facts {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+
+.inspector-facts dt {
+  color: var(--chef-muted);
+  font-size: 11px;
+}
+
+.inspector-facts dd {
+  margin: 0;
+  font-family: var(--chef-mono);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.inspector-group {
+  border-top: 1px solid var(--chef-glass-line);
+  padding: 10px 0 2px;
+}
+
+.inspector-group > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.inspector-group > summary span {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--surface-control);
+  color: var(--chef-muted);
+  font-size: 11px;
+}
+
+.inspector-item {
+  margin: 8px 0 0;
+  padding: 8px 10px;
+  border: 1px solid var(--surface-inset-line);
+  border-radius: 10px;
+  background: var(--surface-inset);
+}
+
+.inspector-item > summary {
+  font-family: var(--chef-mono);
+  font-size: 12px;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+
+.inspector-item dl {
+  margin: 8px 0 0;
+}
+
+.inspector-item dt {
+  margin-top: 6px;
+  color: var(--chef-muted);
+  font-size: 11px;
+}
+
+.inspector-item dd {
+  margin: 0;
+  font-family: var(--chef-mono);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.graph-legend {
+  bottom: 16px;
+  left: 16px;
+  display: flex;
+  gap: 16px;
+  margin: 0;
+  padding: 9px 14px;
+  list-style: none;
+  color: var(--chef-muted);
+  font-size: 12px;
+}
+
+.graph-legend li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.legend-dot {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  border: 1.5px solid;
+  border-radius: 3px;
+}
+
+.legend-dot.is-observed {
+  border-color: hsl(var(--chef-hue) 45% 38%);
+}
+
+.legend-dot.is-candidate {
+  border-color: #f2b35a;
+}
+
+.legend-dot.is-hint {
+  border-color: #f2b35a;
+  border-style: dashed;
+}
+
+.legend-dot.is-unresolved {
+  border-color: #928b84;
+  border-style: dashed;
+}
+
+.graph-zoom {
+  right: 16px;
+  bottom: 16px;
+  display: flex;
+  gap: 6px;
+  padding: 6px;
+}
+
+.graph-zoom button {
+  width: 34px;
+  min-height: 34px;
+  padding: 0;
+  font-size: 17px;
+  line-height: 1;
+}
+
+.graph-disclaimer {
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  z-index: 1;
+  max-width: min(520px, 38%);
+  margin: 0;
+  color: var(--chef-muted);
+  font-size: 11px;
+  line-height: 1.45;
+  text-align: center;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.graph-status {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  z-index: 3;
+  margin: 0;
+  padding: 6px 14px;
+  border: 1px solid var(--chef-glass-line);
+  border-radius: 999px;
+  background: var(--chef-glass);
+  color: var(--chef-muted);
+  font-size: 12px;
+  transform: translateX(-50%);
+}
+
+/* Resumen: chips flotantes arriba a la derecha del mapa. */
+.graph-column > .summary-rail {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 3;
+  display: block;
+  grid-column: auto;
+  grid-row: auto;
+}
+
+.graph-column > .summary-rail ul {
+  flex-direction: row;
+  gap: 8px;
+}
+
+.graph-column > .summary-rail .stat-card {
+  min-width: 82px;
+  padding: 8px 14px;
+  gap: 0;
+}
+
+.graph-column > .summary-rail .stat-card strong {
+  font-size: 20px;
+}
+
+/* Consola: panel plegable debajo del mapa. */
+.terminal-column {
+  grid-row: 2;
+}
+
+.terminal-column > h2 {
+  padding: 0;
+}
+
+.terminal-column .console-toggle {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 0;
+  padding: 12px 18px 12px 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: left;
+  text-transform: inherit;
+  cursor: pointer;
+}
+
+.terminal-column .console-toggle:hover:not(:disabled) {
+  background: transparent;
+}
+
+.terminal-column .console-toggle::after {
+  margin-left: auto;
+  content: '▾';
+  transition: transform 0.25s var(--chef-ease);
+}
+
+.terminal-column .console-toggle[aria-expanded='false']::after {
+  transform: rotate(-90deg);
+}
+
+.terminal-column > h2 {
+  padding-left: 18px;
+}
+
+.terminal-column #activity-terminal {
+  height: 280px;
+  flex: none;
+}
+
+.terminal-column.is-collapsed #activity-terminal {
+  display: none;
+}
+
+@media (max-width: 1100px) {
+  .graph-disclaimer {
+    display: none;
+  }
+
+  .graph-hud-left {
+    width: min(280px, calc(100% - 32px));
+  }
+
+  .graph-inspector {
+    width: min(300px, calc(100% - 32px));
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
