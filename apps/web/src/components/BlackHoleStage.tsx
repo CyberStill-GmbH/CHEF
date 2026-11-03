@@ -13,8 +13,10 @@ import {
 } from './blackHole';
 import { useScrollProgress } from './scrollProgress';
 
-const COLUMNS = 560;
-const ROWS = 336;
+const COLUMNS = 700;
+const ROWS = 274;
+/** Inclinación de la imagen en el plano de la pantalla (25°, en sentido horario). */
+const ROLL = (25 * Math.PI) / 180;
 const STAR_COUNT = 720;
 /** Radio (px) del clic dentro del cual las estrellas se encienden. */
 const CLICK_RADIUS = 160;
@@ -211,13 +213,17 @@ export function BlackHoleStage({
       context.imageSmoothingEnabled = true;
       context.imageSmoothingQuality = 'high';
       context.globalAlpha = appear;
+      context.save();
+      context.translate(centerX, centerY);
+      context.rotate(ROLL);
       context.drawImage(
         holeCanvas,
-        centerX - (FIELD_WIDTH / 2) * unit,
-        centerY - (FIELD_HEIGHT / 2) * unit,
+        -(FIELD_WIDTH / 2) * unit,
+        -(FIELD_HEIGHT / 2) * unit,
         FIELD_WIDTH * unit,
         FIELD_HEIGHT * unit,
       );
+      context.restore();
       context.globalAlpha = 1;
       context.globalCompositeOperation = 'source-over';
     };
@@ -248,7 +254,7 @@ export function BlackHoleStage({
       } else {
         tick += 1;
         // El disco gira a ~30 cuadros por segundo; las estrellas, a pantalla completa.
-        if (finishedAt !== null && tick % 3 === 0) paintHole(seconds);
+        if (finishedAt !== null && tick % 2 === 0) paintHole(seconds);
         draw(seconds);
         for (let index = pulses.length - 1; index >= 0; index -= 1) {
           const pulse = pulses[index];

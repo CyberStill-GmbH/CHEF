@@ -17,13 +17,13 @@
  */
 
 /** Ancho y alto del plano de la imagen, en unidades de M. */
-export const FIELD_WIDTH = 30;
+export const FIELD_WIDTH = 46;
 export const FIELD_HEIGHT = 18;
 /** Radio de la sombra de un agujero de Schwarzschild: 3√3 M. */
 export const SHADOW_RADIUS = 5.196;
 
 const INNER_RADIUS = 6;
-const OUTER_RADIUS = 22;
+const OUTER_RADIUS = 36;
 const STEP = 0.04;
 const MAX_SWEEP = Math.PI * 3.2;
 const ORDERS = 3;
@@ -57,7 +57,7 @@ export function createTrace(columns: number, rows: number): BlackHoleTrace {
   for (let index = 0; index < count; index += 1) {
     const nx = Math.abs(((index % columns) + 0.5) / columns - 0.5) * 2;
     const ny = Math.abs((Math.floor(index / columns) + 0.5) / rows - 0.5) * 2;
-    fade[index] = smooth((1 - nx) / 0.45) * smooth((1 - ny) / 0.5);
+    fade[index] = smooth((1 - nx) / 0.3) * smooth((1 - ny) / 0.5);
   }
   return {
     columns,
@@ -120,7 +120,7 @@ export function advanceTrace(trace: BlackHoleTrace, maxMs: number): boolean {
             Math.sqrt(Math.max(1 - 3 / r, 0.001)) /
             Math.max(1 + omega * x * sinTheta, 0.2);
           const edge = Math.min(1, (r - INNER_RADIUS) / 1.2 + 0.15);
-          const emissivity = Math.pow(INNER_RADIUS / r, 2.3) * edge;
+          const emissivity = Math.pow(INNER_RADIUS / r, 1.9) * edge;
           const slot = order;
           (trace.intensity[slot] as Float32Array)[index] =
             Math.pow(g, 2.4) * emissivity;
@@ -191,9 +191,9 @@ const STREAKS = (() => {
   for (let i = 0; i < STREAK_SIZE; i += 1) {
     const r = i * 0.09;
     const raw =
-      0.5 * valueNoise(r * 1.1, 1) +
-      0.3 * valueNoise(r * 2.9, 2) +
-      0.2 * valueNoise(r * 7.3, 3);
+      0.5 * valueNoise(r * 0.9, 1) +
+      0.3 * valueNoise(r * 2.3, 2) +
+      0.2 * valueNoise(r * 4.2, 3);
     table[i] = Math.pow(Math.min(Math.max(raw, 0), 1), 1.9);
   }
   return table;
@@ -211,7 +211,7 @@ export function paintTrace(
 ) {
   const data = image.data;
   data.fill(0);
-  const spin = time * 2.4;
+  const spin = time * 6.5;
   for (const index of trace.lit) {
     let total = 0;
     for (let order = 0; order < ORDERS; order += 1) {
@@ -222,16 +222,19 @@ export function paintTrace(
       const turn = psi - spin * Math.pow(r, -1.5) * 6;
       // Azimut: manchas suaves que giran; radio: filamentos finos y desiguales.
       const patch =
-        0.78 +
-        0.12 * Math.sin(2 * turn + 0.18 * r) +
-        0.1 * Math.sin(3 * turn + 1.1 + 0.3 * r);
+        0.62 +
+        0.22 * Math.sin(2 * turn + 0.18 * r) +
+        0.18 * Math.sin(3 * turn + 1.1 + 0.3 * r) +
+        0.35 * Math.pow(0.5 + 0.5 * Math.sin(turn + 0.5), 4);
       const line = Math.min(
         STREAK_SIZE - 1,
         Math.max(0, Math.floor((r - INNER_RADIUS) / 0.09)),
       );
       const filament =
         0.3 +
-        1.5 * (STREAKS[line] ?? 0) * (0.8 + 0.2 * Math.sin(4 * turn + r * 1.7));
+        1.5 *
+          (STREAKS[line] ?? 0) *
+          (0.75 + 0.25 * Math.sin(2 * turn + r * 0.8));
       const texture = patch * filament;
       total += base * texture;
     }
