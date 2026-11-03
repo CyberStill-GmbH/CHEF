@@ -61,7 +61,7 @@ const ROW_GAP = 70;
 /**
  * Dispone el mapa por carriles según el tipo de activo (dominio, IP, servicios,
  * hallazgos), de izquierda a derecha, y deja los nodos sin relaciones en un
- * último carril de pistas. Dentro de cada carril se ordena por la altura media
+ * una banda de pistas debajo. Dentro de cada carril se ordena por la altura media
  * de sus vecinos ya colocados, para que las aristas se crucen lo menos posible.
  */
 function arrangeGraph(cy: Core) {
@@ -94,14 +94,16 @@ function arrangeGraph(cy: Core) {
       node.position({ x: laneIndex * LANE_GAP, y });
     });
   });
-  const lonelyX = ordered.length * LANE_GAP;
-  const perColumn = Math.max(6, Math.ceil(lonely.length / 2));
+  // Las pistas sin relaciones van en una banda propia debajo de los carriles.
+  const columns = Math.max(3, ordered.length);
+  const top =
+    placed.size === 0
+      ? 0
+      : Math.max(...[...placed.values()].map((y) => Math.abs(y))) + 120;
   lonely.forEach((node, index) => {
-    const column = Math.floor(index / perColumn);
-    const rows = Math.min(perColumn, lonely.length - column * perColumn);
     node.position({
-      x: lonelyX + column * LANE_GAP,
-      y: ((index % perColumn) - (rows - 1) / 2) * ROW_GAP,
+      x: (index % columns) * LANE_GAP,
+      y: top + Math.floor(index / columns) * ROW_GAP,
     });
   });
 }
@@ -231,6 +233,12 @@ export function ReconGraphPanel({
         container,
         elements: graphElements(initialGraph),
         layout: { name: 'preset' },
+        // Mapa fijo, como una imagen: sin zoom, sin arrastre y sin mover nodos,
+        // para que la rueda del ratón siga desplazando la página.
+        userZoomingEnabled: false,
+        userPanningEnabled: false,
+        boxSelectionEnabled: false,
+        autoungrabify: true,
         minZoom: 0.2,
         maxZoom: 3,
         style: graphStyle(hueRef.current),
@@ -394,31 +402,6 @@ export function ReconGraphPanel({
       fromAssetId === selectedAssetId || toAssetId === selectedAssetId,
   );
 
-  const zoomBy = (factor: number) => {
-    const cy = graphRef.current;
-    if (cy === null) return;
-    cy.animate(
-      {
-        zoom: {
-          level: Math.min(
-            Math.max(cy.zoom() * factor, cy.minZoom()),
-            cy.maxZoom(),
-          ),
-          renderedPosition: { x: cy.width() / 2, y: cy.height() / 2 },
-        },
-      },
-      { duration: 220 },
-    );
-  };
-  const fitView = () => {
-    const cy = graphRef.current;
-    if (cy === null) return;
-    cy.animate(
-      { fit: { eles: cy.elements(), padding: 28 } },
-      { duration: 320 },
-    );
-  };
-
   if (variant === 'open') {
     return (
       <div
@@ -503,7 +486,6 @@ export function ReconGraphPanel({
 
         <aside
           className="graph-hud graph-inspector"
-          hidden={selectedAsset === undefined}
           aria-label="Detalle del activo seleccionado"
         >
           {selectedAsset === undefined ? (
@@ -624,34 +606,6 @@ export function ReconGraphPanel({
             Sin resolver
           </li>
         </ul>
-
-        <div
-          className="graph-hud graph-zoom"
-          role="group"
-          aria-label="Controles del mapa"
-        >
-          <button
-            type="button"
-            aria-label="Acercar"
-            onClick={() => zoomBy(1.3)}
-          >
-            +
-          </button>
-          <button
-            type="button"
-            aria-label="Alejar"
-            onClick={() => zoomBy(1 / 1.3)}
-          >
-            −
-          </button>
-          <button
-            type="button"
-            aria-label="Encuadrar todo el mapa"
-            onClick={fitView}
-          >
-            ⤢
-          </button>
-        </div>
 
         <p className="graph-disclaimer">
           Haz clic en un nodo para ver su evidencia. La animación organiza

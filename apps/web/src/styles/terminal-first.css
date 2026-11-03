@@ -810,7 +810,9 @@
 /* Franja libre arriba (paneles) y abajo (leyenda y zoom): ningún nodo queda debajo. */
 .graph-open .recon-graph-canvas {
   position: absolute;
-  inset: 150px 0 60px;
+  /* A la derecha queda reservado el hueco del panel de detalle: nada lo tapa. */
+  inset: 150px 340px 60px 0;
+  width: auto;
   height: auto;
   min-height: 0;
   margin: 0;
@@ -922,7 +924,7 @@
 .graph-inspector {
   top: 92px;
   right: 16px;
-  width: min(360px, calc(100% - 32px));
+  width: min(320px, calc(100% - 32px));
   max-height: calc(100% - 92px - 68px);
   padding: 16px;
   overflow: auto;
@@ -1216,7 +1218,11 @@
   }
 
   .graph-inspector {
-    width: min(300px, calc(100% - 32px));
+    width: min(280px, calc(100% - 32px));
+  }
+
+  .graph-open .recon-graph-canvas {
+    inset: 150px 300px 60px 0;
   }
 }
 
