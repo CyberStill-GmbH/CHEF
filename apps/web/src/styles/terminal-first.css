@@ -804,14 +804,14 @@
 
 .graph-open {
   position: relative;
-  height: clamp(540px, 76vh, 820px);
+  height: clamp(700px, 92vh, 1000px);
 }
 
 /* Franja libre arriba (paneles) y abajo (leyenda y zoom): ningún nodo queda debajo. */
 .graph-open .recon-graph-canvas {
   position: absolute;
-  /* A la derecha queda reservado el hueco del panel de detalle: nada lo tapa. */
-  inset: 150px 340px 60px 0;
+  /* Abajo queda libre la franja de la leyenda y del aviso. */
+  inset: 150px 0 110px;
   width: auto;
   height: auto;
   min-height: 0;
@@ -922,13 +922,18 @@
 }
 
 .graph-inspector {
-  top: 92px;
-  right: 16px;
-  width: min(320px, calc(100% - 32px));
-  max-height: calc(100% - 92px - 68px);
+  width: 320px;
+  max-height: 392px;
   padding: 16px;
   overflow: auto;
-  animation: chef-slide-right 0.7s var(--chef-ease) 0.5s both;
+  animation: chef-pop 0.22s var(--chef-ease) both;
+}
+
+@keyframes chef-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
 }
 
 .graph-hint {
@@ -1215,14 +1220,6 @@
 
   .graph-hud-left {
     width: min(280px, calc(100% - 32px));
-  }
-
-  .graph-inspector {
-    width: min(280px, calc(100% - 32px));
-  }
-
-  .graph-open .recon-graph-canvas {
-    inset: 150px 300px 60px 0;
   }
 }
 

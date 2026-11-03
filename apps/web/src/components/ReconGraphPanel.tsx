@@ -1,4 +1,11 @@
-import { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+} from 'react';
 import type {
   Core,
   ElementDefinition,
@@ -9,6 +16,34 @@ import type {
 import type { ReconAssetDto, ReconGraphDto } from '../contracts/recon-graph';
 import { AmbientHueContext, hslToHex } from '../ambient';
 import { prefersReducedMotion } from '../motion';
+
+interface PopoverAnchor {
+  left: number;
+  right: number;
+  centerY: number;
+  width: number;
+  height: number;
+}
+
+const POPOVER_WIDTH = 320;
+const POPOVER_HEIGHT = 392;
+
+/** Coloca el detalle al lado del nodo, como un menú contextual. */
+function popoverStyle(anchor: PopoverAnchor | null): CSSProperties | undefined {
+  if (anchor === null) return undefined;
+  const onRight = (anchor.left + anchor.right) / 2 > anchor.width / 2;
+  const wanted = onRight ? anchor.left - POPOVER_WIDTH - 14 : anchor.right + 14;
+  return {
+    left: Math.min(
+      Math.max(wanted, 8),
+      Math.max(8, anchor.width - POPOVER_WIDTH - 8),
+    ),
+    top: Math.min(
+      Math.max(anchor.centerY - 48, 8),
+      Math.max(8, anchor.height - POPOVER_HEIGHT),
+    ),
+  };
+}
 
 interface ReconGraphPanelProps {
   /** 'open' = mapa sin caja con paneles flotantes (Reconocimiento); 'embedded' = caja apilada. */
@@ -126,6 +161,20 @@ function arrangeGraph(cy: Core) {
       y: offsetY + 30 + Math.floor(index / columns) * ROW_GAP,
     });
   });
+  if (lonely.length > 0 && offsetY > 0) {
+    const box = cy.nodes().boundingBox({});
+    cy.add({
+      data: {
+        id: 'zone-divider',
+        label: `Sin conexión · ${lonely.length}`,
+        span: Math.max(box.w + 120, 900),
+      },
+      classes: 'zone',
+      selectable: false,
+      grabbable: false,
+      position: { x: (box.x1 + box.x2) / 2, y: offsetY - 30 },
+    });
+  }
 }
 
 /** Hoja de estilo del grafo: el acento sale del matiz del ambiente activo. */
@@ -149,6 +198,25 @@ function graphStyle(hue: number): StylesheetJson {
         'background-color': hslToHex(hue, 14, 7),
         'border-width': 1.5,
         'border-color': hslToHex(hue, 45, 32),
+      },
+    },
+    {
+      // Línea que separa los nodos conectados (arriba) de los sueltos (abajo).
+      selector: 'node.zone',
+      style: {
+        events: 'no',
+        width: 'data(span)',
+        height: 2,
+        shape: 'rectangle',
+        'background-color': hslToHex(hue, 30, 40),
+        'background-opacity': 0.4,
+        'border-width': 0,
+        'text-valign': 'top',
+        'text-halign': 'center',
+        'text-margin-y': -12,
+        'text-max-width': '600px',
+        'font-size': 13,
+        color: hslToHex(hue, 25, 66),
       },
     },
     {
@@ -274,6 +342,9 @@ export function ReconGraphPanel({
         cy.fit(undefined, 28);
       }
       cy.on('tap', 'node', (event) => setSelectedAssetId(event.target.id()));
+      cy.on('tap', (event) => {
+        if (event.target === cy) setSelectedAssetId(null);
+      });
 
       // Aparición animada: los nodos brotan desde el centro hacia su lugar, en
       // cascada, y después se dibujan las relaciones. Solo es presentación; el
@@ -382,6 +453,54 @@ export function ReconGraphPanel({
     cy.nodes().unselect();
     if (selectedAssetId !== null) cy.getElementById(selectedAssetId).select();
   }, [selectedAssetId]);
+
+  // El detalle aparece junto al nodo elegido, hacia el lado con más espacio.
+  const [anchor, setAnchor] = useState<PopoverAnchor | null>(null);
+  useEffect(() => {
+    if (variant !== 'open') return;
+    const place = () => {
+      const cy = graphRef.current;
+      const canvas = document.getElementById('recon-graph-canvas');
+      const root = canvas?.parentElement;
+      const node =
+        cy === null || selectedAssetId === null
+          ? null
+          : cy.getElementById(selectedAssetId);
+      if (
+        canvas === null ||
+        canvas === undefined ||
+        !root ||
+        !node ||
+        node.empty()
+      ) {
+        setAnchor(null);
+        return;
+      }
+      const box = node.renderedBoundingBox({
+        includeLabels: false,
+        includeOverlays: false,
+      });
+      setAnchor({
+        left: canvas.offsetLeft + box.x1,
+        right: canvas.offsetLeft + box.x2,
+        centerY: canvas.offsetTop + (box.y1 + box.y2) / 2,
+        width: root.clientWidth,
+        height: root.clientHeight,
+      });
+    };
+    place();
+    window.addEventListener('resize', place);
+    return () => window.removeEventListener('resize', place);
+  }, [selectedAssetId, variant]);
+
+  useEffect(() => {
+    if (variant !== 'open' || selectedAssetId === null) return;
+    const close = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setSelectedAssetId(null);
+    };
+    window.addEventListener('keydown', close);
+    return () => window.removeEventListener('keydown', close);
+  }, [selectedAssetId, variant]);
 
   useEffect(() => {
     if (
@@ -507,13 +626,11 @@ export function ReconGraphPanel({
 
         <aside
           className="graph-hud graph-inspector"
+          hidden={selectedAsset === undefined || anchor === null}
+          style={popoverStyle(anchor)}
           aria-label="Detalle del activo seleccionado"
         >
-          {selectedAsset === undefined ? (
-            <p className="graph-hint">
-              Selecciona un nodo para revisar su evidencia y relaciones.
-            </p>
-          ) : (
+          {selectedAsset === undefined ? null : (
             <>
               <button
                 type="button"
