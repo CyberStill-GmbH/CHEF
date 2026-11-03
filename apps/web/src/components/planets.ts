@@ -12,9 +12,11 @@ type PlanetStyle = 'earth' | 'ringed' | 'banded' | 'facets' | 'moon';
 
 interface PlanetSpec {
   style: PlanetStyle;
-  /** Posición del centro como fracción del ancho y del alto. */
+  /** Posición horizontal (fracción del ancho) y vertical (fracción del recorrido del fondo). */
   x: number;
   y: number;
+  /** Cuánto de lo que se desplaza la página se mueve este planeta (0 = fijo). */
+  parallax: number;
   /** Radio como fracción del lado menor de la pantalla. */
   size: number;
   hue: number;
@@ -46,54 +48,60 @@ export interface Planet {
   grabbed: boolean;
 }
 
+/** Todos en tonos Dune: de rojo brasa a ámbar, y una luna de gris cálido. */
 const SPECS: readonly PlanetSpec[] = [
   {
     style: 'earth',
     x: 0.84,
-    y: 0.27,
+    y: 0.1,
+    parallax: 0.5,
     size: 0.095,
-    hue: 192,
-    saturation: 90,
+    hue: 28,
+    saturation: 94,
     tilt: 0.35,
     spin: 0.16,
   },
   {
     style: 'ringed',
     x: 0.2,
-    y: 0.7,
+    y: 0.34,
+    parallax: 0.4,
     size: 0.075,
-    hue: 34,
+    hue: 36,
     saturation: 92,
     tilt: 0.5,
     spin: -0.12,
   },
   {
     style: 'banded',
-    x: 0.62,
-    y: 0.83,
+    x: 0.8,
+    y: 0.55,
+    parallax: 0.55,
     size: 0.058,
-    hue: 8,
-    saturation: 88,
+    hue: 14,
+    saturation: 90,
     tilt: 0.25,
     spin: 0.22,
   },
   {
     style: 'facets',
-    x: 0.42,
-    y: 0.12,
+    x: 0.3,
+    y: 0.76,
+    parallax: 0.35,
     size: 0.05,
-    hue: 268,
-    saturation: 82,
+    hue: 22,
+    saturation: 92,
     tilt: 0.6,
     spin: -0.18,
   },
   {
     style: 'moon',
-    x: 0.93,
-    y: 0.72,
+    x: 0.88,
+    y: 0.94,
+    parallax: 0.6,
     size: 0.036,
-    hue: 214,
-    saturation: 30,
+    hue: 32,
+    saturation: 38,
     tilt: 0.2,
     spin: 0.1,
   },
@@ -334,8 +342,24 @@ export function layoutPlanets(
   const base = Math.min(width, height);
   for (const planet of planets) {
     planet.cx = planet.spec.x * width;
-    planet.cy = planet.spec.y * height;
     planet.radius = Math.min(Math.max(planet.spec.size * base, 22), 120);
+  }
+}
+
+/**
+ * Coloca cada planeta según el scroll: el fondo se desliza más despacio que la
+ * página (paralaje), así que al bajar van apareciendo planetas nuevos. Las
+ * posiciones verticales se reparten por todo el recorrido del fondo.
+ */
+export function placePlanets(
+  planets: readonly Planet[],
+  height: number,
+  scrollTop: number,
+  maxScroll: number,
+) {
+  const reach = height + 0.6 * maxScroll;
+  for (const planet of planets) {
+    planet.cy = planet.spec.y * reach - scrollTop * planet.spec.parallax;
   }
 }
 
@@ -378,6 +402,8 @@ export function drawPlanets(
 ) {
   for (const planet of planets) {
     const { cx, cy, radius, spec } = planet;
+    if (cy < -radius * 2.6 || cy > context.canvas.clientHeight + radius * 2.6)
+      continue;
     const hue = spec.hue;
     const sat = spec.saturation;
 

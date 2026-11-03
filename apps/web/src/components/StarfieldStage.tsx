@@ -5,6 +5,7 @@ import {
   buildPlanets,
   drawPlanets,
   layoutPlanets,
+  placePlanets,
   planetAt,
   stepPlanets,
   type Planet,
@@ -123,6 +124,24 @@ export function StarfieldStage() {
       y: number;
       time: number;
     } | null = null;
+    // La página se desplaza dentro de .main-content: el fondo lo sigue con paralaje.
+    const scroller = document.querySelector<HTMLElement>('.main-content');
+    let scrollTop = 0;
+    let maxScroll = 0;
+    const readScroll = () => {
+      if (
+        scroller !== null &&
+        scroller.scrollHeight - scroller.clientHeight > 1
+      ) {
+        scrollTop = scroller.scrollTop;
+        maxScroll = scroller.scrollHeight - scroller.clientHeight;
+        return;
+      }
+      // En pantallas estrechas se desplaza toda la ventana, no el contenedor.
+      const root = document.documentElement;
+      scrollTop = window.scrollY;
+      maxScroll = Math.max(0, root.scrollHeight - window.innerHeight);
+    };
     const overControl = (target: EventTarget | null) =>
       target instanceof Element && target.closest(CONTROLS) !== null;
     const pointer = { x: -9999, y: -9999, sx: -9999, sy: -9999 };
@@ -133,6 +152,7 @@ export function StarfieldStage() {
     let last = 0;
     let angle = 0;
     let dirty = true;
+    let stopScroll: (() => void) | null = null;
 
     const resize = () => {
       const ratio = Math.min(window.devicePixelRatio || 1, 2);
@@ -142,6 +162,8 @@ export function StarfieldStage() {
       canvas.height = Math.max(1, Math.round(height * ratio));
       context.setTransform(ratio, 0, 0, ratio, 0, 0);
       layoutPlanets(planets, width, height);
+      readScroll();
+      placePlanets(planets, height, scrollTop, maxScroll);
       dirty = true;
     };
 
@@ -222,6 +244,8 @@ export function StarfieldStage() {
       pointer.sy += (pointer.y - pointer.sy) * 0.16;
       angle += SPIN * step;
       stepPlanets(planets, step);
+      readScroll();
+      placePlanets(planets, height, scrollTop, maxScroll);
       for (const star of stars) {
         star.z -= FLOW * step * (0.4 + (1 - star.z) * 1.6);
         if (star.z < 0.06) {
@@ -314,6 +338,17 @@ export function StarfieldStage() {
     const resizeObserver = new ResizeObserver(resize);
     resizeObserver.observe(canvas);
     if (reduced) {
+      const onScroll = () => {
+        readScroll();
+        placePlanets(planets, height, scrollTop, maxScroll);
+        dirty = true;
+      };
+      scroller?.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('scroll', onScroll, { passive: true });
+      stopScroll = () => {
+        scroller?.removeEventListener('scroll', onScroll);
+        window.removeEventListener('scroll', onScroll);
+      };
       const redraw = () => {
         if (dirty) {
           draw(0);
@@ -333,6 +368,7 @@ export function StarfieldStage() {
 
     return () => {
       window.cancelAnimationFrame(frame);
+      stopScroll?.();
       resizeObserver.disconnect();
       window.removeEventListener('pointermove', onPointer);
       window.removeEventListener('pointerdown', onDown);
