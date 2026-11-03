@@ -427,7 +427,7 @@ export function App({ client = defaultClient }: AppProps) {
               aria-current={activeWorkspace === 'about' ? 'page' : undefined}
               onClick={() => navigateTo('about', 'about-title')}
             >
-              <WorkspaceIcon name="about" /> Acerca de
+              <WorkspaceIcon name="about" /> Inicio
             </button>
             <button
               className={
@@ -958,8 +958,8 @@ function WorkspaceIcon({
   const paths = {
     about: (
       <>
-        <circle cx="12" cy="12" r="9" />
-        <path d="M12 11v5.5M12 7.6v.1" />
+        <path d="M4 11.2 12 4l8 7.2" />
+        <path d="M6.5 10v9.5h11V10M10 19.5v-5h4v5" />
       </>
     ),
     recon: (
