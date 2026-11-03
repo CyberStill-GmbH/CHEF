@@ -584,7 +584,11 @@
   line-height: 1.1;
 }
 
-/* Reconocimiento con scroll: el planeta aparece al llegar al final */
+/* Reconocimiento con scroll; al final aparece el horizonte planetario */
+:root {
+  --globe-height: 460px;
+}
+
 .main-content.recon-content {
   grid-template-rows: auto minmax(560px, 1fr) auto auto;
   overflow-x: hidden;
@@ -593,44 +597,60 @@
   scrollbar-width: thin;
 }
 
-.globe-footer {
-  position: relative;
-  display: flex;
-  /* A sangre: ocupa todo el ancho y el fondo de la página, sin tarjeta. */
-  min-height: max(560px, 66vh);
-  margin: 12px calc(-1 * clamp(18px, 2.2vw, 32px)) -14px;
-  align-items: flex-start;
-  justify-content: center;
-  overflow: hidden;
-  border: 0;
-  border-top: 1px solid var(--chef-glass-line);
-  border-radius: 0;
-  background: #050403;
+/*
+ * El planeta vive en un escenario fijo al fondo de TODA la pantalla, por debajo
+ * de la barra lateral (que es de vidrio y lo deja ver) y del contenido. Solo se
+ * muestra cuando el espacio reservado al final del contenido está a la vista.
+ */
+.globe-stage {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 0;
+  height: var(--globe-height);
+  background: linear-gradient(to bottom, transparent, rgba(5, 4, 3, 0.94) 38%);
   opacity: 0;
+  pointer-events: none;
   transform: translateY(60px);
   transition:
     opacity 0.9s var(--chef-ease),
     transform 1.1s var(--chef-ease);
 }
 
-.globe-footer.is-revealed {
+.globe-stage.is-revealed {
   opacity: 1;
   transform: none;
 }
 
 .globe-canvas {
-  position: absolute;
-  inset: 0;
+  display: block;
   width: 100%;
   height: 100%;
 }
 
+.globe-spacer {
+  display: flex;
+  height: var(--globe-height);
+  margin: 12px calc(-1 * clamp(18px, 2.2vw, 32px)) -14px;
+  align-items: flex-start;
+  justify-content: center;
+}
+
 .globe-copy {
-  position: relative;
-  z-index: 1;
   width: 100%;
-  padding: 44px 24px 0;
+  padding: 40px 24px 0;
+  opacity: 0;
   text-align: center;
+  transform: translateY(18px);
+  transition:
+    opacity 0.9s var(--chef-ease) 0.25s,
+    transform 1s var(--chef-ease) 0.25s;
+}
+
+.globe-spacer.is-revealed .globe-copy {
+  opacity: 1;
+  transform: none;
 }
 
 .globe-kicker {

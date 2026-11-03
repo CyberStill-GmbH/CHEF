@@ -18,7 +18,7 @@ import {
 } from './components/AuroraBackground';
 import { AssetList } from './components/AssetList';
 import { CountUp } from './components/CountUp';
-import { GlobeFooter } from './components/GlobeFooter';
+import { GlobeSpacer, GlobeStage } from './components/GlobeFooter';
 import { EmptyState } from './components/EmptyState';
 import { ErrorState } from './components/ErrorState';
 import { EvidencePanel } from './components/EvidencePanel';
@@ -103,6 +103,7 @@ export function App({ client = defaultClient }: AppProps) {
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
   const [activeWorkspace, setActiveWorkspace] = useState('recon');
   const [ambient, setAmbient] = useState<AuroraPreset>(readAmbient);
+  const [planetActive, setPlanetActive] = useState(false);
 
   useEffect(() => {
     try {
@@ -380,6 +381,9 @@ export function App({ client = defaultClient }: AppProps) {
   return (
     <div className="chef-shell">
       <AuroraBackground preset={ambient} />
+      {activeWorkspace === 'recon' && (
+        <GlobeStage preset={ambient} active={planetActive} />
+      )}
       <aside className="project-sidebar" aria-label="Navegación de CHEF">
         <a className="wordmark" href="#workspace" aria-label="CHEF, inicio">
           <img src="/chef-mascot.webp" alt="" />
@@ -863,7 +867,9 @@ export function App({ client = defaultClient }: AppProps) {
               </p>
             </details>
           </footer>
-          {activeWorkspace === 'recon' && <GlobeFooter preset={ambient} />}
+          {activeWorkspace === 'recon' && (
+            <GlobeSpacer onActiveChange={setPlanetActive} />
+          )}
         </div>
       </main>
     </div>

@@ -206,11 +206,20 @@ function buildStars(random: () => number): Star[] {
  * del ambiente activo. Solo dibuja mientras está a la vista y respeta
  * prefers-reduced-motion (queda como una imagen fija).
  */
-export function GlobeFooter({ preset }: { preset: AuroraPreset }) {
+export function GlobeStage({
+  preset,
+  active,
+}: {
+  preset: AuroraPreset;
+  active: boolean;
+}) {
   const rootRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const toneRef = useRef(auroraTone(preset));
   toneRef.current = auroraTone(preset);
+  const controllerRef = useRef<{ setActive(active: boolean): void } | null>(
+    null,
+  );
 
   useEffect(() => {
     const root = rootRef.current;
@@ -246,6 +255,7 @@ export function GlobeFooter({ preset }: { preset: AuroraPreset }) {
 
     let width = 0;
     let height = 0;
+    let offsetX = 0;
     let frame = 0;
     let visible = false;
     let revealedAt = 0;
@@ -255,6 +265,11 @@ export function GlobeFooter({ preset }: { preset: AuroraPreset }) {
     const resize = () => {
       const ratio = Math.min(window.devicePixelRatio || 1, 2);
       width = canvas.clientWidth;
+      // La barra lateral es de vidrio y el planeta pasa por debajo; el punto más
+      // alto del horizonte se centra en el área principal.
+      offsetX =
+        document.querySelector('.project-sidebar')?.getBoundingClientRect()
+          .width ?? 0;
       height = canvas.clientHeight;
       canvas.width = Math.max(1, Math.round(width * ratio));
       canvas.height = Math.max(1, Math.round(height * ratio));
@@ -276,8 +291,8 @@ export function GlobeFooter({ preset }: { preset: AuroraPreset }) {
       const eased = reduced ? 1 : 1 - Math.pow(1 - progress, 3);
 
       const radius = Math.max(width * 0.72, height * 1.25);
-      const centerX = width / 2;
-      const top = height * 0.4;
+      const centerX = width / 2 + offsetX / 2;
+      const top = height * 0.5;
       const centerY = top + radius + (1 - eased) * height * 0.3;
       const yaw = reduced ? 0.9 : time * 0.00011 + pointer.sx * 0.25;
       const pitch = 1.12 + pointer.sy * 0.05;
@@ -472,67 +487,95 @@ export function GlobeFooter({ preset }: { preset: AuroraPreset }) {
       frame = window.requestAnimationFrame(tick);
     };
 
-    const observer =
-      typeof IntersectionObserver === 'undefined'
-        ? null
-        : new IntersectionObserver(
-            (entries) => {
-              const entry = entries[0];
-              if (entry === undefined) return;
-              visible = entry.isIntersecting;
-              if (visible) {
-                root.classList.add('is-revealed');
-                if (revealedAt === 0) revealedAt = performance.now();
-                if (reduced) draw(performance.now());
-                else start();
-              }
-            },
-            { threshold: 0.2 },
-          );
-
     const onPointer = (event: PointerEvent) => {
-      const rect = root.getBoundingClientRect();
-      pointer.x = ((event.clientX - rect.left) / rect.width - 0.5) * 2;
-      pointer.y = ((event.clientY - rect.top) / rect.height - 0.5) * 2;
+      pointer.x = (event.clientX / window.innerWidth - 0.5) * 2;
+      pointer.y = (event.clientY / window.innerHeight - 0.5) * 2;
+    };
+
+    controllerRef.current = {
+      setActive(next: boolean) {
+        if (next === visible) return;
+        visible = next;
+        if (next) {
+          root.classList.add('is-revealed');
+          revealedAt = performance.now();
+          if (reduced) draw(revealedAt);
+          else start();
+        } else {
+          root.classList.remove('is-revealed');
+        }
+      },
     };
 
     resize();
     const resizeObserver = new ResizeObserver(() => {
       resize();
-      if (reduced || !visible) draw(performance.now());
+      if (visible && reduced) draw(performance.now());
     });
     resizeObserver.observe(canvas);
-    if (observer === null) {
-      visible = true;
-      root.classList.add('is-revealed');
-      revealedAt = performance.now();
-      if (reduced) draw(revealedAt);
-      else start();
-    } else {
-      observer.observe(root);
-    }
     if (!reduced) {
-      root.addEventListener('pointermove', onPointer, { passive: true });
+      window.addEventListener('pointermove', onPointer, { passive: true });
     }
 
     return () => {
       visible = false;
+      controllerRef.current = null;
       window.cancelAnimationFrame(frame);
-      observer?.disconnect();
       resizeObserver.disconnect();
-      root.removeEventListener('pointermove', onPointer);
+      window.removeEventListener('pointermove', onPointer);
     };
   }, []);
 
+  useEffect(() => {
+    controllerRef.current?.setActive(active);
+  }, [active]);
+
   return (
-    <div
-      ref={rootRef}
-      className="globe-footer"
-      role="region"
-      aria-labelledby="globe-title"
-    >
-      <canvas ref={canvasRef} className="globe-canvas" aria-hidden="true" />
-      <div className="globe-copy">
+    <div ref={rootRef} className="globe-stage" aria-hidden="true">
+      <canvas ref={canvasRef} className="globe-canvas" />
+    </div>
+  );
+}
+
+/**
+ * Espacio al final del contenido: reserva la altura del planeta, lleva el texto
+ * y avisa cuándo está a la vista para que el escenario se revele (y se oculte
+ * al volver a subir).
+ */
+export function GlobeSpacer({
+  onActiveChange,
+}: {
+  onActiveChange: (active: boolean) => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const element = ref.current;
+    if (element === null) return;
+    if (typeof IntersectionObserver === 'undefined') {
+      element.classList.add('is-revealed');
+      onActiveChange(true);
+      return () => onActiveChange(false);
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry === undefined) return;
+        element.classList.toggle('is-revealed', entry.isIntersecting);
+        onActiveChange(entry.isIntersecting);
+      },
+      { threshold: 0.2 },
+    );
+    observer.observe(element);
+    return () => {
+      observer.disconnect();
+      onActiveChange(false);
+    };
+  }, [onActiveChange]);
+
+  return (
+    <div ref={ref} className="globe-spacer">
+      <div className="globe-copy" role="region" aria-labelledby="globe-title">
         <p className="globe-kicker">Red de evidencia</p>
         <h2 id="globe-title">Todo conectado.</h2>
         <p>
