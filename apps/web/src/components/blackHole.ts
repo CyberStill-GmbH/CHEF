@@ -17,18 +17,18 @@
  */
 
 /** Ancho y alto del plano de la imagen, en unidades de M. */
-export const FIELD_WIDTH = 46;
-export const FIELD_HEIGHT = 18;
+export const FIELD_WIDTH = 50;
+export const FIELD_HEIGHT = 16;
 /** Radio de la sombra de un agujero de Schwarzschild: 3√3 M. */
 export const SHADOW_RADIUS = 5.196;
 
-const INNER_RADIUS = 6;
-const OUTER_RADIUS = 36;
+const INNER_RADIUS = 3.6;
+const OUTER_RADIUS = 34;
 const STEP = 0.04;
 const MAX_SWEEP = Math.PI * 3.2;
 const ORDERS = 3;
-/** Inclinación respecto del eje del disco: 78° (casi de canto, como Gargantúa). */
-const INCLINATION = (78 * Math.PI) / 180;
+/** Inclinación respecto del eje del disco: 88° (casi de canto, como Gargantúa). */
+const INCLINATION = (86.5 * Math.PI) / 180;
 
 export interface BlackHoleTrace {
   readonly columns: number;
@@ -57,7 +57,7 @@ export function createTrace(columns: number, rows: number): BlackHoleTrace {
   for (let index = 0; index < count; index += 1) {
     const nx = Math.abs(((index % columns) + 0.5) / columns - 0.5) * 2;
     const ny = Math.abs((Math.floor(index / columns) + 0.5) / rows - 0.5) * 2;
-    fade[index] = smooth((1 - nx) / 0.3) * smooth((1 - ny) / 0.5);
+    fade[index] = smooth((1 - nx) / 0.25) * smooth((1 - ny) / 0.22);
   }
   return {
     columns,
@@ -117,13 +117,24 @@ export function advanceTrace(trace: BlackHoleTrace, maxMs: number): boolean {
           const py = r * sinPhi * (x / b);
           const omega = Math.pow(r, -1.5);
           const g =
-            Math.sqrt(Math.max(1 - 3 / r, 0.001)) /
-            Math.max(1 + omega * x * sinTheta, 0.2);
+            Math.sqrt(Math.max(1 - 3 / r, 0.12)) /
+            Math.max(1 + 0.55 * omega * x * sinTheta, 0.3);
           const edge = Math.min(1, (r - INNER_RADIUS) / 1.2 + 0.15);
-          const emissivity = Math.pow(INNER_RADIUS / r, 1.9) * edge;
+          // El disco directo llega lejos; las imágenes lensadas se concentran
+          // junto a la sombra, y el anillo de fotones (3.er cruce) se refuerza.
+          // Rayos casi rectos (la banda del ecuador) conservan el brillo lejos
+          // del centro; los muy curvados (el arco sobre la sombra) no.
+          const bent = Math.min(
+            Math.max((Math.abs(threshold - Math.PI / 2) - 0.08) / 0.5, 0),
+            1,
+          );
+          const slope = order === 0 ? 1.1 + 1.6 * bent : 5;
+          const boost =
+            (order >= 2 ? 2.2 : 1) * (order === 0 ? 1 + 3.2 * (1 - bent) : 1);
+          const emissivity = Math.pow(INNER_RADIUS / r, slope) * edge * boost;
           const slot = order;
           (trace.intensity[slot] as Float32Array)[index] =
-            Math.pow(g, 2.4) * emissivity;
+            Math.pow(g, 1.2) * emissivity;
           (trace.radius[slot] as Float32Array)[index] = r;
           (trace.azimuth[slot] as Float32Array)[index] = Math.atan2(py, px);
           any = true;
@@ -147,9 +158,9 @@ export function buildPalette(): Uint8ClampedArray {
     [0, 4, 2, 2],
     [0.2, 66, 22, 12],
     [0.4, 168, 72, 38],
-    [0.62, 238, 142, 88],
-    [0.82, 255, 206, 154],
-    [1, 255, 246, 230],
+    [0.6, 246, 160, 96],
+    [0.8, 255, 222, 168],
+    [1, 255, 250, 240],
   ];
   const palette = new Uint8ClampedArray(256 * 3);
   for (let i = 0; i < 256; i += 1) {
@@ -238,8 +249,11 @@ export function paintTrace(
       const texture = patch * filament;
       total += base * texture;
     }
-    const value = 1 - Math.exp(-total * 2.3 * (trace.fade[index] ?? 0));
-    const level = Math.min(255, Math.max(0, Math.round(value * 255)));
+    const value = 1 - Math.exp(-total * 6.4 * (trace.fade[index] ?? 0));
+    const level = Math.min(
+      255,
+      Math.max(0, Math.round(Math.pow(value, 1.25) * 255)),
+    );
     const offset = index * 4;
     data[offset] = palette[level * 3] ?? 0;
     data[offset + 1] = palette[level * 3 + 1] ?? 0;

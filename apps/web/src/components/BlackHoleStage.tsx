@@ -13,10 +13,10 @@ import {
 } from './blackHole';
 import { useScrollProgress } from './scrollProgress';
 
-const COLUMNS = 700;
-const ROWS = 274;
-/** Inclinación de la imagen en el plano de la pantalla (25°, en sentido horario). */
-const ROLL = (25 * Math.PI) / 180;
+const COLUMNS = 800;
+const ROWS = 256;
+/** Inclinación de la imagen en el plano de la pantalla (20°, en sentido horario). */
+const ROLL = (20 * Math.PI) / 180;
 const STAR_COUNT = 720;
 /** Radio (px) del clic dentro del cual las estrellas se encienden. */
 const CLICK_RADIUS = 160;
@@ -83,6 +83,11 @@ export function BlackHoleStage({
     const random = seeded(23);
     const palette = buildPalette();
     const image = holeContext.createImageData(COLUMNS, ROWS);
+    // Versión pequeña de la imagen: al ampliarla se ve como un resplandor suave.
+    const bloomCanvas = document.createElement('canvas');
+    bloomCanvas.width = COLUMNS / 4;
+    bloomCanvas.height = ROWS / 4;
+    const bloomContext = bloomCanvas.getContext('2d');
     sharedTrace ??= createTrace(COLUMNS, ROWS);
     const trace = sharedTrace;
     const sharedWasReady = trace.done >= trace.columns * trace.rows;
@@ -223,6 +228,15 @@ export function BlackHoleStage({
         FIELD_WIDTH * unit,
         FIELD_HEIGHT * unit,
       );
+      // Resplandor: la versión pequeña, ampliada y sumada, suaviza los bordes.
+      context.globalAlpha = 0.6 * appear;
+      context.drawImage(
+        bloomCanvas,
+        -(FIELD_WIDTH / 2) * unit,
+        -(FIELD_HEIGHT / 2) * unit,
+        FIELD_WIDTH * unit,
+        FIELD_HEIGHT * unit,
+      );
       context.restore();
       context.globalAlpha = 1;
       context.globalCompositeOperation = 'source-over';
@@ -231,6 +245,16 @@ export function BlackHoleStage({
     const paintHole = (seconds: number) => {
       paintTrace(trace, image, palette, seconds);
       holeContext.putImageData(image, 0, 0);
+      if (bloomContext !== null) {
+        bloomContext.clearRect(0, 0, bloomCanvas.width, bloomCanvas.height);
+        bloomContext.drawImage(
+          holeCanvas,
+          0,
+          0,
+          bloomCanvas.width,
+          bloomCanvas.height,
+        );
+      }
     };
 
     const loop = (now: number) => {
