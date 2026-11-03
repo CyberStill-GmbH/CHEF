@@ -7,6 +7,10 @@ interface PresetDefinition {
   hues: readonly [number, number, number];
   saturation: number;
   lightness: number;
+  /** Opacidad del centro de cada mancha: más alto = más intenso. */
+  glow: number;
+  /** Cuántos grados puede derivar el tono alrededor de su base. */
+  drift: number;
 }
 
 const PRESETS: Record<AuroraPreset, PresetDefinition> = {
@@ -15,15 +19,33 @@ const PRESETS: Record<AuroraPreset, PresetDefinition> = {
     hues: [155, 245, 175],
     saturation: 72,
     lightness: 58,
+    glow: 0.34,
+    drift: 24,
   },
-  dune: { label: 'Dune', hues: [28, 14, 42], saturation: 86, lightness: 55 },
+  dune: {
+    label: 'Dune',
+    hues: [26, 15, 33],
+    saturation: 92,
+    lightness: 52,
+    glow: 0.52,
+    drift: 9,
+  },
   ocean: {
     label: 'Ocean',
     hues: [205, 190, 225],
     saturation: 80,
     lightness: 56,
+    glow: 0.36,
+    drift: 24,
   },
-  dusk: { label: 'Dusk', hues: [270, 310, 240], saturation: 72, lightness: 62 },
+  dusk: {
+    label: 'Dusk',
+    hues: [270, 310, 240],
+    saturation: 72,
+    lightness: 62,
+    glow: 0.38,
+    drift: 24,
+  },
 };
 
 export const AURORA_PRESETS = Object.keys(PRESETS) as AuroraPreset[];
@@ -104,11 +126,11 @@ export function AuroraBackground({ preset }: { preset: AuroraPreset }) {
         const diameter = blob.size * reach;
         const hue =
           definition.hues[index % definition.hues.length]! +
-          Math.sin(time / 7000 + blob.phase) * 24;
+          Math.sin(time / 7000 + blob.phase) * definition.drift;
         element.style.width = `${diameter}px`;
         element.style.height = `${diameter}px`;
         element.style.transform = `translate3d(${blob.x * width - diameter / 2}px, ${blob.y * height - diameter / 2}px, 0)`;
-        element.style.background = `radial-gradient(closest-side, ${color(definition, hue, 0.34)}, ${color(definition, hue, 0)} 72%)`;
+        element.style.background = `radial-gradient(closest-side, ${color(definition, hue, definition.glow)}, ${color(definition, hue, 0)} 72%)`;
       });
     };
 

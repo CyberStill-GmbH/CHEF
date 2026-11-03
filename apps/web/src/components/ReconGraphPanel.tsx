@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Core, ElementDefinition } from 'cytoscape';
 
 import type { ReconAssetDto, ReconGraphDto } from '../contracts/recon-graph';
+import { prefersReducedMotion } from '../motion';
 
 interface ReconGraphPanelProps {
   graph: ReconGraphDto;
@@ -164,6 +165,57 @@ export function ReconGraphPanel({ graph }: ReconGraphPanelProps) {
         cy.fit(undefined, 24);
       }
       cy.on('tap', 'node', (event) => setSelectedAssetId(event.target.id()));
+
+      // Aparición animada: los nodos brotan desde el centro hacia su lugar, en
+      // cascada, y después se dibujan las relaciones. Solo es presentación; el
+      // layout final ya está calculado.
+      if (!prefersReducedMotion()) {
+        const nodes = cy.nodes();
+        const edges = cy.edges();
+        const extent = cy.extent();
+        const centerX = (extent.x1 + extent.x2) / 2;
+        const centerY = (extent.y1 + extent.y2) / 2;
+        const destinations = new Map(
+          nodes.map((node) => [node.id(), { ...node.position() }] as const),
+        );
+        nodes.style('opacity', 0);
+        edges.style('opacity', 0);
+        const lastIndex = nodes.length - 1;
+        nodes.forEach((node, index) => {
+          node.position({ x: centerX, y: centerY });
+          node.delay(index * 70).animate(
+            {
+              position: destinations.get(node.id()) ?? node.position(),
+              style: { opacity: 1 },
+            },
+            {
+              duration: 750,
+              easing: 'ease-out-cubic',
+              // Un reajuste de tamaño durante la animación encuadra los nodos
+              // aún colapsados en el centro; al terminar se recoloca la cámara.
+              ...(index === lastIndex
+                ? {
+                    complete: () => {
+                      if (cy?.destroyed()) return;
+                      cy?.animate(
+                        { fit: { eles: cy.elements(), padding: 24 } },
+                        { duration: 450, easing: 'ease-out-cubic' },
+                      );
+                    },
+                  }
+                : {}),
+            },
+          );
+        });
+        edges.forEach((edge, index) => {
+          edge
+            .delay(nodes.length * 70 + 250 + index * 50)
+            .animate(
+              { style: { opacity: 1 } },
+              { duration: 500, easing: 'ease-out-cubic' },
+            );
+        });
+      }
     });
 
     return () => {

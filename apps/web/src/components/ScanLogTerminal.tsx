@@ -3,6 +3,7 @@ import { FitAddon } from '@xterm/addon-fit';
 import { Terminal } from '@xterm/xterm';
 
 import type { ScanLogDto } from '../contracts/scan-log';
+import { prefersReducedMotion } from '../motion';
 import '@xterm/xterm/css/xterm.css';
 import './ScanLogTerminal.css';
 
@@ -13,6 +14,20 @@ interface ScanLogTerminalProps {
 
 const MAX_COMMAND_CHARS = 8192;
 const MAX_HISTORY = 100;
+/**
+ * Cola de escrituras de la terminal: el banner, la salida de los comandos y los
+ * logs entrantes se escriben uno tras otro. Sin ella, la salida "tecleada" se
+ * mezclaría con los logs que llegan mientras tanto.
+ */
+function enqueue(
+  queue: { current: Promise<void> },
+  task: () => Promise<void> | void,
+): Promise<void> {
+  const next = queue.current.then(task).catch(() => undefined);
+  queue.current = next;
+  return next;
+}
+
 const PROMPT = '\x1b[1;38;2;91;227;160mchef>\x1b[0m ';
 
 export function ScanLogTerminal({ logs, onCommand }: ScanLogTerminalProps) {
@@ -20,6 +35,7 @@ export function ScanLogTerminal({ logs, onCommand }: ScanLogTerminalProps) {
   const terminalRef = useRef<Terminal | null>(null);
   const onCommandRef = useRef(onCommand);
   const logsRef = useRef(logs);
+  const queueRef = useRef<Promise<void>>(Promise.resolve());
   const inputRef = useRef('');
   const historyRef = useRef<string[]>([]);
   const historyCursorRef = useRef(0);
@@ -93,6 +109,29 @@ export function ScanLogTerminal({ logs, onCommand }: ScanLogTerminalProps) {
       }
     };
 
+    // Salida "viva": se escribe en pequeños bloques, como una máquina de escribir.
+    // Sin movimiento (o sin matchMedia) se escribe de golpe, igual que antes.
+    let cancelled = false;
+    const animated = !prefersReducedMotion();
+    const pause = (ms: number) =>
+      new Promise<void>((resolve) => window.setTimeout(resolve, ms));
+    const typeLines = async (lines: readonly string[]) => {
+      if (!animated) {
+        writeOutput(lines);
+        return;
+      }
+      for (const line of lines) {
+        const characters = Array.from(safeTerminalText(line));
+        for (let index = 0; index < characters.length; index += 3) {
+          if (cancelled) return;
+          terminal.write(characters.slice(index, index + 3).join(''));
+          await pause(11);
+        }
+        terminal.write('\r\n');
+        await pause(70);
+      }
+    };
+
     const clearViewport = () => {
       terminal.clear();
       terminal.write('\x1b[H');
@@ -157,7 +196,7 @@ export function ScanLogTerminal({ logs, onCommand }: ScanLogTerminalProps) {
 
       try {
         const result = await onCommandRef.current(command);
-        writeOutput(result);
+        await enqueue(queueRef, () => typeLines(result));
         setStatus('Listo');
       } catch {
         writeOutput(['No se pudo ejecutar el comando CHEF.']);
@@ -169,14 +208,26 @@ export function ScanLogTerminal({ logs, onCommand }: ScanLogTerminalProps) {
       }
     };
 
-    writeOutput([
+    const banner = [
       'CHEF terminal · escribe un comando para empezar',
       'chef help   chef status   chef url <URL>   chef report   clear',
       'chef url clasifica la URL localmente; no consulta la red.',
       '',
-    ]);
-    writePrompt();
-    terminal.focus();
+    ];
+    if (animated) {
+      terminal.options.disableStdin = true;
+      void enqueue(queueRef, async () => {
+        await typeLines(banner);
+        if (cancelled) return;
+        terminal.options.disableStdin = false;
+        writePrompt();
+        terminal.focus();
+      });
+    } else {
+      writeOutput(banner);
+      writePrompt();
+      terminal.focus();
+    }
 
     const inputSubscription = terminal.onData((data) => {
       if (data === '\r') {
@@ -252,6 +303,7 @@ export function ScanLogTerminal({ logs, onCommand }: ScanLogTerminalProps) {
     });
 
     return () => {
+      cancelled = true;
       observer.disconnect();
       inputSubscription.dispose();
       terminal.dispose();
@@ -260,37 +312,43 @@ export function ScanLogTerminal({ logs, onCommand }: ScanLogTerminalProps) {
   }, []);
 
   useEffect(() => {
-    const terminal = terminalRef.current;
-    if (terminal === null) return;
+    void enqueue(queueRef, () => {
+      const terminal = terminalRef.current;
+      if (terminal === null) return;
+      const currentLogs = logsRef.current;
 
-    const lastLog = lastLogRef.current;
-    let startIndex: number;
-    if (lastLog !== null) {
-      const previousIndex = logs.findIndex(
-        (log) =>
-          log.jobId === lastLog.jobId && log.sequence === lastLog.sequence,
-      );
-      startIndex =
-        previousIndex < 0 ? Math.max(0, logs.length - 200) : previousIndex + 1;
-    } else {
-      startIndex = Math.max(0, logs.length - 200);
-    }
+      const lastLog = lastLogRef.current;
+      let startIndex: number;
+      if (lastLog !== null) {
+        const previousIndex = currentLogs.findIndex(
+          (log) =>
+            log.jobId === lastLog.jobId && log.sequence === lastLog.sequence,
+        );
+        startIndex =
+          previousIndex < 0
+            ? Math.max(0, currentLogs.length - 200)
+            : previousIndex + 1;
+      } else {
+        startIndex = Math.max(0, currentLogs.length - 200);
+      }
 
-    const freshLogs = logs.slice(startIndex);
-    if (freshLogs.length === 0) return;
+      const freshLogs = currentLogs.slice(startIndex);
+      if (freshLogs.length === 0) return;
 
-    terminal.write('\r\x1b[2K\r\n');
-    for (const log of freshLogs) {
-      const details = log.eventType === undefined ? '' : ` [${log.eventType}]`;
-      terminal.write(
-        `${safeTerminalText(log.message)}${safeTerminalText(details)}\r\n`,
-      );
-    }
-    const last = freshLogs.at(-1);
-    if (last !== undefined) {
-      lastLogRef.current = { jobId: last.jobId, sequence: last.sequence };
-    }
-    terminal.write(`${PROMPT}${safeTerminalText(inputRef.current)}`);
+      terminal.write('\r\x1b[2K\r\n');
+      for (const log of freshLogs) {
+        const details =
+          log.eventType === undefined ? '' : ` [${log.eventType}]`;
+        terminal.write(
+          `${safeTerminalText(log.message)}${safeTerminalText(details)}\r\n`,
+        );
+      }
+      const last = freshLogs.at(-1);
+      if (last !== undefined) {
+        lastLogRef.current = { jobId: last.jobId, sequence: last.sequence };
+      }
+      terminal.write(`${PROMPT}${safeTerminalText(inputRef.current)}`);
+    });
   }, [logs]);
 
   return (

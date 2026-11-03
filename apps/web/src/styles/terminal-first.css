@@ -1,8 +1,9 @@
 /*
  * Capa de diseño "viva".
  * Carga después de styles.css y workbench.css: redefine los tokens, pone un
- * fondo animado (AuroraBackground) y paneles de vidrio, y reordena el workbench
- * (mapa grande arriba, terminal como panel). No cambia el comportamiento.
+ * fondo animado (AuroraBackground), paneles de vidrio y animaciones suaves de
+ * entrada. No cambia el comportamiento. Todo movimiento se apaga con
+ * prefers-reduced-motion.
  */
 
 :root {
@@ -20,6 +21,7 @@
   --chef-dim: #6b7078;
   --chef-glass: rgba(14, 15, 18, 0.58);
   --chef-glass-line: rgba(255, 255, 255, 0.09);
+  --chef-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   --chef-mono:
     'JetBrains Mono', 'Cascadia Code', 'SFMono-Regular', Consolas, monospace;
   font-family: 'Inter', 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif;
@@ -29,6 +31,66 @@
 ::selection {
   color: #070809;
   background: var(--chef-green);
+}
+
+@keyframes chef-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes chef-slide-left {
+  from {
+    opacity: 0;
+    transform: translateX(-16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes chef-slide-right {
+  from {
+    opacity: 0;
+    transform: translateX(34px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes chef-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+@keyframes chef-beat {
+  0%,
+  100% {
+    opacity: 0.55;
+    box-shadow: 0 0 0 0 rgba(91, 227, 160, 0);
+  }
+
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 10px 1px rgba(91, 227, 160, 0.55);
+  }
 }
 
 /* Fondo vivo */
@@ -98,7 +160,22 @@
   backdrop-filter: blur(16px);
 }
 
-/* Rail lateral */
+/* Sidebar dinámico: entradas escalonadas y micro-interacciones */
+.wordmark,
+.project-switcher,
+.sidebar-label,
+.rail-note {
+  animation: chef-slide-left 0.6s var(--chef-ease) both;
+}
+
+.wordmark {
+  animation-delay: 0.04s;
+}
+
+.wordmark img {
+  animation: chef-float 4.5s ease-in-out infinite;
+}
+
 .wordmark span {
   color: var(--chef-text);
   font-size: 17px;
@@ -110,6 +187,15 @@
   border-color: var(--chef-glass-line);
   border-radius: 10px;
   background: var(--chef-glass);
+  animation-delay: 0.1s;
+  transition:
+    border-color 0.25s ease,
+    transform 0.25s var(--chef-ease);
+}
+
+.project-switcher:hover {
+  border-color: rgba(91, 227, 160, 0.4);
+  transform: translateY(-1px);
 }
 
 .sidebar-label {
@@ -119,17 +205,41 @@
   font-size: 11px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
+  animation-delay: 0.16s;
 }
 
 .nav-item {
+  position: relative;
   min-height: 38px;
   border-radius: 8px;
   color: var(--chef-muted);
+  animation: chef-slide-left 0.6s var(--chef-ease) both;
+  transition:
+    background 0.25s ease,
+    color 0.25s ease,
+    transform 0.25s var(--chef-ease);
+}
+
+.workspace-nav .nav-item:nth-child(1) {
+  animation-delay: 0.2s;
+}
+
+.workspace-nav .nav-item:nth-child(2) {
+  animation-delay: 0.27s;
+}
+
+.workspace-nav .nav-item:nth-child(3) {
+  animation-delay: 0.34s;
+}
+
+.workspace-nav .nav-item:nth-child(4) {
+  animation-delay: 0.41s;
 }
 
 .nav-item:hover {
   background: rgba(255, 255, 255, 0.05);
   color: var(--chef-text);
+  transform: translateX(3px);
 }
 
 .nav-item.is-active {
@@ -137,6 +247,23 @@
   border-left-color: var(--chef-glass-line);
   background: rgba(255, 255, 255, 0.07);
   color: var(--chef-text);
+}
+
+.nav-item.is-active::after {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  width: 6px;
+  height: 6px;
+  margin-top: -3px;
+  border-radius: 50%;
+  background: var(--chef-green);
+  content: '';
+  animation: chef-beat 2.4s ease-in-out infinite;
+}
+
+.nav-item.is-active .workspace-icon {
+  filter: drop-shadow(0 0 6px rgba(91, 227, 160, 0.6));
 }
 
 .command-rail ul {
@@ -154,13 +281,48 @@
   justify-content: space-between;
   gap: 10px;
   padding: 6px 4px;
+  border-radius: 6px;
   font-size: 12px;
+  animation: chef-slide-left 0.6s var(--chef-ease) both;
+  transition:
+    background 0.2s ease,
+    transform 0.25s var(--chef-ease);
+}
+
+.command-rail li:nth-child(1) {
+  animation-delay: 0.5s;
+}
+
+.command-rail li:nth-child(2) {
+  animation-delay: 0.56s;
+}
+
+.command-rail li:nth-child(3) {
+  animation-delay: 0.62s;
+}
+
+.command-rail li:nth-child(4) {
+  animation-delay: 0.68s;
+}
+
+.command-rail li:nth-child(5) {
+  animation-delay: 0.74s;
+}
+
+.command-rail li:hover {
+  background: rgba(255, 255, 255, 0.05);
+  transform: translateX(3px);
 }
 
 .command-rail code {
   color: var(--chef-green);
   font-family: var(--chef-mono);
   font-size: 13px;
+  transition: text-shadow 0.25s ease;
+}
+
+.command-rail li:hover code {
+  text-shadow: 0 0 10px rgba(91, 227, 160, 0.6);
 }
 
 .command-rail li span {
@@ -172,6 +334,7 @@
   color: var(--chef-muted);
   font-size: 12px;
   line-height: 1.5;
+  animation-delay: 0.82s;
 }
 
 /* Barra superior */
@@ -218,6 +381,10 @@
   color: var(--chef-green);
 }
 
+.page-heading {
+  animation: chef-rise 0.7s var(--chef-ease) 0.08s both;
+}
+
 .page-heading h1 {
   font-size: 26px;
   font-weight: 600;
@@ -230,51 +397,9 @@
   background: var(--chef-glass);
 }
 
-/* La franja de métricas añade una fila propia; el mapa sigue siendo la elástica. */
-.recon-content:has(> .stat-strip) {
-  grid-template-rows: auto auto minmax(0, 1fr) auto;
-}
-
-/* Franja de métricas */
-.stat-strip {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.stat-card {
-  display: flex;
-  flex: 1 1 160px;
-  flex-direction: column;
-  gap: 4px;
-  padding: 14px 16px;
-  border: 1px solid var(--chef-glass-line);
-  border-radius: 12px;
-  background: var(--chef-glass);
-  backdrop-filter: blur(14px);
-}
-
-.stat-card span {
-  color: var(--chef-muted);
-  font-family: var(--chef-mono);
-  font-size: 11px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.stat-card strong {
-  font-size: 28px;
-  font-weight: 600;
-  letter-spacing: -0.03em;
-  line-height: 1.1;
-}
-
-/* Workbench: mapa grande arriba, terminal como panel de vidrio */
+/* Workbench: mapa y terminal a la izquierda, resumen a la derecha */
 .recon-workbench {
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) 270px;
   grid-template-rows: minmax(0, 1fr) 300px;
   align-items: stretch;
   gap: 16px;
@@ -298,15 +423,31 @@
   grid-row: 1;
   padding: 16px;
   scrollbar-color: #2a2f34 transparent;
+  animation: chef-rise 0.8s var(--chef-ease) 0.18s both;
 }
 
 .terminal-column {
   grid-row: 2;
   padding: 0;
   overflow: hidden;
+  animation: chef-rise 0.8s var(--chef-ease) 0.32s both;
+  transition:
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+/* Terminal viva: brilla cuando tiene el foco */
+.terminal-column:focus-within {
+  border-color: rgba(91, 227, 160, 0.45);
+  box-shadow:
+    0 0 0 1px rgba(91, 227, 160, 0.12),
+    0 0 46px -14px rgba(91, 227, 160, 0.45);
 }
 
 .terminal-column > h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   margin: 0;
   padding: 12px 18px;
   border-bottom: 1px solid var(--chef-glass-line);
@@ -317,6 +458,15 @@
   font-weight: 500;
   letter-spacing: 0.1em;
   text-transform: uppercase;
+}
+
+.terminal-column > h2::before {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--chef-green);
+  content: '';
+  animation: chef-beat 2.4s ease-in-out infinite;
 }
 
 #activity-terminal {
@@ -351,15 +501,115 @@
   text-transform: uppercase;
 }
 
+/* Resumen lateral con entrada suave */
+.summary-rail {
+  display: flex;
+  grid-column: 2;
+  grid-row: 1 / -1;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+}
+
+.rail-title {
+  margin: 0 2px;
+  color: var(--chef-muted);
+  font-family: var(--chef-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  animation: chef-slide-right 0.7s var(--chef-ease) 0.2s both;
+}
+
+.summary-rail ul {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 18px;
+  border: 1px solid var(--chef-glass-line);
+  border-radius: 12px;
+  background: var(--chef-glass);
+  backdrop-filter: blur(14px);
+  animation: chef-slide-right 0.75s var(--chef-ease) both;
+  transition:
+    border-color 0.25s ease,
+    transform 0.3s var(--chef-ease),
+    box-shadow 0.3s ease;
+}
+
+.stat-card:nth-child(1) {
+  animation-delay: 0.26s;
+}
+
+.stat-card:nth-child(2) {
+  animation-delay: 0.37s;
+}
+
+.stat-card:nth-child(3) {
+  animation-delay: 0.48s;
+}
+
+.stat-card:nth-child(4) {
+  animation-delay: 0.59s;
+}
+
+.stat-card:hover {
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: 0 12px 30px -16px rgba(0, 0, 0, 0.8);
+  transform: translateY(-2px);
+}
+
+.stat-card span {
+  color: var(--chef-muted);
+  font-family: var(--chef-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.stat-card strong {
+  font-size: 30px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
 @media (max-width: 1180px) {
   .recon-workbench {
-    grid-template-rows: minmax(420px, 1fr) 280px;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(420px, 1fr) 280px auto;
+  }
+
+  .summary-rail {
+    grid-column: 1;
+    grid-row: 3;
+  }
+
+  .summary-rail ul {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .stat-card {
+    flex: 1 1 150px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .aurora-blob,
-  .aurora-ripple {
-    transition: none;
+  .chef-shell *,
+  .chef-shell *::before,
+  .chef-shell *::after {
+    animation: none !important;
+    transition: none !important;
   }
 }

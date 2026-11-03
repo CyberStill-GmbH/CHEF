@@ -17,6 +17,7 @@ import {
   type AuroraPreset,
 } from './components/AuroraBackground';
 import { AssetList } from './components/AssetList';
+import { CountUp } from './components/CountUp';
 import { EmptyState } from './components/EmptyState';
 import { ErrorState } from './components/ErrorState';
 import { EvidencePanel } from './components/EvidencePanel';
@@ -43,7 +44,7 @@ import { useSnapshot } from './hooks/useSnapshot';
 
 const defaultClient = createDefaultApiClient();
 
-const AMBIENT_KEY = 'chef.ambient';
+const AMBIENT_KEY = 'chef.ambient.v2';
 
 function readAmbient(): AuroraPreset {
   try {
@@ -53,7 +54,7 @@ function readAmbient(): AuroraPreset {
   } catch {
     // El almacenamiento puede estar bloqueado; se usa el ambiente por defecto.
   }
-  return 'aurora';
+  return 'dune';
 }
 
 interface AppProps {
@@ -535,16 +536,6 @@ export function App({ client = defaultClient }: AppProps) {
                 : 'Sin snapshot'}
             </div>
           </section>
-          {activeWorkspace === 'recon' && reconStats.length > 0 && (
-            <ul className="stat-strip" aria-label="Métricas del mapa">
-              {reconStats.map((stat) => (
-                <li key={stat.label} className="stat-card">
-                  <span>{stat.label}</span>
-                  <strong>{stat.value}</strong>
-                </li>
-              ))}
-            </ul>
-          )}
           <div className="recon-workbench" hidden={activeWorkspace !== 'recon'}>
             <div className="terminal-column">
               <h2>Consola</h2>
@@ -615,6 +606,28 @@ export function App({ client = defaultClient }: AppProps) {
                   <ErrorState message={state.message} onRetry={retry} />
                 )}
             </div>
+            {reconStats.length > 0 && (
+              <aside className="summary-rail" aria-label="Resumen del mapa">
+                <p className="rail-title">Resumen</p>
+                <ul>
+                  {reconStats.map((stat, index) => (
+                    <li key={stat.label} className="stat-card">
+                      <span>{stat.label}</span>
+                      <strong>
+                        {typeof stat.value === 'number' ? (
+                          <CountUp
+                            value={stat.value}
+                            delay={260 + index * 110}
+                          />
+                        ) : (
+                          stat.value
+                        )}
+                      </strong>
+                    </li>
+                  ))}
+                </ul>
+              </aside>
+            )}
           </div>
           <section
             aria-labelledby="chef-config-title"
