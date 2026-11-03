@@ -497,3 +497,20 @@
   background: hsl(var(--chef-hue) 12% 6% / 0.4);
   backdrop-filter: blur(0.6px);
 }
+
+/* Hueco de la barra lateral entre la navegación y los comandos. */
+.sidebar-planet {
+  position: relative;
+  min-height: 0;
+  flex: 1 1 0;
+  margin: 6px 0;
+  pointer-events: none;
+}
+
+.sidebar-planet canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}

@@ -24,6 +24,7 @@ import { AssetList } from './components/AssetList';
 import { CountUp } from './components/CountUp';
 import { FurnaceSpacer, FurnaceStage } from './components/FurnaceStage';
 import { GlobeSpacer, GlobeStage } from './components/GlobeFooter';
+import { SidebarPlanet } from './components/SidebarPlanet';
 import { StarfieldStage } from './components/StarfieldStage';
 import { EmptyState } from './components/EmptyState';
 import { ErrorState } from './components/ErrorState';
@@ -520,6 +521,7 @@ export function App({ client = defaultClient }: AppProps) {
               <WorkspaceIcon name="settings" /> Ajustes
             </button>
           </nav>
+          <SidebarPlanet preset={ambient} />
           <section
             className="command-rail"
             aria-label="Comandos de la terminal"
