@@ -1,6 +1,14 @@
 import { useEffect, useRef } from 'react';
 
 import { prefersReducedMotion } from '../motion';
+import {
+  buildPlanets,
+  drawPlanets,
+  layoutPlanets,
+  planetAt,
+  stepPlanets,
+  type Planet,
+} from './planets';
 
 const STAR_COUNT = 900;
 /** Radio (px) alrededor del cursor dentro del cual las estrellas se apartan. */
@@ -11,6 +19,9 @@ const CLICK_SECONDS = 1.4;
 /** Qué tan rápido fluye el campo hacia afuera (profundidad por segundo). */
 const FLOW = 0.018;
 const SPIN = 0.006;
+/** Elementos sobre los que un clic no agarra un planeta. */
+const CONTROLS =
+  'button, a, input, select, textarea, summary, label, .project-sidebar, .topbar';
 
 interface Star {
   /** Posición en el plano, entre -1 y 1, antes de la perspectiva. */
@@ -105,6 +116,15 @@ export function StarfieldStage() {
       };
     });
     const pulses: Pulse[] = [];
+    const planets = buildPlanets();
+    let grab: {
+      planet: Planet;
+      x: number;
+      y: number;
+      time: number;
+    } | null = null;
+    const overControl = (target: EventTarget | null) =>
+      target instanceof Element && target.closest(CONTROLS) !== null;
     const pointer = { x: -9999, y: -9999, sx: -9999, sy: -9999 };
 
     let width = 0;
@@ -121,6 +141,7 @@ export function StarfieldStage() {
       canvas.width = Math.max(1, Math.round(width * ratio));
       canvas.height = Math.max(1, Math.round(height * ratio));
       context.setTransform(ratio, 0, 0, ratio, 0, 0);
+      layoutPlanets(planets, width, height);
       dirty = true;
     };
 
@@ -190,6 +211,7 @@ export function StarfieldStage() {
       }
       context.globalAlpha = 1;
       context.globalCompositeOperation = 'source-over';
+      drawPlanets(context, planets, seconds, reduced);
     };
 
     const tick = (now: number) => {
@@ -199,6 +221,7 @@ export function StarfieldStage() {
       pointer.sx += (pointer.x - pointer.sx) * 0.16;
       pointer.sy += (pointer.y - pointer.sy) * 0.16;
       angle += SPIN * step;
+      stepPlanets(planets, step);
       for (const star of stars) {
         star.z -= FLOW * step * (0.4 + (1 - star.z) * 1.6);
         if (star.z < 0.06) {
@@ -225,6 +248,34 @@ export function StarfieldStage() {
         pointer.sx = pointer.x;
         pointer.sy = pointer.y;
       }
+      if (grab !== null) {
+        // Girar el planeta agarrado según lo que se mueve el puntero.
+        const now = performance.now();
+        const seconds = Math.max((now - grab.time) / 1000, 0.008);
+        const dx = event.clientX - grab.x;
+        const dy = event.clientY - grab.y;
+        grab.planet.yaw += dx * 0.012;
+        grab.planet.pitch = Math.min(
+          Math.max(grab.planet.pitch + dy * 0.012, -1.3),
+          1.3,
+        );
+        grab.planet.yawSpeed = Math.max(
+          -7,
+          Math.min(7, (dx * 0.012) / seconds),
+        );
+        grab.planet.pitchSpeed = Math.max(
+          -5,
+          Math.min(5, (dy * 0.012) / seconds),
+        );
+        grab.x = event.clientX;
+        grab.y = event.clientY;
+        grab.time = now;
+        return;
+      }
+      const hover =
+        !overControl(event.target) &&
+        planetAt(planets, event.clientX, event.clientY) !== null;
+      document.documentElement.style.cursor = hover ? 'grab' : '';
     };
     const onDown = (event: PointerEvent) => {
       pulses.push({
@@ -232,6 +283,27 @@ export function StarfieldStage() {
         y: event.clientY,
         start: performance.now() / 1000,
       });
+      if (overControl(event.target)) return;
+      const planet = planetAt(planets, event.clientX, event.clientY);
+      if (planet === null) return;
+      planet.grabbed = true;
+      planet.yawSpeed = 0;
+      planet.pitchSpeed = 0;
+      grab = {
+        planet,
+        x: event.clientX,
+        y: event.clientY,
+        time: performance.now(),
+      };
+      document.documentElement.style.cursor = 'grabbing';
+      document.body.style.userSelect = 'none';
+    };
+    const onUp = () => {
+      if (grab === null) return;
+      grab.planet.grabbed = false;
+      grab = null;
+      document.documentElement.style.cursor = '';
+      document.body.style.userSelect = '';
     };
     const onLeave = () => {
       pointer.x = -9999;
@@ -253,6 +325,8 @@ export function StarfieldStage() {
     } else {
       window.addEventListener('pointermove', onPointer, { passive: true });
       window.addEventListener('pointerdown', onDown, { passive: true });
+      window.addEventListener('pointerup', onUp, { passive: true });
+      window.addEventListener('pointercancel', onUp, { passive: true });
       document.addEventListener('pointerleave', onLeave);
       frame = window.requestAnimationFrame(tick);
     }
@@ -262,6 +336,10 @@ export function StarfieldStage() {
       resizeObserver.disconnect();
       window.removeEventListener('pointermove', onPointer);
       window.removeEventListener('pointerdown', onDown);
+      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointercancel', onUp);
+      document.documentElement.style.cursor = '';
+      document.body.style.userSelect = '';
       document.removeEventListener('pointerleave', onLeave);
     };
   }, []);
