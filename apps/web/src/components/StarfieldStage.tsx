@@ -1,9 +1,11 @@
 import { useEffect, useRef } from 'react';
 
 import { prefersReducedMotion } from '../motion';
+import { auroraTone, type AuroraPreset } from './AuroraBackground';
 import {
   buildPlanets,
   drawPlanets,
+  hslToRgb,
   layoutPlanets,
   placePlanets,
   planetAt,
@@ -87,7 +89,7 @@ function makeSprite(rgb: readonly [number, number, number]): HTMLCanvasElement {
  * solo cerca del punto, cuando se hace clic. Es un canvas 2D propio, sin
  * dependencias. Con "reducir movimiento" queda una imagen fija.
  */
-export function StarfieldStage() {
+export function StarfieldStage({ preset }: { preset: AuroraPreset }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -97,11 +99,14 @@ export function StarfieldStage() {
     if (context === null) return;
 
     const reduced = prefersReducedMotion();
+    const tone = auroraTone(preset);
     const random = seeded(31);
+    // Las estrellas también toman el matiz del ambiente: unas casi blancas, otras
+    // del color del ambiente y otras algo desplazadas.
     const sprites = [
-      makeSprite([236, 240, 255]),
-      makeSprite([255, 214, 176]),
-      makeSprite([186, 212, 255]),
+      makeSprite(hslToRgb(tone.hue, 28, 92)),
+      makeSprite(hslToRgb(tone.hue, tone.saturation, 72)),
+      makeSprite(hslToRgb((tone.hue + 28) % 360, tone.saturation * 0.9, 70)),
     ] as const;
     const stars: Star[] = Array.from({ length: STAR_COUNT }, () => {
       const pick = random();
@@ -117,7 +122,7 @@ export function StarfieldStage() {
       };
     });
     const pulses: Pulse[] = [];
-    const planets = buildPlanets();
+    const planets = buildPlanets(tone);
     let grab: {
       planet: Planet;
       x: number;
@@ -378,7 +383,7 @@ export function StarfieldStage() {
       document.body.style.userSelect = '';
       document.removeEventListener('pointerleave', onLeave);
     };
-  }, []);
+  }, [preset]);
 
   return (
     <div className="starfield-stage" aria-hidden="true">

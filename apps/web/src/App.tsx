@@ -433,7 +433,7 @@ export function App({ client = defaultClient }: AppProps) {
         {activeWorkspace === 'about' ? (
           <FurnaceStage progressRef={furnaceProgress} />
         ) : activeWorkspace === 'evidence' ? (
-          <StarfieldStage />
+          <StarfieldStage preset={ambient} />
         ) : (
           <AuroraBackground preset={ambient} />
         )}

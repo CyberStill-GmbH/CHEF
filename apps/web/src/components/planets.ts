@@ -48,16 +48,21 @@ export interface Planet {
   grabbed: boolean;
 }
 
-/** Todos en tonos Dune: de rojo brasa a ámbar, y una luna de gris cálido. */
-const SPECS: readonly PlanetSpec[] = [
+/** Plano de cada planeta: el matiz sale del ambiente activo más un desfase. */
+type PlanetBlueprint = Omit<PlanetSpec, 'hue' | 'saturation'> & {
+  hueOffset: number;
+  satScale: number;
+};
+
+const SPECS: readonly PlanetBlueprint[] = [
   {
     style: 'earth',
     x: 0.84,
     y: 0.1,
     parallax: 0.5,
     size: 0.095,
-    hue: 28,
-    saturation: 94,
+    hueOffset: 2,
+    satScale: 1,
     tilt: 0.35,
     spin: 0.16,
   },
@@ -67,8 +72,8 @@ const SPECS: readonly PlanetSpec[] = [
     y: 0.34,
     parallax: 0.4,
     size: 0.075,
-    hue: 36,
-    saturation: 92,
+    hueOffset: 10,
+    satScale: 1,
     tilt: 0.5,
     spin: -0.12,
   },
@@ -78,8 +83,8 @@ const SPECS: readonly PlanetSpec[] = [
     y: 0.55,
     parallax: 0.55,
     size: 0.058,
-    hue: 14,
-    saturation: 90,
+    hueOffset: -12,
+    satScale: 1,
     tilt: 0.25,
     spin: 0.22,
   },
@@ -89,8 +94,8 @@ const SPECS: readonly PlanetSpec[] = [
     y: 0.76,
     parallax: 0.35,
     size: 0.05,
-    hue: 22,
-    saturation: 92,
+    hueOffset: -4,
+    satScale: 1,
     tilt: 0.6,
     spin: -0.18,
   },
@@ -100,14 +105,18 @@ const SPECS: readonly PlanetSpec[] = [
     y: 0.94,
     parallax: 0.6,
     size: 0.036,
-    hue: 32,
-    saturation: 38,
+    hueOffset: 6,
+    satScale: 0.4,
     tilt: 0.2,
     spin: 0.1,
   },
 ];
 
-function hslToRgb(h: number, s: number, l: number): [number, number, number] {
+export function hslToRgb(
+  h: number,
+  s: number,
+  l: number,
+): [number, number, number] {
   const a = (s / 100) * Math.min(l / 100, 1 - l / 100);
   const f = (n: number) => {
     const k = (n + h / 30) % 12;
@@ -314,8 +323,19 @@ function buildGeometry(spec: PlanetSpec): {
   return { nodes, links };
 }
 
-export function buildPlanets(): Planet[] {
-  return SPECS.map((spec, index) => {
+export interface AmbientTone {
+  hue: number;
+  saturation: number;
+}
+
+export function buildPlanets(tone: AmbientTone): Planet[] {
+  return SPECS.map((blueprint, index) => {
+    const { hueOffset, satScale, ...rest } = blueprint;
+    const spec: PlanetSpec = {
+      ...rest,
+      hue: (tone.hue + hueOffset + 360) % 360,
+      saturation: tone.saturation * satScale,
+    };
     const { nodes, links } = buildGeometry(spec);
     return {
       spec,
