@@ -804,17 +804,15 @@
 
 .graph-open {
   position: relative;
-  height: clamp(700px, 92vh, 1000px);
+  /* El alto lo marca el contenido: el lienzo crece con el número de nodos. */
+  padding: 150px 0 110px;
 }
 
 /* Franja libre arriba (paneles) y abajo (leyenda y zoom): ningún nodo queda debajo. */
 .graph-open .recon-graph-canvas {
-  position: absolute;
-  /* Abajo queda libre la franja de la leyenda y del aviso. */
-  inset: 150px 0 110px;
-  width: auto;
-  height: auto;
-  min-height: 0;
+  position: relative;
+  width: 100%;
+  min-height: 260px;
   margin: 0;
   border: 0;
   border-radius: 0;

@@ -25,6 +25,30 @@ interface PopoverAnchor {
   height: number;
 }
 
+interface BoundingBox {
+  x1: number;
+  y1: number;
+  w: number;
+  h: number;
+}
+
+/**
+ * Encuadra el mapa a un zoom entre 0,35 y 1,1 que depende solo del ancho
+ * disponible, alineado arriba, y devuelve el alto que necesita el lienzo.
+ */
+function frameGraph(cy: Core, width: number, box: BoundingBox): number {
+  const margin = 40;
+  const zoom = Math.min(Math.max(width / (box.w + margin * 2), 0.35), 1.1);
+  cy.viewport({
+    zoom,
+    pan: {
+      x: (width - box.w * zoom) / 2 - box.x1 * zoom,
+      y: margin - box.y1 * zoom,
+    },
+  });
+  return Math.ceil(box.h * zoom + margin * 2);
+}
+
 const POPOVER_WIDTH = 320;
 const POPOVER_HEIGHT = 392;
 
@@ -91,9 +115,9 @@ const KIND_ORDER: Record<ReconAssetDto['kind'], number> = {
 };
 
 /** Separación entre niveles: deja sitio a la etiqueta de cada relación. */
-const LEVEL_GAP = 460;
-const COLUMN_GAP = 300;
-const ROW_GAP = 84;
+const LEVEL_GAP = 560;
+const COLUMN_GAP = 370;
+const ROW_GAP = 104;
 
 /**
  * Dispone el mapa como un abanico: en cada grupo conectado el activo con más
@@ -167,7 +191,7 @@ function arrangeGraph(cy: Core) {
       data: {
         id: 'zone-divider',
         label: `Sin conexión · ${lonely.length}`,
-        span: Math.max(box.w + 120, 900),
+        span: box.w + 80,
       },
       classes: 'zone',
       selectable: false,
@@ -185,16 +209,16 @@ function graphStyle(hue: number): StylesheetJson {
       style: {
         label: 'data(label)',
         'text-wrap': 'wrap',
-        'text-max-width': '214px',
-        'font-size': 15,
+        'text-max-width': '276px',
+        'font-size': 18,
         'font-family': "'JetBrains Mono', 'Cascadia Code', Consolas, monospace",
         color: '#e4e6e8',
         'text-valign': 'center',
         'text-halign': 'center',
-        width: 240,
-        height: 58,
+        width: 304,
+        height: 74,
         shape: 'round-rectangle',
-        'corner-radius': '29',
+        'corner-radius': '37',
         'background-color': hslToHex(hue, 14, 7),
         'border-width': 1.5,
         'border-color': hslToHex(hue, 45, 32),
@@ -215,7 +239,7 @@ function graphStyle(hue: number): StylesheetJson {
         'text-halign': 'center',
         'text-margin-y': -12,
         'text-max-width': '600px',
-        'font-size': 13,
+        'font-size': 15,
         color: hslToHex(hue, 25, 66),
       },
     },
@@ -243,8 +267,8 @@ function graphStyle(hue: number): StylesheetJson {
       selector: 'edge',
       style: {
         label: 'data(label)',
-        'font-size': 12,
-        'text-margin-y': -9,
+        'font-size': 14,
+        'text-margin-y': -10,
         'font-family': "'JetBrains Mono', 'Cascadia Code', Consolas, monospace",
         color: '#8b9097',
         'text-background-color': '#0a0b0d',
@@ -286,6 +310,8 @@ export function ReconGraphPanel({
     variant === 'open' ? null : (graph.assets[0]?.id ?? null),
   );
   const graphRef = useRef<Core | null>(null);
+  const layoutBoxRef = useRef<BoundingBox | null>(null);
+  const [canvasHeight, setCanvasHeight] = useState<number | null>(null);
   const latestGraphRef = useRef(graph);
   const selectedAssetIdRef = useRef(selectedAssetId);
   latestGraphRef.current = graph;
@@ -303,16 +329,20 @@ export function ReconGraphPanel({
     let cy: Core | null = null;
     const container = document.getElementById('recon-graph-canvas');
     if (container === null) return;
-    const observer = new ResizeObserver(() => {
-      if (
-        cy === null ||
-        container.clientWidth === 0 ||
-        container.clientHeight === 0
-      )
-        return;
+    // El mapa se dibuja a un zoom fijo según el ancho disponible y el lienzo
+    // crece en alto lo que haga falta: no se encoge cuando hay más nodos.
+    const applyFrame = () => {
+      const box = layoutBoxRef.current;
+      if (cy === null || box === null || container.clientWidth === 0) return;
       cy.resize();
-      cy.fit(undefined, 24);
-    });
+      const height = frameGraph(cy, container.clientWidth, box);
+      setCanvasHeight((previous) =>
+        previous !== null && Math.abs(previous - height) < 2
+          ? previous
+          : height,
+      );
+    };
+    const observer = new ResizeObserver(applyFrame);
     observer.observe(container);
 
     void import('cytoscape').then(({ default: cytoscape }) => {
@@ -334,13 +364,11 @@ export function ReconGraphPanel({
       });
       graphRef.current = cy;
       arrangeGraph(cy);
+      layoutBoxRef.current = cy.nodes().boundingBox({});
       if (selectedAssetIdRef.current !== null) {
         cy.getElementById(selectedAssetIdRef.current).select();
       }
-      if (container.clientWidth > 0 && container.clientHeight > 0) {
-        cy.resize();
-        cy.fit(undefined, 28);
-      }
+      applyFrame();
       cy.on('tap', 'node', (event) => setSelectedAssetId(event.target.id()));
       cy.on('tap', (event) => {
         if (event.target === cy) setSelectedAssetId(null);
@@ -376,11 +404,7 @@ export function ReconGraphPanel({
               ...(index === lastIndex
                 ? {
                     complete: () => {
-                      if (cy?.destroyed()) return;
-                      cy?.animate(
-                        { fit: { eles: cy.elements(), padding: 28 } },
-                        { duration: 450, easing: 'ease-out-cubic' },
-                      );
+                      if (!cy?.destroyed()) applyFrame();
                     },
                   }
                 : {}),
@@ -552,6 +576,11 @@ export function ReconGraphPanel({
         <div
           id="recon-graph-canvas"
           className="recon-graph-canvas"
+          style={
+            variant === 'open' && canvasHeight !== null
+              ? { height: canvasHeight }
+              : undefined
+          }
           role="img"
           aria-label="Diagrama de activos y relaciones. Usa la lista de activos para seleccionar uno y consultar su evidencia."
         />
