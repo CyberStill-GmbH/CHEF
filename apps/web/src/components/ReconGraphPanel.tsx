@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import type { Core, ElementDefinition } from 'cytoscape';
+import { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import type { Core, ElementDefinition, StylesheetJson } from 'cytoscape';
 
 import type { ReconAssetDto, ReconGraphDto } from '../contracts/recon-graph';
+import { AmbientHueContext, hslToHex } from '../ambient';
 import { prefersReducedMotion } from '../motion';
 
 interface ReconGraphPanelProps {
@@ -35,6 +36,83 @@ const ASSERTION_LABELS: Record<string, string> = {
   observed_open: 'reportado abierto',
 };
 
+/** Hoja de estilo del grafo: el acento sale del matiz del ambiente activo. */
+function graphStyle(hue: number): StylesheetJson {
+  return [
+    {
+      selector: 'node',
+      style: {
+        label: 'data(label)',
+        'text-wrap': 'wrap',
+        'text-max-width': '140px',
+        'font-size': 11,
+        'font-family': "'JetBrains Mono', 'Cascadia Code', Consolas, monospace",
+        color: '#e4e6e8',
+        'text-valign': 'center',
+        'text-halign': 'center',
+        width: 156,
+        height: 54,
+        shape: 'round-rectangle',
+        'background-color': '#0f1113',
+        'border-width': 1.5,
+        'border-color': hslToHex(hue, 45, 32),
+      },
+    },
+    {
+      selector: 'node.candidate',
+      style: { 'background-color': '#17130a', 'border-color': '#f2b35a' },
+    },
+    {
+      selector: 'node.hint',
+      style: {
+        'background-color': '#17130a',
+        'border-color': '#f2b35a',
+        'border-style': 'dashed',
+      },
+    },
+    {
+      selector: 'node.unresolved',
+      style: {
+        'background-color': '#14161a',
+        'border-color': '#8b9097',
+        'border-style': 'dashed',
+      },
+    },
+    {
+      selector: 'edge',
+      style: {
+        label: 'data(label)',
+        'font-size': 9,
+        'font-family': "'JetBrains Mono', 'Cascadia Code', Consolas, monospace",
+        color: '#8b9097',
+        'text-background-color': '#0a0b0d',
+        'text-background-opacity': 0.9,
+        'text-background-padding': '2px',
+        'curve-style': 'bezier',
+        'target-arrow-shape': 'triangle',
+        'line-color': '#2e3338',
+        'target-arrow-color': '#2e3338',
+        width: 1.5,
+      },
+    },
+    {
+      selector: 'edge.hint',
+      style: {
+        'line-style': 'dashed',
+        'line-color': '#f2b35a',
+        'target-arrow-color': '#f2b35a',
+      },
+    },
+    {
+      selector: 'node:selected',
+      style: {
+        'border-width': 2.5,
+        'border-color': hslToHex(hue, 94, 60),
+        'background-color': hslToHex(hue, 40, 9),
+      },
+    },
+  ];
+}
 export function ReconGraphPanel({ graph }: ReconGraphPanelProps) {
   const [filter, setFilter] = useState('');
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(
@@ -44,6 +122,14 @@ export function ReconGraphPanel({ graph }: ReconGraphPanelProps) {
   const latestGraphRef = useRef(graph);
   const selectedAssetIdRef = useRef(selectedAssetId);
   latestGraphRef.current = graph;
+  const hue = useContext(AmbientHueContext);
+  const hueRef = useRef(hue);
+  hueRef.current = hue;
+
+  // Al cambiar de ambiente, el grafo se repinta con el nuevo acento.
+  useEffect(() => {
+    graphRef.current?.style(graphStyle(hue));
+  }, [hue]);
 
   useEffect(() => {
     let disposed = false;
@@ -79,82 +165,7 @@ export function ReconGraphPanel({ graph }: ReconGraphPanelProps) {
         },
         minZoom: 0.2,
         maxZoom: 3,
-        style: [
-          {
-            selector: 'node',
-            style: {
-              label: 'data(label)',
-              'text-wrap': 'wrap',
-              'text-max-width': '140px',
-              'font-size': 11,
-              'font-family':
-                "'JetBrains Mono', 'Cascadia Code', Consolas, monospace",
-              color: '#e4e6e8',
-              'text-valign': 'center',
-              'text-halign': 'center',
-              width: 156,
-              height: 54,
-              shape: 'round-rectangle',
-              'background-color': '#0f1113',
-              'border-width': 1.5,
-              'border-color': '#2f5f48',
-            },
-          },
-          {
-            selector: 'node.candidate',
-            style: { 'background-color': '#17130a', 'border-color': '#f2b35a' },
-          },
-          {
-            selector: 'node.hint',
-            style: {
-              'background-color': '#17130a',
-              'border-color': '#f2b35a',
-              'border-style': 'dashed',
-            },
-          },
-          {
-            selector: 'node.unresolved',
-            style: {
-              'background-color': '#14161a',
-              'border-color': '#8b9097',
-              'border-style': 'dashed',
-            },
-          },
-          {
-            selector: 'edge',
-            style: {
-              label: 'data(label)',
-              'font-size': 9,
-              'font-family':
-                "'JetBrains Mono', 'Cascadia Code', Consolas, monospace",
-              color: '#8b9097',
-              'text-background-color': '#0a0b0d',
-              'text-background-opacity': 0.9,
-              'text-background-padding': '2px',
-              'curve-style': 'bezier',
-              'target-arrow-shape': 'triangle',
-              'line-color': '#2e3338',
-              'target-arrow-color': '#2e3338',
-              width: 1.5,
-            },
-          },
-          {
-            selector: 'edge.hint',
-            style: {
-              'line-style': 'dashed',
-              'line-color': '#f2b35a',
-              'target-arrow-color': '#f2b35a',
-            },
-          },
-          {
-            selector: 'node:selected',
-            style: {
-              'border-width': 2.5,
-              'border-color': '#5be3a0',
-              'background-color': '#0f1a14',
-            },
-          },
-        ],
+        style: graphStyle(hueRef.current),
       });
       graphRef.current = cy;
       if (selectedAssetIdRef.current !== null) {

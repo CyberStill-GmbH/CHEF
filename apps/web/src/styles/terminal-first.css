@@ -7,19 +7,23 @@
  */
 
 :root {
-  --chef-bg: #070809;
-  --chef-sidebar: #0a0b0d;
-  --chef-panel: #0f1113;
-  --chef-panel-strong: #14161a;
-  --chef-line: #17191c;
-  --chef-line-strong: #24282c;
-  --chef-green: #5be3a0;
-  --chef-green-soft: #8ff0bd;
-  --chef-amber: #f2b35a;
-  --chef-text: #e4e6e8;
-  --chef-muted: #8b9097;
-  --chef-dim: #6b7078;
-  --chef-glass: rgba(14, 15, 18, 0.58);
+  /* Matiz del ambiente activo (lo escribe App); Dune = naranja brasa. */
+  --chef-hue: 24;
+  /* Superficies: grafito cálido que toma un toque del matiz. */
+  --chef-bg: hsl(var(--chef-hue) 10% 3%);
+  --chef-sidebar: hsl(var(--chef-hue) 12% 4%);
+  --chef-panel: hsl(var(--chef-hue) 10% 6%);
+  --chef-panel-strong: hsl(var(--chef-hue) 9% 8%);
+  --chef-line: hsl(var(--chef-hue) 8% 12%);
+  --chef-line-strong: hsl(var(--chef-hue) 9% 19%);
+  /* El nombre "green" es histórico: ahora es el acento del ambiente. */
+  --chef-green: hsl(var(--chef-hue) 94% 56%);
+  --chef-green-soft: hsl(var(--chef-hue) 92% 72%);
+  --chef-amber: hsl(44 88% 62%);
+  --chef-text: #ece8e4;
+  --chef-muted: #928b84;
+  --chef-dim: #6f6963;
+  --chef-glass: hsl(var(--chef-hue) 12% 6% / 0.58);
   --chef-glass-line: rgba(255, 255, 255, 0.09);
   --chef-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   --chef-mono:
@@ -84,12 +88,12 @@
   0%,
   100% {
     opacity: 0.55;
-    box-shadow: 0 0 0 0 rgba(91, 227, 160, 0);
+    box-shadow: 0 0 0 0 hsl(var(--chef-hue) 85% 62% / 0);
   }
 
   50% {
     opacity: 1;
-    box-shadow: 0 0 10px 1px rgba(91, 227, 160, 0.55);
+    box-shadow: 0 0 10px 1px hsl(var(--chef-hue) 85% 62% / 0.55);
   }
 }
 
@@ -194,7 +198,7 @@
 }
 
 .project-switcher:hover {
-  border-color: rgba(91, 227, 160, 0.4);
+  border-color: hsl(var(--chef-hue) 85% 62% / 0.4);
   transform: translateY(-1px);
 }
 
@@ -263,7 +267,7 @@
 }
 
 .nav-item.is-active .workspace-icon {
-  filter: drop-shadow(0 0 6px rgba(91, 227, 160, 0.6));
+  filter: drop-shadow(0 0 6px hsl(var(--chef-hue) 85% 62% / 0.6));
 }
 
 .command-rail ul {
@@ -322,7 +326,7 @@
 }
 
 .command-rail li:hover code {
-  text-shadow: 0 0 10px rgba(91, 227, 160, 0.6);
+  text-shadow: 0 0 10px hsl(var(--chef-hue) 85% 62% / 0.6);
 }
 
 .command-rail li span {
@@ -376,8 +380,8 @@
 }
 
 .backend-status.is-ready {
-  border-color: #1f3a2d;
-  background: rgba(13, 23, 18, 0.7);
+  border-color: hsl(var(--chef-hue) 30% 17%);
+  background: hsl(var(--chef-hue) 28% 7% / 0.7);
   color: var(--chef-green);
 }
 
@@ -438,10 +442,10 @@
 
 /* Terminal viva: brilla cuando tiene el foco */
 .terminal-column:focus-within {
-  border-color: rgba(91, 227, 160, 0.45);
+  border-color: hsl(var(--chef-hue) 85% 62% / 0.45);
   box-shadow:
-    0 0 0 1px rgba(91, 227, 160, 0.12),
-    0 0 46px -14px rgba(91, 227, 160, 0.45);
+    0 0 0 1px hsl(var(--chef-hue) 85% 62% / 0.12),
+    0 0 46px -14px hsl(var(--chef-hue) 85% 62% / 0.45);
 }
 
 .terminal-column > h2 {

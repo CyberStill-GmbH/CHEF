@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { FitAddon } from '@xterm/addon-fit';
 import { Terminal } from '@xterm/xterm';
 
 import type { ScanLogDto } from '../contracts/scan-log';
+import { AmbientHueContext, hslToHex, hslToRgb } from '../ambient';
 import { prefersReducedMotion } from '../motion';
 import '@xterm/xterm/css/xterm.css';
 import './ScanLogTerminal.css';
@@ -28,12 +29,40 @@ function enqueue(
   return next;
 }
 
-const PROMPT = '\x1b[1;38;2;91;227;160mchef>\x1b[0m ';
+/** Prompt "chef>" con el acento del ambiente (secuencia ANSI de 24 bits). */
+function promptFor(hue: number): string {
+  const [r, g, b] = hslToRgb(hue, 94, 62);
+  return `\x1b[1;38;2;${r};${g};${b}mchef>\x1b[0m `;
+}
+
+function terminalTheme(hue: number) {
+  const accent = hslToHex(hue, 94, 60);
+  return {
+    background: 'rgba(7, 8, 9, 0)',
+    foreground: '#ece8e4',
+    cursor: accent,
+    cursorAccent: '#070809',
+    selectionBackground: hslToHex(hue, 45, 22),
+    black: '#0f1113',
+    brightBlack: '#928b84',
+    green: accent,
+    brightGreen: hslToHex(hue, 92, 74),
+    yellow: '#f2b35a',
+    brightYellow: '#f7c987',
+    blue: '#7dd3fc',
+    brightBlue: '#a5e0fd',
+    red: '#ff8e87',
+    brightRed: '#ffaaa4',
+  };
+}
 
 export function ScanLogTerminal({ logs, onCommand }: ScanLogTerminalProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const terminalRef = useRef<Terminal | null>(null);
   const onCommandRef = useRef(onCommand);
+  const hue = useContext(AmbientHueContext);
+  const promptRef = useRef(promptFor(hue));
+  promptRef.current = promptFor(hue);
   const logsRef = useRef(logs);
   const queueRef = useRef<Promise<void>>(Promise.resolve());
   const inputRef = useRef('');
@@ -69,23 +98,7 @@ export function ScanLogTerminal({ logs, onCommand }: ScanLogTerminalProps) {
       lineHeight: 1.55,
       scrollback: 1000,
       screenReaderMode: true,
-      theme: {
-        background: 'rgba(7, 8, 9, 0)',
-        foreground: '#e4e6e8',
-        cursor: '#5be3a0',
-        cursorAccent: '#070809',
-        selectionBackground: '#1f3a2d',
-        black: '#0f1113',
-        brightBlack: '#8b9097',
-        green: '#5be3a0',
-        brightGreen: '#8ff0bd',
-        yellow: '#f2b35a',
-        brightYellow: '#f7c987',
-        blue: '#7dd3fc',
-        brightBlue: '#a5e0fd',
-        red: '#ff8e87',
-        brightRed: '#ffaaa4',
-      },
+      theme: terminalTheme(hue),
     });
     const fit = new FitAddon();
     terminal.loadAddon(fit);
@@ -100,7 +113,9 @@ export function ScanLogTerminal({ logs, onCommand }: ScanLogTerminalProps) {
     observer.observe(host);
 
     const writePrompt = () => {
-      terminal.write(`\r\x1b[2K${PROMPT}${safeTerminalText(inputRef.current)}`);
+      terminal.write(
+        `\r\x1b[2K${promptRef.current}${safeTerminalText(inputRef.current)}`,
+      );
     };
 
     const writeOutput = (lines: readonly string[]) => {
@@ -347,9 +362,16 @@ export function ScanLogTerminal({ logs, onCommand }: ScanLogTerminalProps) {
       if (last !== undefined) {
         lastLogRef.current = { jobId: last.jobId, sequence: last.sequence };
       }
-      terminal.write(`${PROMPT}${safeTerminalText(inputRef.current)}`);
+      terminal.write(
+        `${promptRef.current}${safeTerminalText(inputRef.current)}`,
+      );
     });
   }, [logs]);
+
+  useEffect(() => {
+    const terminal = terminalRef.current;
+    if (terminal !== null) terminal.options.theme = terminalTheme(hue);
+  }, [hue]);
 
   return (
     <section
