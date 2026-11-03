@@ -9,6 +9,7 @@ import {
 } from 'react';
 
 import { AmbientHueContext } from './ambient';
+import { prefersReducedMotion } from './motion';
 import type { ApiClient } from './api/ApiClient';
 import { createDefaultApiClient } from './api/defaultApiClient';
 import {
@@ -50,6 +51,8 @@ import { useSnapshot } from './hooks/useSnapshot';
 const defaultClient = createDefaultApiClient();
 
 const AMBIENT_KEY = 'chef.ambient.v2';
+const TRANSITION_OUT_MS = 180;
+const TRANSITION_IN_MS = 800;
 
 function readAmbient(): AuroraPreset {
   try {
@@ -117,6 +120,19 @@ export function App({ client = defaultClient }: AppProps) {
   const planetProgress = useRef(0);
   // Calor (0..1) del fondo de Inicio según el scroll.
   const furnaceProgress = useRef(0);
+  // Cambio de vista: la actual sale rápido y la nueva entra con su propia animación.
+  const [transition, setTransition] = useState<{
+    phase: 'out' | 'in';
+    target: string;
+  } | null>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const transitionTimers = useRef<number[]>([]);
+  useEffect(
+    () => () => {
+      for (const timer of transitionTimers.current) window.clearTimeout(timer);
+    },
+    [],
+  );
   const [consoleOpen, setConsoleOpen] = useState(true);
 
   useEffect(() => {
@@ -388,8 +404,26 @@ export function App({ client = defaultClient }: AppProps) {
       : [];
 
   function navigateTo(section: string, targetId: string) {
-    setActiveWorkspace(section);
     void targetId;
+    if (section === activeWorkspace) return;
+    if (prefersReducedMotion()) {
+      setActiveWorkspace(section);
+      return;
+    }
+    // Mientras dura la transición se ignoran más clics.
+    if (transition !== null) return;
+    setTransition({ phase: 'out', target: section });
+    transitionTimers.current.push(
+      window.setTimeout(() => {
+        setActiveWorkspace(section);
+        if (contentRef.current !== null) contentRef.current.scrollTop = 0;
+        setTransition({ phase: 'in', target: section });
+      }, TRANSITION_OUT_MS),
+      window.setTimeout(
+        () => setTransition(null),
+        TRANSITION_OUT_MS + TRANSITION_IN_MS,
+      ),
+    );
   }
 
   return (
@@ -547,11 +581,18 @@ export function App({ client = defaultClient }: AppProps) {
             </div>
           </header>
           <div
-            className={
+            ref={contentRef}
+            className={[
               activeWorkspace === 'recon'
                 ? 'main-content recon-content'
-                : 'main-content'
-            }
+                : 'main-content',
+              transition?.phase === 'out' ? 'is-leaving' : '',
+              transition?.phase === 'in'
+                ? `is-entering enter-${transition.target}`
+                : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
           >
             {activeWorkspace === 'about' && (
               <AboutPage
@@ -606,7 +647,8 @@ export function App({ client = defaultClient }: AppProps) {
                     representación
                   </p>
                 )}
-                {state.status === 'success' &&
+                {activeWorkspace === 'recon' &&
+                  state.status === 'success' &&
                   (streamedGraph ?? state.reconGraph) !== undefined &&
                   ((streamedGraph ?? state.reconGraph)!.assets.length > 0 ? (
                     <ReconGraphPanel

@@ -411,3 +411,59 @@
 .about-page li p {
   text-wrap: pretty;
 }
+
+/*
+ * Cambio de vista. La vista actual sale rápido (igual para todas) y la nueva
+ * entra con su propia animación: Inicio sube desde las brasas y Reconocimiento
+ * se abre desde el centro, donde además brotan los nodos del mapa.
+ */
+.main-content.is-leaving {
+  animation: chef-leave 0.18s ease-in both;
+  pointer-events: none;
+}
+
+.main-content.is-entering {
+  animation: chef-enter-default 0.45s var(--chef-ease) both;
+}
+
+.main-content.enter-about {
+  animation: chef-enter-ember 0.8s var(--chef-ease) both;
+}
+
+.main-content.enter-recon {
+  animation: chef-enter-recon 0.65s var(--chef-ease) both;
+}
+
+@keyframes chef-leave {
+  to {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes chef-enter-default {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+@keyframes chef-enter-ember {
+  from {
+    opacity: 0;
+    transform: translateY(56px);
+    filter: blur(6px) brightness(1.5);
+  }
+
+  60% {
+    filter: blur(0) brightness(1.15);
+  }
+}
+
+@keyframes chef-enter-recon {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+    filter: blur(5px);
+  }
+}
