@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 
 import { prefersReducedMotion } from '../motion';
+import { useScrollProgress } from './scrollProgress';
 
 const FLAME_LAYERS = [
   // Del fondo al frente: más altas y rojas atrás, más bajas y claras delante.
@@ -431,37 +432,7 @@ export function FurnaceSpacer({
   progressRef: { current: number };
 }) {
   const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const element = ref.current;
-    if (element === null) return;
-    const scroller = element.closest<HTMLElement>('.main-content');
-    if (scroller === null) {
-      progressRef.current = 1;
-      return () => {
-        progressRef.current = 0;
-      };
-    }
-    const update = () => {
-      const range = scroller.scrollHeight - scroller.clientHeight;
-      progressRef.current =
-        range > 8 ? Math.min(Math.max(scroller.scrollTop / range, 0), 1) : 0;
-    };
-    update();
-    scroller.addEventListener('scroll', update, { passive: true });
-    window.addEventListener('resize', update);
-    const layoutObserver =
-      typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(update);
-    for (const child of Array.from(scroller.children)) {
-      layoutObserver?.observe(child);
-    }
-    return () => {
-      layoutObserver?.disconnect();
-      scroller.removeEventListener('scroll', update);
-      window.removeEventListener('resize', update);
-      progressRef.current = 0;
-    };
-  }, [progressRef]);
+  useScrollProgress(ref, progressRef);
 
   return <div ref={ref} className="furnace-spacer" aria-hidden="true" />;
 }
