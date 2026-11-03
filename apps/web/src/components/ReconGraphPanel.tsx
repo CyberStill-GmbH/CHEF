@@ -43,67 +43,87 @@ const ASSERTION_LABELS: Record<string, string> = {
   observed_open: 'reportado abierto',
 };
 
-/** Carril de cada tipo de activo, de izquierda a derecha. */
-const LANE_BY_KIND: Record<ReconAssetDto['kind'], number> = {
+/** Orden de los tipos al repartir los vecinos de un nodo. */
+const KIND_ORDER: Record<ReconAssetDto['kind'], number> = {
   organization: 0,
-  domain: 0,
-  ip_address: 1,
-  service: 2,
-  web_endpoint: 2,
-  technology: 2,
-  certificate: 2,
-  candidate_finding: 3,
+  domain: 1,
+  ip_address: 2,
+  service: 3,
+  web_endpoint: 4,
+  technology: 5,
+  certificate: 6,
+  candidate_finding: 7,
 };
 
-const LANE_GAP = 300;
-const ROW_GAP = 70;
+/** Separación entre niveles: deja sitio a la etiqueta de cada relación. */
+const LEVEL_GAP = 460;
+const COLUMN_GAP = 300;
+const ROW_GAP = 84;
 
 /**
- * Dispone el mapa por carriles según el tipo de activo (dominio, IP, servicios,
- * hallazgos), de izquierda a derecha, y deja los nodos sin relaciones en un
- * una banda de pistas debajo. Dentro de cada carril se ordena por la altura media
- * de sus vecinos ya colocados, para que las aristas se crucen lo menos posible.
+ * Dispone el mapa como un abanico: en cada grupo conectado el activo con más
+ * relaciones queda a la izquierda y sus vecinos se reparten en una columna a su
+ * derecha, con sitio para las etiquetas; los siguientes niveles continúan hacia
+ * la derecha. Así las líneas parten de un punto y no atraviesan otros nodos. Los
+ * nodos sin relaciones van en una banda propia debajo.
  */
 function arrangeGraph(cy: Core) {
   const lonely = cy.nodes().filter((node) => node.degree(false) === 0);
-  const groups = new Map<number, NodeSingular[]>();
-  cy.nodes()
-    .filter((node) => node.degree(false) > 0)
-    .forEach((node) => {
-      const kind = node.data('kind') as ReconAssetDto['kind'];
-      const lane = LANE_BY_KIND[kind];
-      groups.set(lane, [...(groups.get(lane) ?? []), node]);
+  let offsetY = 0;
+  cy.elements()
+    .components()
+    .filter((component) => component.nodes().length > 1)
+    .forEach((component) => {
+      const nodes = component.nodes().toArray();
+      const hub = nodes.reduce((best, node) =>
+        node.degree(false) > best.degree(false) ? node : best,
+      );
+      const levels: NodeSingular[][] = [[hub]];
+      const seen = new Set([hub.id()]);
+      for (let depth = 0; depth < levels.length; depth += 1) {
+        const next: NodeSingular[] = [];
+        for (const node of levels[depth] ?? []) {
+          node.neighborhood('node').forEach((neighbor) => {
+            if (seen.has(neighbor.id())) return;
+            seen.add(neighbor.id());
+            next.push(neighbor);
+          });
+        }
+        if (next.length > 0) levels.push(next);
+      }
+      const height = Math.max(...levels.map((level) => level.length)) * ROW_GAP;
+      const placed = new Map<string, number>();
+      levels.forEach((level, depth) => {
+        const score = (node: NodeSingular) => {
+          const ys = node
+            .neighborhood('node')
+            .map((neighbor) => placed.get(neighbor.id()))
+            .filter((y): y is number => y !== undefined);
+          return ys.length === 0
+            ? 0
+            : ys.reduce((sum, y) => sum + y, 0) / ys.length;
+        };
+        const order = (node: NodeSingular) =>
+          KIND_ORDER[node.data('kind') as ReconAssetDto['kind']];
+        level.sort((a, b) =>
+          depth <= 1
+            ? order(a) - order(b) || a.id().localeCompare(b.id())
+            : score(a) - score(b),
+        );
+        level.forEach((node, row) => {
+          const y =
+            offsetY + height / 2 + (row - (level.length - 1) / 2) * ROW_GAP;
+          placed.set(node.id(), y);
+          node.position({ x: depth * LEVEL_GAP, y });
+        });
+      });
+      offsetY += height + 90;
     });
-  const ordered = [...groups.keys()].sort((a, b) => a - b);
-  const placed = new Map<string, number>();
-  ordered.forEach((lane, laneIndex) => {
-    const nodes = groups.get(lane) ?? [];
-    const score = (node: NodeSingular) => {
-      const ys = node
-        .neighborhood('node')
-        .map((neighbor) => placed.get(neighbor.id()))
-        .filter((y): y is number => y !== undefined);
-      return ys.length === 0
-        ? 0
-        : ys.reduce((sum, y) => sum + y, 0) / ys.length;
-    };
-    nodes.sort((a, b) => score(a) - score(b));
-    nodes.forEach((node, row) => {
-      const y = (row - (nodes.length - 1) / 2) * ROW_GAP;
-      placed.set(node.id(), y);
-      node.position({ x: laneIndex * LANE_GAP, y });
-    });
-  });
-  // Las pistas sin relaciones van en una banda propia debajo de los carriles.
-  const columns = Math.max(3, ordered.length);
-  const top =
-    placed.size === 0
-      ? 0
-      : Math.max(...[...placed.values()].map((y) => Math.abs(y))) + 120;
+  const columns = 3;
   lonely.forEach((node, index) => {
     node.position({
-      x: (index % columns) * LANE_GAP,
-      y: top + Math.floor(index / columns) * ROW_GAP,
+      x: (index % columns) * COLUMN_GAP,
+      y: offsetY + 30 + Math.floor(index / columns) * ROW_GAP,
     });
   });
 }
@@ -156,6 +176,7 @@ function graphStyle(hue: number): StylesheetJson {
       style: {
         label: 'data(label)',
         'font-size': 12,
+        'text-margin-y': -9,
         'font-family': "'JetBrains Mono', 'Cascadia Code', Consolas, monospace",
         color: '#8b9097',
         'text-background-color': '#0a0b0d',
