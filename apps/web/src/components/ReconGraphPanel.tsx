@@ -1,5 +1,10 @@
 import { useContext, useEffect, useMemo, useRef, useState } from 'react';
-import type { Core, ElementDefinition, StylesheetJson } from 'cytoscape';
+import type {
+  Core,
+  ElementDefinition,
+  NodeSingular,
+  StylesheetJson,
+} from 'cytoscape';
 
 import type { ReconAssetDto, ReconGraphDto } from '../contracts/recon-graph';
 import { AmbientHueContext, hslToHex } from '../ambient';
@@ -38,76 +43,67 @@ const ASSERTION_LABELS: Record<string, string> = {
   observed_open: 'reportado abierto',
 };
 
-/**
- * Dispone el mapa: el grupo con relaciones usa un layout de fuerzas y los nodos
- * sueltos (sin relaciones) se ordenan en una cuadrícula aparte. Con un único
- * layout de fuerzas, los nodos sueltos salen disparados lejísimos y, al
- * encuadrar, todo queda diminuto. Si el lienzo es ancho y el grupo sale alto, se
- * gira a horizontal para aprovechar el espacio.
- */
-function arrangeGraph(cy: Core, aspect: number) {
-  const connected = cy.nodes().filter((node) => node.degree(false) > 0);
-  const lonely = cy.nodes().filter((node) => node.degree(false) === 0);
-  if (connected.length > 0) {
-    connected
-      .union(connected.connectedEdges())
-      .layout({
-        name: 'cose',
-        animate: false,
-        fit: false,
-        padding: 30,
-        nodeOverlap: 40,
-        componentSpacing: 80,
-        gravity: 0.5,
-        nodeRepulsion: 9000,
-        idealEdgeLength: 150,
-      })
-      .run();
-    const grown = connected.boundingBox({});
-    if (aspect > 1.2 && grown.h > grown.w * 1.1) {
-      const cx = (grown.x1 + grown.x2) / 2;
-      const cy0 = (grown.y1 + grown.y2) / 2;
-      connected.positions((node) => ({
-        x: cx + (node.position('y') - cy0),
-        y: cy0 + (node.position('x') - cx),
-      }));
-    }
-  }
-  if (lonely.length === 0) return;
-  const box = connected.length > 0 ? connected.boundingBox({}) : null;
-  const width = box === null ? 0 : box.w;
-  const columns = Math.max(3, Math.min(6, Math.floor(width / 196) + 1));
-  const startX = box === null ? 0 : box.x1;
-  const startY = box === null ? 0 : box.y2 + 120;
-  lonely.forEach((node, index) => {
-    node.position({
-      x: startX + (index % columns) * 196,
-      y: startY + Math.floor(index / columns) * 86,
-    });
-  });
-}
+/** Carril de cada tipo de activo, de izquierda a derecha. */
+const LANE_BY_KIND: Record<ReconAssetDto['kind'], number> = {
+  organization: 0,
+  domain: 0,
+  ip_address: 1,
+  service: 2,
+  web_endpoint: 2,
+  technology: 2,
+  certificate: 2,
+  candidate_finding: 3,
+};
+
+const LANE_GAP = 300;
+const ROW_GAP = 70;
 
 /**
- * Estira el layout en horizontal hasta acercarlo a la proporción del lienzo.
- * El layout de fuerzas suele salir como un tronco alto y estrecho; en un mapa
- * ancho eso deja los nodos diminutos y mucho espacio sin usar.
+ * Dispone el mapa por carriles según el tipo de activo (dominio, IP, servicios,
+ * hallazgos), de izquierda a derecha, y deja los nodos sin relaciones en un
+ * último carril de pistas. Dentro de cada carril se ordena por la altura media
+ * de sus vecinos ya colocados, para que las aristas se crucen lo menos posible.
  */
-function spreadToAspect(cy: Core, width: number, height: number) {
-  const box = cy.nodes().boundingBox({});
-  if (box.w < 1 || box.h < 1 || height < 1) return;
-  const target = width / height;
-  const factorX = Math.min(Math.max(target / (box.w / box.h), 1), 3.2);
-  const stretched = (box.w * factorX) / box.h;
-  // Si aun estirado queda demasiado alto, se comprime un poco en vertical.
-  const factorY =
-    stretched < target * 0.85 ? Math.max(0.65, stretched / (target * 0.85)) : 1;
-  if (factorX <= 1.05 && factorY >= 0.97) return;
-  const centerX = (box.x1 + box.x2) / 2;
-  const centerY = (box.y1 + box.y2) / 2;
-  cy.nodes().positions((node) => ({
-    x: centerX + (node.position('x') - centerX) * factorX,
-    y: centerY + (node.position('y') - centerY) * factorY,
-  }));
+function arrangeGraph(cy: Core) {
+  const lonely = cy.nodes().filter((node) => node.degree(false) === 0);
+  const groups = new Map<number, NodeSingular[]>();
+  cy.nodes()
+    .filter((node) => node.degree(false) > 0)
+    .forEach((node) => {
+      const kind = node.data('kind') as ReconAssetDto['kind'];
+      const lane = LANE_BY_KIND[kind];
+      groups.set(lane, [...(groups.get(lane) ?? []), node]);
+    });
+  const ordered = [...groups.keys()].sort((a, b) => a - b);
+  const placed = new Map<string, number>();
+  ordered.forEach((lane, laneIndex) => {
+    const nodes = groups.get(lane) ?? [];
+    const score = (node: NodeSingular) => {
+      const ys = node
+        .neighborhood('node')
+        .map((neighbor) => placed.get(neighbor.id()))
+        .filter((y): y is number => y !== undefined);
+      return ys.length === 0
+        ? 0
+        : ys.reduce((sum, y) => sum + y, 0) / ys.length;
+    };
+    nodes.sort((a, b) => score(a) - score(b));
+    nodes.forEach((node, row) => {
+      const y = (row - (nodes.length - 1) / 2) * ROW_GAP;
+      placed.set(node.id(), y);
+      node.position({ x: laneIndex * LANE_GAP, y });
+    });
+  });
+  const lonelyX = ordered.length * LANE_GAP;
+  const perColumn = Math.max(6, Math.ceil(lonely.length / 2));
+  lonely.forEach((node, index) => {
+    const column = Math.floor(index / perColumn);
+    const rows = Math.min(perColumn, lonely.length - column * perColumn);
+    node.position({
+      x: lonelyX + column * LANE_GAP,
+      y: ((index % perColumn) - (rows - 1) / 2) * ROW_GAP,
+    });
+  });
 }
 
 /** Hoja de estilo del grafo: el acento sale del matiz del ambiente activo. */
@@ -118,15 +114,16 @@ function graphStyle(hue: number): StylesheetJson {
       style: {
         label: 'data(label)',
         'text-wrap': 'wrap',
-        'text-max-width': '140px',
-        'font-size': 13,
+        'text-max-width': '214px',
+        'font-size': 15,
         'font-family': "'JetBrains Mono', 'Cascadia Code', Consolas, monospace",
         color: '#e4e6e8',
         'text-valign': 'center',
         'text-halign': 'center',
-        width: 176,
-        height: 60,
+        width: 240,
+        height: 58,
         shape: 'round-rectangle',
+        'corner-radius': '29',
         'background-color': hslToHex(hue, 14, 7),
         'border-width': 1.5,
         'border-color': hslToHex(hue, 45, 32),
@@ -156,7 +153,7 @@ function graphStyle(hue: number): StylesheetJson {
       selector: 'edge',
       style: {
         label: 'data(label)',
-        'font-size': 9,
+        'font-size': 12,
         'font-family': "'JetBrains Mono', 'Cascadia Code', Consolas, monospace",
         color: '#8b9097',
         'text-background-color': '#0a0b0d',
@@ -164,9 +161,10 @@ function graphStyle(hue: number): StylesheetJson {
         'text-background-padding': '2px',
         'curve-style': 'bezier',
         'target-arrow-shape': 'triangle',
-        'line-color': hslToHex(hue, 14, 34),
-        'target-arrow-color': hslToHex(hue, 14, 34),
-        width: 1.5,
+        'line-color': hslToHex(hue, 30, 46),
+        'target-arrow-color': hslToHex(hue, 30, 46),
+        width: 2.5,
+        'arrow-scale': 1.3,
       },
     },
     {
@@ -238,15 +236,11 @@ export function ReconGraphPanel({
         style: graphStyle(hueRef.current),
       });
       graphRef.current = cy;
-      arrangeGraph(
-        cy,
-        container.clientWidth / Math.max(container.clientHeight, 1),
-      );
+      arrangeGraph(cy);
       if (selectedAssetIdRef.current !== null) {
         cy.getElementById(selectedAssetIdRef.current).select();
       }
       if (container.clientWidth > 0 && container.clientHeight > 0) {
-        spreadToAspect(cy, container.clientWidth, container.clientHeight);
         cy.resize();
         cy.fit(undefined, 28);
       }
