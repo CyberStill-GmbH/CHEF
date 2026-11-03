@@ -397,12 +397,12 @@ export function App({ client = defaultClient }: AppProps) {
         )}
         <aside className="project-sidebar" aria-label="Navegación de CHEF">
           <a className="wordmark" href="#workspace" aria-label="CHEF, inicio">
-            <img src="/chef-mascot.webp" alt="" />
+            <img src="/chef-logo.png" alt="" />
             <span>CHEF</span>
           </a>
           <div className="project-switcher">
             <span className="project-avatar" aria-hidden="true">
-              <img src="/chef-mascot.webp" alt="" width="30" height="30" />
+              <img src="/chef-logo.png" alt="" width="30" height="30" />
             </span>
             <span>
               <strong>{activeRunLabel}</strong>
