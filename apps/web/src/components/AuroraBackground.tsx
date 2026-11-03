@@ -54,6 +54,16 @@ export function auroraLabel(preset: AuroraPreset): string {
   return PRESETS[preset].label;
 }
 
+/** Tono base del ambiente, para que otros elementos (p. ej. el globo) lo usen. */
+export function auroraTone(preset: AuroraPreset): {
+  hue: number;
+  saturation: number;
+  lightness: number;
+} {
+  const { hues, saturation, lightness } = PRESETS[preset];
+  return { hue: hues[0], saturation, lightness };
+}
+
 interface BlobState {
   x: number;
   y: number;

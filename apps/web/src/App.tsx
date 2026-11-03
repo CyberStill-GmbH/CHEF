@@ -18,6 +18,7 @@ import {
 } from './components/AuroraBackground';
 import { AssetList } from './components/AssetList';
 import { CountUp } from './components/CountUp';
+import { GlobeFooter } from './components/GlobeFooter';
 import { EmptyState } from './components/EmptyState';
 import { ErrorState } from './components/ErrorState';
 import { EvidencePanel } from './components/EvidencePanel';
@@ -844,6 +845,7 @@ export function App({ client = defaultClient }: AppProps) {
                 </div>
               </>
             )}
+          {activeWorkspace === 'recon' && <GlobeFooter preset={ambient} />}
           <footer className="legal-notice" aria-label="Licencia y atribución">
             <details>
               <summary>Licencia y avisos</summary>
