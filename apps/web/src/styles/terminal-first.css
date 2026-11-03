@@ -1,8 +1,8 @@
 /*
- * Capa de diseño "terminal-first".
- * Carga después de styles.css y workbench.css: redefine tokens y el layout del
- * workbench para que la terminal sea la protagonista y la procedencia (grafo)
- * quede a la derecha. No cambia el comportamiento, solo presentación.
+ * Capa de diseño "viva".
+ * Carga después de styles.css y workbench.css: redefine los tokens, pone un
+ * fondo animado (AuroraBackground) y paneles de vidrio, y reordena el workbench
+ * (mapa grande arriba, terminal como panel). No cambia el comportamiento.
  */
 
 :root {
@@ -18,6 +18,8 @@
   --chef-text: #e4e6e8;
   --chef-muted: #8b9097;
   --chef-dim: #6b7078;
+  --chef-glass: rgba(14, 15, 18, 0.58);
+  --chef-glass-line: rgba(255, 255, 255, 0.09);
   --chef-mono:
     'JetBrains Mono', 'Cascadia Code', 'SFMono-Regular', Consolas, monospace;
   font-family: 'Inter', 'Segoe UI Variable', 'Segoe UI', system-ui, sans-serif;
@@ -29,18 +31,74 @@
   background: var(--chef-green);
 }
 
-/* Rail lateral */
+/* Fondo vivo */
 .chef-shell {
+  position: relative;
+  isolation: isolate;
   grid-template-columns: 272px minmax(0, 1fr);
+}
+
+.aurora-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.aurora-blob {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: 50%;
+  will-change: transform;
+}
+
+.aurora-grid {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(
+    rgba(255, 255, 255, 0.1) 1px,
+    transparent 1.2px
+  );
+  background-size: 26px 26px;
+  mask-image: radial-gradient(ellipse at 50% 30%, #000 0%, transparent 75%);
+}
+
+.aurora-ripple {
+  position: absolute;
+  width: 560px;
+  height: 560px;
+  border-radius: 50%;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.project-sidebar,
+.chef-main {
+  position: relative;
+  z-index: 1;
+}
+
+.chef-main {
+  background: transparent;
 }
 
 .project-sidebar {
   gap: 0;
   padding: 18px 14px 14px;
-  border-right: 1px solid var(--chef-line);
-  background: var(--chef-sidebar);
+  border-right: 1px solid var(--chef-glass-line);
+  background: rgba(10, 11, 13, 0.55);
+  backdrop-filter: blur(16px);
 }
 
+.topbar {
+  border-bottom-color: var(--chef-glass-line);
+  background: rgba(10, 11, 13, 0.5);
+  backdrop-filter: blur(16px);
+}
+
+/* Rail lateral */
 .wordmark span {
   color: var(--chef-text);
   font-size: 17px;
@@ -49,9 +107,9 @@
 }
 
 .project-switcher {
-  border-color: var(--chef-line-strong);
+  border-color: var(--chef-glass-line);
   border-radius: 10px;
-  background: var(--chef-panel);
+  background: var(--chef-glass);
 }
 
 .sidebar-label {
@@ -70,14 +128,14 @@
 }
 
 .nav-item:hover {
-  background: var(--chef-panel-strong);
+  background: rgba(255, 255, 255, 0.05);
   color: var(--chef-text);
 }
 
 .nav-item.is-active {
-  border-color: var(--chef-line-strong);
-  border-left-color: var(--chef-line-strong);
-  background: var(--chef-panel-strong);
+  border-color: var(--chef-glass-line);
+  border-left-color: var(--chef-glass-line);
+  background: rgba(255, 255, 255, 0.07);
   color: var(--chef-text);
 }
 
@@ -117,68 +175,142 @@
 }
 
 /* Barra superior */
-.topbar {
-  border-bottom-color: var(--chef-line);
-  background: var(--chef-sidebar);
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ambient-picker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--chef-muted);
+  font-size: 12px;
+}
+
+.ambient-picker select {
+  min-height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--chef-glass-line);
+  border-radius: 8px;
+  background: var(--chef-glass);
+  color: var(--chef-text);
+  font-size: 12px;
 }
 
 .backend-status {
   border-radius: 999px;
-  border-color: var(--chef-line-strong);
-  background: var(--chef-panel);
+  border-color: var(--chef-glass-line);
+  background: var(--chef-glass);
   color: var(--chef-muted);
 }
 
 .backend-status.is-demo {
   border-color: #3a2f1a;
-  background: #17130a;
+  background: rgba(23, 19, 10, 0.7);
   color: var(--chef-amber);
 }
 
 .backend-status.is-ready {
   border-color: #1f3a2d;
-  background: #0d1712;
+  background: rgba(13, 23, 18, 0.7);
   color: var(--chef-green);
 }
 
-/* Encabezado de página más sobrio */
 .page-heading h1 {
-  font-size: 22px;
+  font-size: 26px;
   font-weight: 600;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
 }
 
 .workspace-badge {
-  border-color: var(--chef-line-strong);
+  border-color: var(--chef-glass-line);
   border-radius: 999px;
-  background: var(--chef-panel);
+  background: var(--chef-glass);
 }
 
-/* Workbench: terminal al centro, procedencia a la derecha */
-.recon-workbench {
-  grid-template-columns: minmax(0, 1fr) 460px;
-  grid-template-rows: minmax(0, 1fr);
-  gap: 0;
-  overflow: hidden;
-  border: 1px solid var(--chef-line-strong);
+/* La franja de métricas añade una fila propia; el mapa sigue siendo la elástica. */
+.recon-content:has(> .stat-strip) {
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+}
+
+/* Franja de métricas */
+.stat-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stat-card {
+  display: flex;
+  flex: 1 1 160px;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  border: 1px solid var(--chef-glass-line);
   border-radius: 12px;
-  background: var(--chef-bg);
+  background: var(--chef-glass);
+  backdrop-filter: blur(14px);
+}
+
+.stat-card span {
+  color: var(--chef-muted);
+  font-family: var(--chef-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.stat-card strong {
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+/* Workbench: mapa grande arriba, terminal como panel de vidrio */
+.recon-workbench {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) 300px;
+  align-items: stretch;
+  gap: 16px;
+  overflow: visible;
+  border: 0;
+  background: transparent;
+}
+
+.graph-column,
+.terminal-column {
+  grid-column: 1;
+  align-self: stretch;
+  min-height: 0;
+  border: 1px solid var(--chef-glass-line);
+  border-radius: 14px;
+  background: var(--chef-glass);
+  backdrop-filter: blur(16px);
+}
+
+.graph-column {
+  grid-row: 1;
+  padding: 16px;
+  scrollbar-color: #2a2f34 transparent;
 }
 
 .terminal-column {
-  grid-column: 1;
-  grid-row: 1;
+  grid-row: 2;
   padding: 0;
-  border: 0;
-  border-right: 1px solid var(--chef-line);
-  background: var(--chef-bg);
+  overflow: hidden;
 }
 
 .terminal-column > h2 {
   margin: 0;
   padding: 12px 18px;
-  border-bottom: 1px solid var(--chef-line);
-  background: var(--chef-sidebar);
+  border-bottom: 1px solid var(--chef-glass-line);
+  background: rgba(10, 11, 13, 0.4);
   color: var(--chef-muted);
   font-family: var(--chef-mono);
   font-size: 11px;
@@ -197,52 +329,37 @@
   flex: 1 1 auto;
   min-width: 0;
   border: 0;
-  background: var(--chef-bg);
-}
-
-.graph-column {
-  grid-column: 2;
-  grid-row: 1;
-  padding: 16px;
-  border: 0;
-  background: var(--chef-sidebar);
-  scrollbar-color: #2a2f34 #0a0b0d;
+  background: transparent;
 }
 
 .graph-column .recon-graph-canvas,
 .graph-column .graph-pane .recon-graph-canvas {
-  height: clamp(300px, 44vh, 480px);
-  min-height: 300px;
+  height: clamp(320px, 46vh, 520px);
+  min-height: 320px;
   margin: 0 0 12px;
-  border-color: var(--chef-line-strong);
+  border-color: var(--chef-glass-line);
   border-radius: 10px;
-  background: var(--chef-panel);
+  background: rgba(7, 8, 9, 0.45);
 }
 
 .recon-workspace > .pane-heading h2 {
+  color: var(--chef-muted);
   font-family: var(--chef-mono);
   font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--chef-muted);
 }
 
 @media (max-width: 1180px) {
   .recon-workbench {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: minmax(420px, 1fr) minmax(320px, auto);
+    grid-template-rows: minmax(420px, 1fr) 280px;
   }
+}
 
-  .terminal-column {
-    grid-column: 1;
-    grid-row: 1;
-    border-right: 0;
-    border-bottom: 1px solid var(--chef-line);
-  }
-
-  .graph-column {
-    grid-column: 1;
-    grid-row: 2;
+@media (prefers-reduced-motion: reduce) {
+  .aurora-blob,
+  .aurora-ripple {
+    transition: none;
   }
 }

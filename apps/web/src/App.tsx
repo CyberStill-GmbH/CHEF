@@ -10,6 +10,12 @@ import {
 
 import type { ApiClient } from './api/ApiClient';
 import { createDefaultApiClient } from './api/defaultApiClient';
+import {
+  AURORA_PRESETS,
+  AuroraBackground,
+  auroraLabel,
+  type AuroraPreset,
+} from './components/AuroraBackground';
 import { AssetList } from './components/AssetList';
 import { EmptyState } from './components/EmptyState';
 import { ErrorState } from './components/ErrorState';
@@ -36,6 +42,19 @@ const ScanLogTerminal = lazy(async () => {
 import { useSnapshot } from './hooks/useSnapshot';
 
 const defaultClient = createDefaultApiClient();
+
+const AMBIENT_KEY = 'chef.ambient';
+
+function readAmbient(): AuroraPreset {
+  try {
+    const stored = window.localStorage.getItem(AMBIENT_KEY);
+    if (stored !== null && (AURORA_PRESETS as string[]).includes(stored))
+      return stored as AuroraPreset;
+  } catch {
+    // El almacenamiento puede estar bloqueado; se usa el ambiente por defecto.
+  }
+  return 'aurora';
+}
 
 interface AppProps {
   client?: ApiClient;
@@ -81,6 +100,15 @@ export function App({ client = defaultClient }: AppProps) {
   const { state, retry, showSnapshot } = useSnapshot(client, onScanLog);
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
   const [activeWorkspace, setActiveWorkspace] = useState('recon');
+  const [ambient, setAmbient] = useState<AuroraPreset>(readAmbient);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(AMBIENT_KEY, ambient);
+    } catch {
+      // Sin almacenamiento: el ambiente simplemente no se recuerda.
+    }
+  }, [ambient]);
 
   const runChefCommand = useCallback(
     async (rawCommand: string): Promise<string[]> => {
@@ -314,6 +342,34 @@ export function App({ client = defaultClient }: AppProps) {
     [],
   );
 
+  const statsGraph =
+    streamedGraph ??
+    (state.status === 'success' ? state.reconGraph : undefined);
+  const reconStats =
+    state.status === 'success'
+      ? [
+          {
+            label: 'Activos',
+            value: statsGraph?.assets.length ?? state.snapshot.assets.length,
+          },
+          {
+            label: 'Relaciones',
+            value:
+              statsGraph?.relationships.length ??
+              state.snapshot.relationships.length,
+          },
+          {
+            label: 'Evidencias',
+            value:
+              statsGraph?.evidence.length ?? state.snapshot.evidence.length,
+          },
+          {
+            label: 'Modo',
+            value: client.runtimeMode === 'demo' ? 'Offline' : 'Conectado',
+          },
+        ]
+      : [];
+
   function navigateTo(section: string, targetId: string) {
     setActiveWorkspace(section);
     void targetId;
@@ -321,6 +377,7 @@ export function App({ client = defaultClient }: AppProps) {
 
   return (
     <div className="chef-shell">
+      <AuroraBackground preset={ambient} />
       <aside className="project-sidebar" aria-label="Navegación de CHEF">
         <a className="wordmark" href="#workspace" aria-label="CHEF, inicio">
           <img src="/chef-mascot.webp" alt="" />
@@ -420,6 +477,21 @@ export function App({ client = defaultClient }: AppProps) {
             <strong>{activeRunLabel}</strong>
           </div>
           <div className="topbar-actions">
+            <label className="ambient-picker">
+              <span>Ambiente</span>
+              <select
+                value={ambient}
+                onChange={(event) =>
+                  setAmbient(event.target.value as AuroraPreset)
+                }
+              >
+                {AURORA_PRESETS.map((preset) => (
+                  <option key={preset} value={preset}>
+                    {auroraLabel(preset)}
+                  </option>
+                ))}
+              </select>
+            </label>
             <span
               className={`backend-status ${backendStatusClass}`}
               aria-live="polite"
@@ -463,6 +535,16 @@ export function App({ client = defaultClient }: AppProps) {
                 : 'Sin snapshot'}
             </div>
           </section>
+          {activeWorkspace === 'recon' && reconStats.length > 0 && (
+            <ul className="stat-strip" aria-label="Métricas del mapa">
+              {reconStats.map((stat) => (
+                <li key={stat.label} className="stat-card">
+                  <span>{stat.label}</span>
+                  <strong>{stat.value}</strong>
+                </li>
+              ))}
+            </ul>
+          )}
           <div className="recon-workbench" hidden={activeWorkspace !== 'recon'}>
             <div className="terminal-column">
               <h2>Consola</h2>

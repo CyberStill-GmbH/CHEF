@@ -42,6 +42,7 @@ export function ScanLogTerminal({ logs, onCommand }: ScanLogTerminalProps) {
     if (host === null) return;
 
     const terminal = new Terminal({
+      allowTransparency: true,
       convertEol: true,
       cursorBlink: true,
       cursorInactiveStyle: 'outline',
@@ -53,7 +54,7 @@ export function ScanLogTerminal({ logs, onCommand }: ScanLogTerminalProps) {
       scrollback: 1000,
       screenReaderMode: true,
       theme: {
-        background: '#070809',
+        background: 'rgba(7, 8, 9, 0)',
         foreground: '#e4e6e8',
         cursor: '#5be3a0',
         cursorAccent: '#070809',
