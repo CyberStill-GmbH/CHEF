@@ -596,14 +596,13 @@
 .globe-footer {
   position: relative;
   display: flex;
-  min-height: 540px;
-  align-items: flex-end;
+  min-height: 600px;
+  align-items: flex-start;
   justify-content: center;
   overflow: hidden;
   border: 1px solid var(--chef-glass-line);
   border-radius: 14px;
-  background: var(--chef-glass);
-  backdrop-filter: blur(16px);
+  background: #050403;
   opacity: 0;
   transform: translateY(44px) scale(0.97);
   transition:
@@ -627,8 +626,7 @@
   position: relative;
   z-index: 1;
   width: 100%;
-  padding: 72px 24px 28px;
-  background: linear-gradient(to bottom, transparent, rgba(7, 8, 9, 0.72) 55%);
+  padding: 44px 24px 0;
   text-align: center;
 }
 
