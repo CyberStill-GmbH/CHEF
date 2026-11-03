@@ -98,7 +98,7 @@
 }
 
 .about-button:hover {
-  border-color: hsl(var(--chef-hue) 70% 58% / 0.7);
+  border-color: hsl(var(--chef-hue) calc(70% * var(--chef-sat)) 58% / 0.7);
   transform: translateY(-2px);
 }
 
@@ -168,7 +168,7 @@
   height: 30px;
   place-items: center;
   margin-bottom: 14px;
-  border: 1px solid hsl(var(--chef-hue) 70% 58% / 0.6);
+  border: 1px solid hsl(var(--chef-hue) calc(70% * var(--chef-sat)) 58% / 0.6);
   border-radius: 50%;
   color: var(--chef-green);
   font-family: var(--chef-mono);
@@ -199,12 +199,12 @@
   height: 9px;
   margin-right: 10px;
   border-radius: 50%;
-  background: hsl(var(--chef-hue) 35% 38%);
+  background: hsl(var(--chef-hue) calc(35% * var(--chef-sat)) 38%);
   content: '';
 }
 
 .about-levels li[data-level='2'] h3::before {
-  background: hsl(var(--chef-hue) 80% 52%);
+  background: hsl(var(--chef-hue) calc(80% * var(--chef-sat)) 52%);
 }
 
 .about-levels li[data-level='3'] h3::before {
@@ -240,7 +240,7 @@
 }
 
 .about-grid li:hover {
-  border-color: hsl(var(--chef-hue) 60% 50% / 0.55);
+  border-color: hsl(var(--chef-hue) calc(60% * var(--chef-sat)) 50% / 0.55);
   transform: translateY(-3px);
 }
 
@@ -494,7 +494,7 @@
 .main-content.evidence-content .event-statistics-panel,
 .main-content.evidence-content .explorer-pane,
 .main-content.evidence-content .legal-notice {
-  background: hsl(var(--chef-hue) 12% 6% / 0.4);
+  background: hsl(var(--chef-hue) calc(12% * var(--chef-sat)) 6% / 0.4);
   backdrop-filter: blur(0.6px);
 }
 

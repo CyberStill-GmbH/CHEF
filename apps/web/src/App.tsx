@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from 'react';
 
-import { AmbientHueContext } from './ambient';
+import { AmbientHueContext, setAmbientChroma } from './ambient';
 import { prefersReducedMotion } from './motion';
 import type { ApiClient } from './api/ApiClient';
 import { createDefaultApiClient } from './api/defaultApiClient';
@@ -16,6 +16,7 @@ import {
   AURORA_PRESETS,
   AuroraBackground,
   auroraLabel,
+  auroraChroma,
   auroraTone,
   type AuroraPreset,
 } from './components/AuroraBackground';
@@ -113,11 +114,17 @@ export function App({ client = defaultClient }: AppProps) {
   const [activeWorkspace, setActiveWorkspace] = useState('about');
   const [ambient, setAmbient] = useState<AuroraPreset>(readAmbient);
   const accentHue = auroraTone(ambient).hue;
+  const chroma = auroraChroma(ambient);
+  // Los colores calculados en JS (terminal, grafo) leen el croma al pintarse.
+  setAmbientChroma(chroma);
 
   // Todo el tinte de la interfaz sale del matiz del ambiente (variable CSS).
   useEffect(() => {
-    document.documentElement.style.setProperty('--chef-hue', String(accentHue));
-  }, [accentHue]);
+    const root = document.documentElement;
+    root.style.setProperty('--chef-hue', String(accentHue));
+    root.style.setProperty('--chef-sat', String(chroma));
+    root.dataset.ambient = ambient;
+  }, [accentHue, chroma, ambient]);
   // Avance (0..1) con el que el planeta final se asoma según el scroll.
   const planetProgress = useRef(0);
   // Calor (0..1) del fondo de Inicio según el scroll.
@@ -432,7 +439,7 @@ export function App({ client = defaultClient }: AppProps) {
     <AmbientHueContext.Provider value={accentHue}>
       <div className="chef-shell">
         {activeWorkspace === 'about' ? (
-          <FurnaceStage progressRef={furnaceProgress} />
+          <FurnaceStage progressRef={furnaceProgress} preset={ambient} />
         ) : activeWorkspace === 'evidence' ? (
           <StarfieldStage preset={ambient} />
         ) : (

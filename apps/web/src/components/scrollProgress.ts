@@ -20,12 +20,17 @@ export function useScrollProgress(
       };
     }
     const update = () => {
-      const range = scroller.scrollHeight - scroller.clientHeight;
+      // En pantallas estrechas se desplaza toda la ventana, no el contenedor.
+      const own = scroller.scrollHeight - scroller.clientHeight;
+      const root = document.documentElement;
+      const range = own > 8 ? own : root.scrollHeight - window.innerHeight;
+      const top = own > 8 ? scroller.scrollTop : window.scrollY;
       progressRef.current =
-        range > 8 ? Math.min(Math.max(scroller.scrollTop / range, 0), 1) : 0;
+        range > 8 ? Math.min(Math.max(top / range, 0), 1) : 0;
     };
     update();
     scroller.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('scroll', update, { passive: true });
     window.addEventListener('resize', update);
     const layoutObserver =
       typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(update);
@@ -35,6 +40,7 @@ export function useScrollProgress(
     return () => {
       layoutObserver?.disconnect();
       scroller.removeEventListener('scroll', update);
+      window.removeEventListener('scroll', update);
       window.removeEventListener('resize', update);
       progressRef.current = 0;
     };

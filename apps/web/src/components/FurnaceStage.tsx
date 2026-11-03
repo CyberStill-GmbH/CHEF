@@ -1,7 +1,15 @@
 import { useEffect, useRef } from 'react';
 
 import { prefersReducedMotion } from '../motion';
+import {
+  auroraChroma,
+  auroraTone,
+  type AuroraPreset,
+} from './AuroraBackground';
 import { useScrollProgress } from './scrollProgress';
+
+/** Matiz de Dune: las llamas se definen como desfases respecto a él. */
+const DUNE_HUE = 26;
 
 const FLAME_LAYERS = [
   // Del fondo al frente: más altas y rojas atrás, más bajas y claras delante.
@@ -9,7 +17,7 @@ const FLAME_LAYERS = [
     count: 20,
     width: 0.075,
     height: 1.0,
-    hue: 8,
+    hue: 8 - DUNE_HUE,
     sat: 96,
     light: 36,
     alpha: 0.2,
@@ -18,7 +26,7 @@ const FLAME_LAYERS = [
     count: 26,
     width: 0.052,
     height: 0.78,
-    hue: 20,
+    hue: 20 - DUNE_HUE,
     sat: 100,
     light: 48,
     alpha: 0.17,
@@ -27,7 +35,7 @@ const FLAME_LAYERS = [
     count: 20,
     width: 0.036,
     height: 0.52,
-    hue: 33,
+    hue: 33 - DUNE_HUE,
     sat: 100,
     light: 58,
     alpha: 0.14,
@@ -91,7 +99,10 @@ function seeded(seed: number): () => number {
  */
 export function FurnaceStage({
   progressRef,
+  preset,
 }: {
+  /** Ambiente activo: de él salen los colores de las llamas. */
+  preset: AuroraPreset;
   /** 0 = arriba de la página … 1 = al final (lo escribe FurnaceSpacer). */
   progressRef: { current: number };
 }) {
@@ -113,8 +124,17 @@ export function FurnaceStage({
 
     const reduced = prefersReducedMotion();
     const random = seeded(11);
+    // Colores del ambiente: Dune da brasa y ámbar; los demás desplazan el matiz y
+    // Silk (croma casi 0) queda en blancos y grises, algo más claros para verse.
+    const tone = auroraTone(preset);
+    const chroma = auroraChroma(preset);
+    const lift = Math.max(0, tone.lightness - 55) * 0.6;
+    const wrap = (offset: number) => (tone.hue + offset + 360) % 360;
     const layers = FLAME_LAYERS.map((layer) => ({
       ...layer,
+      hue: wrap(layer.hue),
+      sat: layer.sat * chroma,
+      light: layer.light + lift,
       tongues: Array.from({ length: layer.count }, (_, index): Tongue => ({
         x: (index + 0.15 + random() * 0.7) / layer.count,
         width: layer.width * (0.7 + random() * 0.7),
@@ -181,7 +201,7 @@ export function FurnaceStage({
         size: 0.8 + random() * (1.4 + heat * 1.4),
         age: 0,
         life: 2.4 + random() * 4.2,
-        hue: 10 + random() * 34,
+        hue: wrap(10 - DUNE_HUE + random() * 34),
         phase: random() * Math.PI * 2,
       });
     };
@@ -227,9 +247,18 @@ export function FurnaceStage({
 
       // Resplandor de la brasa en la parte baja de la pantalla.
       const glow = context.createLinearGradient(0, height, 0, height * 0.25);
-      glow.addColorStop(0, `hsla(10, 100%, 40%, ${0.62 * glowAlpha})`);
-      glow.addColorStop(0.35, `hsla(8, 95%, 26%, ${0.3 * glowAlpha})`);
-      glow.addColorStop(1, 'hsla(6, 90%, 14%, 0)');
+      glow.addColorStop(
+        0,
+        `hsla(${wrap(10 - DUNE_HUE)}, ${100 * chroma}%, ${40 + lift}%, ${0.62 * glowAlpha})`,
+      );
+      glow.addColorStop(
+        0.35,
+        `hsla(${wrap(8 - DUNE_HUE)}, ${95 * chroma}%, ${26 + lift}%, ${0.3 * glowAlpha})`,
+      );
+      glow.addColorStop(
+        1,
+        `hsla(${wrap(6 - DUNE_HUE)}, ${90 * chroma}%, ${14 + lift * 0.5}%, 0)`,
+      );
       context.fillStyle = glow;
       context.fillRect(0, 0, width, height);
 
@@ -296,7 +325,7 @@ export function FurnaceStage({
       // Hilos de llama: volutas finas que se enroscan al subir.
       spark.lineCap = 'round';
       spark.lineWidth = 1.6;
-      spark.strokeStyle = `hsla(26, 100%, 60%, ${0.05 + 0.2 * heat})`;
+      spark.strokeStyle = `hsla(${wrap(0)}, ${100 * chroma}%, ${60 + lift}%, ${0.05 + 0.2 * heat})`;
       spark.beginPath();
       for (const wisp of wisps) {
         const baseX = wisp.x * width;
@@ -339,12 +368,12 @@ export function FurnaceStage({
           Math.min(ember.age / 0.5, 1) * (1 - ember.age / ember.life);
         const flicker = 0.65 + 0.35 * Math.sin(time * 0.012 + ember.phase * 5);
         const alpha = Math.max(fade, 0) * flicker;
-        spark.fillStyle = `hsla(${ember.hue}, 100%, ${56 + ember.size * 5}%, ${alpha})`;
+        spark.fillStyle = `hsla(${ember.hue}, ${100 * chroma}%, ${56 + ember.size * 5 + lift}%, ${alpha})`;
         spark.beginPath();
         spark.arc(ember.x, ember.y, ember.size, 0, Math.PI * 2);
         spark.fill();
         if (ember.size > 1.9) {
-          spark.fillStyle = `hsla(${ember.hue}, 100%, 50%, ${alpha * 0.18})`;
+          spark.fillStyle = `hsla(${ember.hue}, ${100 * chroma}%, ${50 + lift}%, ${alpha * 0.18})`;
           spark.beginPath();
           spark.arc(ember.x, ember.y, ember.size * 4, 0, Math.PI * 2);
           spark.fill();
@@ -411,7 +440,7 @@ export function FurnaceStage({
       window.removeEventListener('pointermove', onPointer);
       document.removeEventListener('pointerleave', onLeave);
     };
-  }, [progressRef]);
+  }, [progressRef, preset]);
 
   return (
     <div className="furnace-stage" aria-hidden="true">

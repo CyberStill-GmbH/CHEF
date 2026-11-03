@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 
-export type AuroraPreset = 'aurora' | 'dune' | 'ocean' | 'dusk';
+export type AuroraPreset = 'aurora' | 'dune' | 'ocean' | 'dusk' | 'silk';
 
 interface PresetDefinition {
   label: string;
@@ -11,6 +11,8 @@ interface PresetDefinition {
   glow: number;
   /** Cuántos grados puede derivar el tono alrededor de su base. */
   drift: number;
+  /** Cuánto del color conserva la interfaz: 1 = pleno, casi 0 = blancos y grises. */
+  chroma: number;
 }
 
 const PRESETS: Record<AuroraPreset, PresetDefinition> = {
@@ -21,6 +23,7 @@ const PRESETS: Record<AuroraPreset, PresetDefinition> = {
     lightness: 58,
     glow: 0.34,
     drift: 24,
+    chroma: 1,
   },
   dune: {
     label: 'Dune',
@@ -29,6 +32,7 @@ const PRESETS: Record<AuroraPreset, PresetDefinition> = {
     lightness: 52,
     glow: 0.52,
     drift: 9,
+    chroma: 1,
   },
   ocean: {
     label: 'Ocean',
@@ -37,6 +41,7 @@ const PRESETS: Record<AuroraPreset, PresetDefinition> = {
     lightness: 56,
     glow: 0.36,
     drift: 24,
+    chroma: 1,
   },
   dusk: {
     label: 'Dusk',
@@ -45,6 +50,16 @@ const PRESETS: Record<AuroraPreset, PresetDefinition> = {
     lightness: 62,
     glow: 0.38,
     drift: 24,
+    chroma: 1,
+  },
+  silk: {
+    label: 'Silk',
+    hues: [220, 212, 230],
+    saturation: 9,
+    lightness: 82,
+    glow: 0.3,
+    drift: 6,
+    chroma: 0.07,
   },
 };
 
@@ -52,6 +67,11 @@ export const AURORA_PRESETS = Object.keys(PRESETS) as AuroraPreset[];
 
 export function auroraLabel(preset: AuroraPreset): string {
   return PRESETS[preset].label;
+}
+
+/** Cuánto color conserva la interfaz en este ambiente (1 = pleno). */
+export function auroraChroma(preset: AuroraPreset): number {
+  return PRESETS[preset].chroma;
 }
 
 /** Tono base del ambiente, para que otros elementos (p. ej. el globo) lo usen. */

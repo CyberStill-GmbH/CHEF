@@ -6,13 +6,24 @@ import { createContext } from 'react';
  */
 export const AmbientHueContext = createContext(24);
 
+/**
+ * Cuánto color conserva el ambiente activo (1 = pleno; Silk casi 0, solo blancos
+ * y grises). App lo fija al cambiar de ambiente; los colores calculados en JS
+ * (terminal, grafo) lo aplican a su saturación.
+ */
+let chroma = 1;
+
+export function setAmbientChroma(value: number) {
+  chroma = value;
+}
+
 /** HSL (h en grados, s y l en %) a RGB de 0 a 255. */
 export function hslToRgb(
   hue: number,
   saturation: number,
   lightness: number,
 ): [number, number, number] {
-  const s = saturation / 100;
+  const s = (saturation * chroma) / 100;
   const l = lightness / 100;
   const k = (n: number) => (n + hue / 30) % 12;
   const a = s * Math.min(l, 1 - l);
