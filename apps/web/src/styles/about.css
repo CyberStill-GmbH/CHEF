@@ -532,3 +532,48 @@
   width: 100%;
   height: 100%;
 }
+
+/*
+ * Evidencia con muchos activos: los hijos de la columna no se encogen, así la
+ * rejilla crece con su contenido y el aviso de licencia queda siempre debajo
+ * en lugar de pintarse encima de la lista.
+ */
+.main-content.evidence-content > * {
+  flex-shrink: 0;
+}
+
+.main-content.evidence-content .explorer-grid {
+  min-height: 0;
+}
+
+/* Lista de activos: alineada a la izquierda y sin viñetas sueltas. */
+.explorer-pane ul:has(> li > button[aria-pressed]) {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.explorer-pane li > button[aria-pressed] {
+  position: relative;
+  width: 100%;
+  text-align: left;
+  transition:
+    background 0.2s,
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+/*
+ * Activo seleccionado: tinte y borde con el matiz del ambiente (Dune, Dusk,
+ * Ocean…), más una barra lateral que no depende solo del color.
+ */
+.explorer-pane li > button[aria-pressed='true'] {
+  border-color: hsl(var(--chef-hue) calc(75% * var(--chef-sat)) 60% / 0.85);
+  background: hsl(var(--chef-hue) calc(65% * var(--chef-sat)) 46% / 0.22);
+  box-shadow:
+    inset 3px 0 0 hsl(var(--chef-hue) calc(85% * var(--chef-sat)) 66%),
+    0 0 18px hsl(var(--chef-hue) calc(80% * var(--chef-sat)) 55% / 0.22);
+  color: var(--chef-text);
+}
