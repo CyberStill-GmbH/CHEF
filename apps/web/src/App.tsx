@@ -8,9 +8,27 @@ import {
   type ReactNode,
 } from 'react';
 
+import { AmbientHueContext, setAmbientChroma } from './ambient';
+import { prefersReducedMotion } from './motion';
 import type { ApiClient } from './api/ApiClient';
 import { createDefaultApiClient } from './api/defaultApiClient';
+import {
+  AURORA_PRESETS,
+  AuroraBackground,
+  auroraLabel,
+  auroraChroma,
+  auroraTone,
+  type AuroraPreset,
+} from './components/AuroraBackground';
+import { AboutPage } from './components/AboutPage';
 import { AssetList } from './components/AssetList';
+import { CountUp } from './components/CountUp';
+import { FlowStage } from './components/FlowStage';
+import { FurnaceSpacer, FurnaceStage } from './components/FurnaceStage';
+import { GlobeSpacer, GlobeStage } from './components/GlobeFooter';
+import { InstrumentStage } from './components/InstrumentStage';
+import { SidebarPlanet } from './components/SidebarPlanet';
+import { StarfieldStage } from './components/StarfieldStage';
 import { EmptyState } from './components/EmptyState';
 import { ErrorState } from './components/ErrorState';
 import { EvidencePanel } from './components/EvidencePanel';
@@ -36,6 +54,21 @@ const ScanLogTerminal = lazy(async () => {
 import { useSnapshot } from './hooks/useSnapshot';
 
 const defaultClient = createDefaultApiClient();
+
+const AMBIENT_KEY = 'chef.ambient.v2';
+const TRANSITION_OUT_MS = 180;
+const TRANSITION_IN_MS = 800;
+
+function readAmbient(): AuroraPreset {
+  try {
+    const stored = window.localStorage.getItem(AMBIENT_KEY);
+    if (stored !== null && (AURORA_PRESETS as string[]).includes(stored))
+      return stored as AuroraPreset;
+  } catch {
+    // El almacenamiento puede estar bloqueado; se usa el ambiente por defecto.
+  }
+  return 'dune';
+}
 
 interface AppProps {
   client?: ApiClient;
@@ -80,7 +113,46 @@ export function App({ client = defaultClient }: AppProps) {
   }, []);
   const { state, retry, showSnapshot } = useSnapshot(client, onScanLog);
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
-  const [activeWorkspace, setActiveWorkspace] = useState('recon');
+  const [activeWorkspace, setActiveWorkspace] = useState('about');
+  const [ambient, setAmbient] = useState<AuroraPreset>(readAmbient);
+  const accentHue = auroraTone(ambient).hue;
+  const chroma = auroraChroma(ambient);
+  // Los colores calculados en JS (terminal, grafo) leen el croma al pintarse.
+  setAmbientChroma(chroma);
+
+  // Todo el tinte de la interfaz sale del matiz del ambiente (variable CSS).
+  useEffect(() => {
+    const root = document.documentElement;
+    root.style.setProperty('--chef-hue', String(accentHue));
+    root.style.setProperty('--chef-sat', String(chroma));
+    root.dataset.ambient = ambient;
+  }, [accentHue, chroma, ambient]);
+  // Avance (0..1) con el que el planeta final se asoma según el scroll.
+  const planetProgress = useRef(0);
+  // Calor (0..1) del fondo de Inicio según el scroll.
+  const furnaceProgress = useRef(0);
+  // Cambio de vista: la actual sale rápido y la nueva entra con su propia animación.
+  const [transition, setTransition] = useState<{
+    phase: 'out' | 'in';
+    target: string;
+  } | null>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const transitionTimers = useRef<number[]>([]);
+  useEffect(
+    () => () => {
+      for (const timer of transitionTimers.current) window.clearTimeout(timer);
+    },
+    [],
+  );
+  const [consoleOpen, setConsoleOpen] = useState(true);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(AMBIENT_KEY, ambient);
+    } catch {
+      // Sin almacenamiento: el ambiente simplemente no se recuerda.
+    }
+  }, [ambient]);
 
   const runChefCommand = useCallback(
     async (rawCommand: string): Promise<string[]> => {
@@ -314,166 +386,292 @@ export function App({ client = defaultClient }: AppProps) {
     [],
   );
 
+  const statsGraph =
+    streamedGraph ??
+    (state.status === 'success' ? state.reconGraph : undefined);
+  const reconStats =
+    state.status === 'success'
+      ? [
+          {
+            label: 'Activos',
+            value: statsGraph?.assets.length ?? state.snapshot.assets.length,
+          },
+          {
+            label: 'Relaciones',
+            value:
+              statsGraph?.relationships.length ??
+              state.snapshot.relationships.length,
+          },
+          {
+            label: 'Evidencias',
+            value:
+              statsGraph?.evidence.length ?? state.snapshot.evidence.length,
+          },
+          {
+            label: 'Modo',
+            value: client.runtimeMode === 'demo' ? 'Offline' : 'Conectado',
+          },
+        ]
+      : [];
+
   function navigateTo(section: string, targetId: string) {
-    setActiveWorkspace(section);
     void targetId;
+    if (section === activeWorkspace) return;
+    if (prefersReducedMotion()) {
+      setActiveWorkspace(section);
+      return;
+    }
+    // Mientras dura la transición se ignoran más clics.
+    if (transition !== null) return;
+    setTransition({ phase: 'out', target: section });
+    transitionTimers.current.push(
+      window.setTimeout(() => {
+        setActiveWorkspace(section);
+        if (contentRef.current !== null) contentRef.current.scrollTop = 0;
+        setTransition({ phase: 'in', target: section });
+      }, TRANSITION_OUT_MS),
+      window.setTimeout(
+        () => setTransition(null),
+        TRANSITION_OUT_MS + TRANSITION_IN_MS,
+      ),
+    );
   }
 
   return (
-    <div className="chef-shell">
-      <aside className="project-sidebar" aria-label="Navegación de CHEF">
-        <a className="wordmark" href="#workspace" aria-label="CHEF, inicio">
-          <img src="/chef-mascot.webp" alt="" />
-          <span>CHEF</span>
-        </a>
-        <div className="project-switcher">
-          <span className="project-avatar" aria-hidden="true">
-            <img src="/chef-mascot.webp" alt="" width="30" height="30" />
-          </span>
-          <span>
-            <strong>{activeRunLabel}</strong>
-            <small>
-              {state.status === 'success' ? 'Snapshot cargado' : 'Sin snapshot'}
-            </small>
-          </span>
-          <span className="switcher-chevron" aria-hidden="true">
-            ⌄
-          </span>
-        </div>
-        <p className="sidebar-label">Espacio de trabajo</p>
-        <nav className="workspace-nav" aria-label="Vistas del proyecto">
-          <button
-            className={
-              activeWorkspace === 'recon' ? 'nav-item is-active' : 'nav-item'
-            }
-            type="button"
-            aria-current={activeWorkspace === 'recon' ? 'page' : undefined}
-            onClick={() => navigateTo('recon', 'overview')}
-          >
-            <WorkspaceIcon name="recon" /> Reconocimiento
-          </button>
-          <button
-            className={
-              activeWorkspace === 'evidence' ? 'nav-item is-active' : 'nav-item'
-            }
-            type="button"
-            aria-current={activeWorkspace === 'evidence' ? 'page' : undefined}
-            onClick={() => navigateTo('evidence', 'evidence-workspace')}
-          >
-            <WorkspaceIcon name="evidence" /> Evidencia
-          </button>
-          <button
-            className={
-              activeWorkspace === 'sources' ? 'nav-item is-active' : 'nav-item'
-            }
-            type="button"
-            aria-current={activeWorkspace === 'sources' ? 'page' : undefined}
-            onClick={() => navigateTo('sources', 'source-imports')}
-          >
-            <WorkspaceIcon name="sources" /> Fuentes
-          </button>
-          <button
-            className={
-              activeWorkspace === 'settings' ? 'nav-item is-active' : 'nav-item'
-            }
-            type="button"
-            aria-current={activeWorkspace === 'settings' ? 'page' : undefined}
-            onClick={() => navigateTo('settings', 'chef-config-title')}
-          >
-            <WorkspaceIcon name="settings" /> Ajustes
-          </button>
-        </nav>
-      </aside>
-      <main id="workspace" className="chef-main">
-        <header className="topbar">
-          <div className="breadcrumbs">
+    <AmbientHueContext.Provider value={accentHue}>
+      <div className="chef-shell">
+        {activeWorkspace === 'about' ? (
+          <FurnaceStage progressRef={furnaceProgress} preset={ambient} />
+        ) : activeWorkspace === 'evidence' ? (
+          <StarfieldStage preset={ambient} />
+        ) : activeWorkspace === 'sources' ? (
+          <FlowStage preset={ambient} />
+        ) : activeWorkspace === 'settings' ? (
+          <InstrumentStage preset={ambient} />
+        ) : (
+          <AuroraBackground preset={ambient} />
+        )}
+        {activeWorkspace === 'recon' && (
+          <GlobeStage preset={ambient} progressRef={planetProgress} />
+        )}
+        <aside className="project-sidebar" aria-label="Navegación de CHEF">
+          <a className="wordmark" href="#workspace" aria-label="CHEF, inicio">
+            <img src="/chef-logo.png" alt="" />
             <span>CHEF</span>
-            <b>/</b>
-            <strong>{activeRunLabel}</strong>
-          </div>
-          <div className="topbar-actions">
-            <span
-              className={`backend-status ${backendStatusClass}`}
-              aria-live="polite"
-            >
-              <i aria-hidden="true" /> {backendStatus}
+          </a>
+          <div className="project-switcher">
+            <span className="project-avatar" aria-hidden="true">
+              <img src="/chef-logo.png" alt="" width="30" height="30" />
+            </span>
+            <span>
+              <strong>{activeRunLabel}</strong>
+              <small>
+                {state.status === 'success'
+                  ? 'Snapshot cargado'
+                  : 'Sin snapshot'}
+              </small>
+            </span>
+            <span className="switcher-chevron" aria-hidden="true">
+              ⌄
             </span>
           </div>
-        </header>
-        <div
-          className={
-            activeWorkspace === 'recon'
-              ? 'main-content recon-content'
-              : 'main-content'
-          }
-        >
-          <section className="page-heading" id="overview">
-            <div>
-              <h1>
-                {activeWorkspace === 'recon'
-                  ? 'Reconocimiento'
-                  : activeWorkspace === 'evidence'
-                    ? 'Evidencia'
-                    : activeWorkspace === 'sources'
-                      ? 'Importaciones'
-                      : 'Configuración'}
-              </h1>
-              <p className="page-description">
-                {activeWorkspace === 'recon'
-                  ? 'Explora activos y evidencia del snapshot cargado.'
-                  : activeWorkspace === 'evidence'
-                    ? 'Consulta procedencia, relaciones y exportaciones.'
-                    : activeWorkspace === 'sources'
-                      ? 'Importa archivos de evidencia para procesarlos en CHEF.'
-                      : 'Consulta el alcance y el estado de CHEF.'}
-              </p>
-            </div>
-            <div className="workspace-badge">
-              <span className="status-dot" />{' '}
-              {state.status === 'success'
-                ? `${state.snapshot.assets.length} en snapshot`
-                : 'Sin snapshot'}
-            </div>
+          <p className="sidebar-label">Espacio de trabajo</p>
+          <nav className="workspace-nav" aria-label="Vistas del proyecto">
+            <button
+              className={
+                activeWorkspace === 'about' ? 'nav-item is-active' : 'nav-item'
+              }
+              type="button"
+              aria-current={activeWorkspace === 'about' ? 'page' : undefined}
+              onClick={() => navigateTo('about', 'about-title')}
+            >
+              <WorkspaceIcon name="about" /> Inicio
+            </button>
+            <button
+              className={
+                activeWorkspace === 'recon' ? 'nav-item is-active' : 'nav-item'
+              }
+              type="button"
+              aria-current={activeWorkspace === 'recon' ? 'page' : undefined}
+              onClick={() => navigateTo('recon', 'overview')}
+            >
+              <WorkspaceIcon name="recon" /> Reconocimiento
+            </button>
+            <button
+              className={
+                activeWorkspace === 'evidence'
+                  ? 'nav-item is-active'
+                  : 'nav-item'
+              }
+              type="button"
+              aria-current={activeWorkspace === 'evidence' ? 'page' : undefined}
+              onClick={() => navigateTo('evidence', 'evidence-workspace')}
+            >
+              <WorkspaceIcon name="evidence" /> Evidencia
+            </button>
+            <button
+              className={
+                activeWorkspace === 'sources'
+                  ? 'nav-item is-active'
+                  : 'nav-item'
+              }
+              type="button"
+              aria-current={activeWorkspace === 'sources' ? 'page' : undefined}
+              onClick={() => navigateTo('sources', 'source-imports')}
+            >
+              <WorkspaceIcon name="sources" /> Fuentes
+            </button>
+            <button
+              className={
+                activeWorkspace === 'settings'
+                  ? 'nav-item is-active'
+                  : 'nav-item'
+              }
+              type="button"
+              aria-current={activeWorkspace === 'settings' ? 'page' : undefined}
+              onClick={() => navigateTo('settings', 'chef-config-title')}
+            >
+              <WorkspaceIcon name="settings" /> Ajustes
+            </button>
+          </nav>
+          <SidebarPlanet preset={ambient} />
+          <section
+            className="command-rail"
+            aria-label="Comandos de la terminal"
+          >
+            <p className="sidebar-label">Comandos</p>
+            <ul>
+              <li>
+                <code>chef help</code>
+                <span>ayuda</span>
+              </li>
+              <li>
+                <code>chef status</code>
+                <span>estado</span>
+              </li>
+              <li>
+                <code>chef url</code>
+                <span>clasifica</span>
+              </li>
+              <li>
+                <code>chef report</code>
+                <span>informe</span>
+              </li>
+              <li>
+                <code>clear</code>
+                <span>limpiar</span>
+              </li>
+            </ul>
+            <p className="rail-note">
+              chef url clasifica la URL localmente; no consulta la red.
+            </p>
           </section>
-          <div className="recon-workbench" hidden={activeWorkspace !== 'recon'}>
-            <div className="terminal-column">
-              <h2>Consola</h2>
-              <Suspense
-                fallback={
-                  <section
-                    aria-label="Terminal CHEF"
-                    className="scan-log-panel terminal-loading"
-                  >
-                    Cargando terminal…
-                  </section>
-                }
-              >
-                <div id="activity-terminal">
-                  <ScanLogTerminal logs={scanLogs} onCommand={runChefCommand} />
-                </div>
-              </Suspense>
+        </aside>
+        <main id="workspace" className="chef-main">
+          <header className="topbar">
+            <div className="breadcrumbs">
+              <span>CHEF</span>
+              <b>/</b>
+              <strong>{activeRunLabel}</strong>
             </div>
-            <div className="graph-column">
-              <section
-                className="recon-workspace"
-                aria-labelledby="graph-title"
+            <div className="topbar-actions">
+              <label className="ambient-picker">
+                <span>Ambiente</span>
+                <select
+                  value={ambient}
+                  onChange={(event) =>
+                    setAmbient(event.target.value as AuroraPreset)
+                  }
+                >
+                  {AURORA_PRESETS.map((preset) => (
+                    <option key={preset} value={preset}>
+                      {auroraLabel(preset)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <span
+                className={`backend-status ${backendStatusClass}`}
+                aria-live="polite"
               >
-                <header className="pane-heading">
-                  <h2 id="graph-title">Mapa de relaciones</h2>
-                  <span className="pane-meta">
-                    Proyección validada por CHEF
-                  </span>
-                </header>
+                <i aria-hidden="true" /> {backendStatus}
+              </span>
+            </div>
+          </header>
+          <div
+            ref={contentRef}
+            className={[
+              activeWorkspace === 'recon'
+                ? 'main-content recon-content'
+                : 'main-content',
+              activeWorkspace === 'evidence' ? 'evidence-content' : '',
+              transition?.phase === 'out' ? 'is-leaving' : '',
+              transition?.phase === 'in'
+                ? `is-entering enter-${transition.target}`
+                : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
+          >
+            {activeWorkspace === 'about' && (
+              <AboutPage
+                onNavigate={(workspace) =>
+                  navigateTo(
+                    workspace,
+                    workspace === 'recon' ? 'overview' : 'source-imports',
+                  )
+                }
+              />
+            )}
+            <section
+              className="page-heading"
+              id="overview"
+              hidden={activeWorkspace === 'about'}
+            >
+              <div>
+                <h1>
+                  {activeWorkspace === 'recon'
+                    ? 'Reconocimiento'
+                    : activeWorkspace === 'evidence'
+                      ? 'Evidencia'
+                      : activeWorkspace === 'sources'
+                        ? 'Importaciones'
+                        : 'Configuración'}
+                </h1>
+                <p className="page-description">
+                  {activeWorkspace === 'recon'
+                    ? 'Explora activos y evidencia del snapshot cargado.'
+                    : activeWorkspace === 'evidence'
+                      ? 'Consulta procedencia, relaciones y exportaciones.'
+                      : activeWorkspace === 'sources'
+                        ? 'Importa archivos de evidencia para procesarlos en CHEF.'
+                        : 'Consulta el alcance y el estado de CHEF.'}
+                </p>
+              </div>
+              <div className="workspace-badge">
+                <span className="status-dot" />{' '}
+                {state.status === 'success'
+                  ? `${state.snapshot.assets.length} en snapshot`
+                  : 'Sin snapshot'}
+              </div>
+            </section>
+            <div
+              className="recon-workbench"
+              hidden={activeWorkspace !== 'recon'}
+            >
+              <div className="graph-column">
                 {streamedGraph !== null && (
-                  <p role="status">
+                  <p role="status" className="graph-status">
                     Mostrando el grafo ya validado y guardado · cargando su
                     representación
                   </p>
                 )}
-                {state.status === 'success' &&
+                {activeWorkspace === 'recon' &&
+                  state.status === 'success' &&
                   (streamedGraph ?? state.reconGraph) !== undefined &&
                   ((streamedGraph ?? state.reconGraph)!.assets.length > 0 ? (
                     <ReconGraphPanel
+                      variant="open"
                       key={
                         streamedGraphRequestId ??
                         `snapshot:${state.snapshot.run.id}`
@@ -492,256 +690,325 @@ export function App({ client = defaultClient }: AppProps) {
                       El snapshot no contiene una proyección de grafo.
                     </p>
                   )}
-              </section>
-              {censysImport === null &&
-                urlscanImport === null &&
-                state.status === 'loading' && <LoadingState />}
-              {censysImport === null &&
-                urlscanImport === null &&
-                state.status === 'empty' && <EmptyState />}
-              {censysImport === null &&
-                urlscanImport === null &&
-                state.status === 'error' && (
-                  <ErrorState message={state.message} onRetry={retry} />
-                )}
-            </div>
-          </div>
-          <section
-            aria-labelledby="chef-config-title"
-            id="settings-panel"
-            className="config-strip"
-            hidden={activeWorkspace !== 'settings'}
-          >
-            <h2 id="chef-config-title">Configuración local</h2>
-            {configLoadFailed && <p>No se pudo cargar config.toml de CHEF.</p>}
-            {chefConfig !== null && (
-              <dl>
-                <dt>Scope configurado</dt>
-                <dd>
-                  {chefConfig.config.scope.allowed_hosts.length} objetivos
-                  permitidos
-                </dd>
-                <dt>Descubrimiento de red</dt>
-                <dd>
-                  {chefConfig.config.runtime.active_discovery
-                    ? 'Habilitado'
-                    : 'Desactivado'}
-                </dd>
-                <dt>Fuentes habilitadas en la configuración</dt>
-                <dd>
-                  {
-                    Object.values(chefConfig.config.sources).filter(
-                      ({ enabled }) => enabled,
-                    ).length
-                  }
-                </dd>
-              </dl>
-            )}
-          </section>
-          <div
-            id="source-imports"
-            className="imports-workspace"
-            hidden={activeWorkspace !== 'sources'}
-          >
-            {client.importBbotJsonl !== undefined &&
-              state.status === 'success' && (
-                <EvidenceImportPanel
-                  client={client}
-                  onImported={handleBbotImported}
-                  onGraphProgress={handleReconGraphProgress}
-                />
-              )}
-            {client.importCensysIpResponse !== undefined &&
-              client.loadCensysIpReconGraph !== undefined && (
-                <CensysIpImportPanel
-                  client={client}
-                  onImported={handleCensysImported}
-                />
-              )}
-            {censysImport !== null && (
-              <section aria-labelledby="censys-import-result-title">
-                <h2 id="censys-import-result-title">
-                  Evidencia Censys guardada
-                </h2>
-                <dl>
-                  <dt>IP consultada en el archivo</dt>
-                  <dd>{censysImport.summary.targetIp}</dd>
-                  <dt>SHA-256 de la respuesta</dt>
-                  <dd>{censysImport.summary.responseSha256}</dd>
-                  <dt>Eventos con linaje</dt>
-                  <dd>{censysImport.summary.eventCount}</dd>
-                  <dt>Activos / relaciones</dt>
-                  <dd>
-                    {censysImport.summary.assetCount} /{' '}
-                    {censysImport.summary.relationshipCount}
-                  </dd>
-                  <dt>Tipos aún sin proyección</dt>
-                  <dd>
-                    {Object.keys(censysImport.summary.unprojectedEventTypes)
-                      .length === 0
-                      ? 'Ninguno'
-                      : Object.entries(
-                          censysImport.summary.unprojectedEventTypes,
-                        )
-                          .map(([eventType, count]) => `${eventType}: ${count}`)
-                          .join(', ')}
-                  </dd>
-                </dl>
-                <p>
-                  Las relaciones y activos de esta importación son pistas de un
-                  snapshot histórico; no representan estado actual.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => navigateTo('evidence', 'evidence-workspace')}
-                >
-                  Volver al snapshot local
-                </button>
-                <ReconGraphPanel graph={censysImport.graph} />
-              </section>
-            )}
-            {client.importUrlScanResponse !== undefined &&
-              client.loadUrlScanReconGraph !== undefined && (
-                <UrlScanImportPanel
-                  client={client}
-                  onImported={handleUrlScanImported}
-                />
-              )}
-            {urlscanImport !== null && (
-              <section aria-labelledby="urlscan-import-result-title">
-                <h2 id="urlscan-import-result-title">
-                  Evidencia urlscan guardada
-                </h2>
-                <dl>
-                  <dt>Dominio consultado</dt>
-                  <dd>{urlscanImport.summary.queryDomain}</dd>
-                  <dt>SHA-256 de la respuesta</dt>
-                  <dd>{urlscanImport.summary.responseSha256}</dd>
-                  <dt>Eventos con linaje</dt>
-                  <dd>{urlscanImport.summary.eventCount}</dd>
-                  <dt>Activos / relaciones</dt>
-                  <dd>
-                    {urlscanImport.summary.assetCount} /{' '}
-                    {urlscanImport.summary.relationshipCount}
-                  </dd>
-                </dl>
-                <p>
-                  Las pistas históricas del archivo no representan estado DNS
-                  actual.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => navigateTo('evidence', 'evidence-workspace')}
-                >
-                  Volver al snapshot local
-                </button>
-                <ReconGraphPanel graph={urlscanImport.graph} />
-              </section>
-            )}
-          </div>
-          {state.status === 'success' &&
-            censysImport === null &&
-            urlscanImport === null && (
-              <>
-                <section
-                  aria-labelledby="snapshot-summary-title"
-                  id="snapshot-summary"
-                  className="snapshot-summary"
-                  hidden={activeWorkspace !== 'evidence'}
-                >
-                  <h2 id="snapshot-summary-title">Resumen del snapshot</h2>
-                  <dl>
-                    <div className="summary-metric">
-                      <dt>Versión</dt>
-                      <dd>{state.snapshot.schemaVersion}</dd>
-                    </div>
-                    <div className="summary-metric">
-                      <dt>Activos</dt>
-                      <dd>{state.snapshot.assets.length}</dd>
-                    </div>
-                    <div className="summary-metric">
-                      <dt>Observaciones</dt>
-                      <dd>{state.snapshot.observations.length}</dd>
-                    </div>
-                    <div className="summary-metric">
-                      <dt>Evidencias</dt>
-                      <dd>{state.snapshot.evidence.length}</dd>
-                    </div>
-                  </dl>
-                </section>
-                {activeWorkspace === 'evidence' &&
-                  client.exportSnapshot !== undefined && (
-                    <SnapshotExportButton
-                      client={client}
-                      snapshot={state.snapshot}
-                      hasReconGraph={state.reconGraph !== undefined}
-                    />
+                {censysImport === null &&
+                  urlscanImport === null &&
+                  state.status === 'loading' && <LoadingState />}
+                {censysImport === null &&
+                  urlscanImport === null &&
+                  state.status === 'empty' && <EmptyState />}
+                {censysImport === null &&
+                  urlscanImport === null &&
+                  state.status === 'error' && (
+                    <ErrorState message={state.message} onRetry={retry} />
                   )}
-                {activeWorkspace === 'evidence' && eventStatistics !== null && (
-                  <EventStatisticsPanel statistics={eventStatistics} />
-                )}
-                <div
-                  className="explorer-grid"
-                  id="evidence-workspace"
-                  hidden={activeWorkspace !== 'evidence'}
-                >
-                  <section
-                    className="explorer-pane asset-pane"
-                    aria-labelledby="asset-list-title"
-                  >
-                    <header className="pane-heading">
-                      <h2 id="asset-list-title">Activos</h2>
-                      <span>{state.snapshot.assets.length}</span>
-                    </header>
-                    <AssetList
-                      assets={state.snapshot.assets}
-                      selectedAssetId={selectedAssetId}
-                      onSelect={setSelectedAssetId}
-                    />
-                  </section>
-                  <aside
-                    className="explorer-pane inspector-pane"
-                    aria-labelledby="inspector-title"
-                  >
-                    <header className="pane-heading">
-                      <h2 id="inspector-title">Inspector</h2>
-                    </header>
-                    {selectedAsset !== undefined ? (
-                      <EvidencePanel
-                        snapshot={state.snapshot}
-                        asset={selectedAsset}
-                      />
-                    ) : (
-                      <p className="pane-empty">
-                        Selecciona un activo para revisar su evidencia,
-                        procedencia y relaciones.
-                      </p>
-                    )}
+                {reconStats.length > 0 && (
+                  <aside className="summary-rail" aria-label="Resumen del mapa">
+                    <ul>
+                      {reconStats.map((stat, index) => (
+                        <li key={stat.label} className="stat-card">
+                          <span>{stat.label}</span>
+                          <strong>
+                            {typeof stat.value === 'number' ? (
+                              <CountUp
+                                value={stat.value}
+                                delay={260 + index * 110}
+                              />
+                            ) : (
+                              stat.value
+                            )}
+                          </strong>
+                        </li>
+                      ))}
+                    </ul>
                   </aside>
-                </div>
-              </>
+                )}
+              </div>
+              <div
+                className={
+                  consoleOpen
+                    ? 'terminal-column'
+                    : 'terminal-column is-collapsed'
+                }
+              >
+                <h2>
+                  <button
+                    type="button"
+                    className="console-toggle"
+                    aria-expanded={consoleOpen}
+                    aria-controls="activity-terminal"
+                    onClick={() => setConsoleOpen((open) => !open)}
+                  >
+                    Consola
+                  </button>
+                </h2>
+                <Suspense
+                  fallback={
+                    <section
+                      aria-label="Terminal CHEF"
+                      className="scan-log-panel terminal-loading"
+                    >
+                      Cargando terminal…
+                    </section>
+                  }
+                >
+                  <div id="activity-terminal">
+                    <ScanLogTerminal
+                      logs={scanLogs}
+                      onCommand={runChefCommand}
+                    />
+                  </div>
+                </Suspense>
+              </div>
+            </div>
+            <section
+              aria-labelledby="chef-config-title"
+              id="settings-panel"
+              className="config-strip"
+              hidden={activeWorkspace !== 'settings'}
+            >
+              <h2 id="chef-config-title">Configuración local</h2>
+              {configLoadFailed && (
+                <p>No se pudo cargar config.toml de CHEF.</p>
+              )}
+              {chefConfig !== null && (
+                <dl>
+                  <dt>Scope configurado</dt>
+                  <dd>
+                    {chefConfig.config.scope.allowed_hosts.length} objetivos
+                    permitidos
+                  </dd>
+                  <dt>Descubrimiento de red</dt>
+                  <dd>
+                    {chefConfig.config.runtime.active_discovery
+                      ? 'Habilitado'
+                      : 'Desactivado'}
+                  </dd>
+                  <dt>Fuentes habilitadas en la configuración</dt>
+                  <dd>
+                    {
+                      Object.values(chefConfig.config.sources).filter(
+                        ({ enabled }) => enabled,
+                      ).length
+                    }
+                  </dd>
+                </dl>
+              )}
+            </section>
+            <div
+              id="source-imports"
+              className="imports-workspace"
+              hidden={activeWorkspace !== 'sources'}
+            >
+              {client.importBbotJsonl !== undefined &&
+                state.status === 'success' && (
+                  <EvidenceImportPanel
+                    client={client}
+                    onImported={handleBbotImported}
+                    onGraphProgress={handleReconGraphProgress}
+                  />
+                )}
+              {client.importCensysIpResponse !== undefined &&
+                client.loadCensysIpReconGraph !== undefined && (
+                  <CensysIpImportPanel
+                    client={client}
+                    onImported={handleCensysImported}
+                  />
+                )}
+              {censysImport !== null && (
+                <section aria-labelledby="censys-import-result-title">
+                  <h2 id="censys-import-result-title">
+                    Evidencia Censys guardada
+                  </h2>
+                  <dl>
+                    <dt>IP consultada en el archivo</dt>
+                    <dd>{censysImport.summary.targetIp}</dd>
+                    <dt>SHA-256 de la respuesta</dt>
+                    <dd>{censysImport.summary.responseSha256}</dd>
+                    <dt>Eventos con linaje</dt>
+                    <dd>{censysImport.summary.eventCount}</dd>
+                    <dt>Activos / relaciones</dt>
+                    <dd>
+                      {censysImport.summary.assetCount} /{' '}
+                      {censysImport.summary.relationshipCount}
+                    </dd>
+                    <dt>Tipos aún sin proyección</dt>
+                    <dd>
+                      {Object.keys(censysImport.summary.unprojectedEventTypes)
+                        .length === 0
+                        ? 'Ninguno'
+                        : Object.entries(
+                            censysImport.summary.unprojectedEventTypes,
+                          )
+                            .map(
+                              ([eventType, count]) => `${eventType}: ${count}`,
+                            )
+                            .join(', ')}
+                    </dd>
+                  </dl>
+                  <p>
+                    Las relaciones y activos de esta importación son pistas de
+                    un snapshot histórico; no representan estado actual.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => navigateTo('evidence', 'evidence-workspace')}
+                  >
+                    Volver al snapshot local
+                  </button>
+                  <ReconGraphPanel graph={censysImport.graph} />
+                </section>
+              )}
+              {client.importUrlScanResponse !== undefined &&
+                client.loadUrlScanReconGraph !== undefined && (
+                  <UrlScanImportPanel
+                    client={client}
+                    onImported={handleUrlScanImported}
+                  />
+                )}
+              {urlscanImport !== null && (
+                <section aria-labelledby="urlscan-import-result-title">
+                  <h2 id="urlscan-import-result-title">
+                    Evidencia urlscan guardada
+                  </h2>
+                  <dl>
+                    <dt>Dominio consultado</dt>
+                    <dd>{urlscanImport.summary.queryDomain}</dd>
+                    <dt>SHA-256 de la respuesta</dt>
+                    <dd>{urlscanImport.summary.responseSha256}</dd>
+                    <dt>Eventos con linaje</dt>
+                    <dd>{urlscanImport.summary.eventCount}</dd>
+                    <dt>Activos / relaciones</dt>
+                    <dd>
+                      {urlscanImport.summary.assetCount} /{' '}
+                      {urlscanImport.summary.relationshipCount}
+                    </dd>
+                  </dl>
+                  <p>
+                    Las pistas históricas del archivo no representan estado DNS
+                    actual.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => navigateTo('evidence', 'evidence-workspace')}
+                  >
+                    Volver al snapshot local
+                  </button>
+                  <ReconGraphPanel graph={urlscanImport.graph} />
+                </section>
+              )}
+            </div>
+            {state.status === 'success' &&
+              censysImport === null &&
+              urlscanImport === null && (
+                <>
+                  <section
+                    aria-labelledby="snapshot-summary-title"
+                    id="snapshot-summary"
+                    className="snapshot-summary"
+                    hidden={activeWorkspace !== 'evidence'}
+                  >
+                    <h2 id="snapshot-summary-title">Resumen del snapshot</h2>
+                    <dl>
+                      <div className="summary-metric">
+                        <dt>Versión</dt>
+                        <dd>{state.snapshot.schemaVersion}</dd>
+                      </div>
+                      <div className="summary-metric">
+                        <dt>Activos</dt>
+                        <dd>{state.snapshot.assets.length}</dd>
+                      </div>
+                      <div className="summary-metric">
+                        <dt>Observaciones</dt>
+                        <dd>{state.snapshot.observations.length}</dd>
+                      </div>
+                      <div className="summary-metric">
+                        <dt>Evidencias</dt>
+                        <dd>{state.snapshot.evidence.length}</dd>
+                      </div>
+                    </dl>
+                  </section>
+                  {activeWorkspace === 'evidence' &&
+                    client.exportSnapshot !== undefined && (
+                      <SnapshotExportButton
+                        client={client}
+                        snapshot={state.snapshot}
+                        hasReconGraph={state.reconGraph !== undefined}
+                      />
+                    )}
+                  {activeWorkspace === 'evidence' &&
+                    eventStatistics !== null && (
+                      <EventStatisticsPanel statistics={eventStatistics} />
+                    )}
+                  <div
+                    className="explorer-grid"
+                    id="evidence-workspace"
+                    hidden={activeWorkspace !== 'evidence'}
+                  >
+                    <section
+                      className="explorer-pane asset-pane"
+                      aria-labelledby="asset-list-title"
+                    >
+                      <header className="pane-heading">
+                        <h2 id="asset-list-title">Activos</h2>
+                        <span>{state.snapshot.assets.length}</span>
+                      </header>
+                      <AssetList
+                        assets={state.snapshot.assets}
+                        selectedAssetId={selectedAssetId}
+                        onSelect={setSelectedAssetId}
+                      />
+                    </section>
+                    <aside
+                      className="explorer-pane inspector-pane"
+                      aria-labelledby="inspector-title"
+                    >
+                      <header className="pane-heading">
+                        <h2 id="inspector-title">Inspector</h2>
+                      </header>
+                      {selectedAsset !== undefined ? (
+                        <EvidencePanel
+                          snapshot={state.snapshot}
+                          asset={selectedAsset}
+                        />
+                      ) : (
+                        <p className="pane-empty">
+                          Selecciona un activo para revisar su evidencia,
+                          procedencia y relaciones.
+                        </p>
+                      )}
+                    </aside>
+                  </div>
+                </>
+              )}
+            <footer className="legal-notice" aria-label="Licencia y atribución">
+              <details>
+                <summary>Licencia y avisos</summary>
+                <p>
+                  CHEF se distribuye bajo AGPL-3.0-only. Copyright © Black
+                  Lantern Security y contribuidores de CHEF. El programa se
+                  ofrece sin garantía; puedes redistribuirlo conforme a los
+                  términos de la licencia.
+                </p>
+                <p>
+                  Consulta los{' '}
+                  <a href="/LICENSE" target="_blank" rel="noreferrer">
+                    términos íntegros de AGPL-3.0
+                  </a>{' '}
+                  y los <a href="/THIRD_PARTY_NOTICES.md">avisos de terceros</a>
+                  .
+                </p>
+              </details>
+            </footer>
+            {activeWorkspace === 'recon' && (
+              <GlobeSpacer progressRef={planetProgress} />
             )}
-          <footer className="legal-notice" aria-label="Licencia y atribución">
-            <details>
-              <summary>Licencia y avisos</summary>
-              <p>
-                CHEF se distribuye bajo AGPL-3.0-only. Copyright © Black Lantern
-                Security y contribuidores de CHEF. El programa se ofrece sin
-                garantía; puedes redistribuirlo conforme a los términos de la
-                licencia.
-              </p>
-              <p>
-                Consulta los{' '}
-                <a href="/LICENSE" target="_blank" rel="noreferrer">
-                  términos íntegros de AGPL-3.0
-                </a>{' '}
-                y los <a href="/THIRD_PARTY_NOTICES.md">avisos de terceros</a>.
-              </p>
-            </details>
-          </footer>
-        </div>
-      </main>
-    </div>
+            {activeWorkspace === 'about' && (
+              <FurnaceSpacer progressRef={furnaceProgress} />
+            )}
+          </div>
+        </main>
+      </div>
+    </AmbientHueContext.Provider>
   );
 }
 
@@ -757,9 +1024,15 @@ function safeDownloadName(value: string) {
 function WorkspaceIcon({
   name,
 }: {
-  name: 'recon' | 'evidence' | 'sources' | 'settings';
+  name: 'about' | 'recon' | 'evidence' | 'sources' | 'settings';
 }) {
   const paths = {
+    about: (
+      <>
+        <path d="M4 11.2 12 4l8 7.2" />
+        <path d="M6.5 10v9.5h11V10M10 19.5v-5h4v5" />
+      </>
+    ),
     recon: (
       <>
         <circle cx="10.5" cy="10.5" r="6.5" />

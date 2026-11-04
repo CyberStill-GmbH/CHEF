@@ -1,0 +1,579 @@
+/* Pestaña "Acerca de": presentación del proyecto. */
+
+.about-page {
+  display: grid;
+  gap: 72px;
+  width: min(1040px, 100%);
+  margin: 0 auto;
+  padding: 24px 0 40px;
+}
+
+.about-page [data-reveal] {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 0.7s var(--chef-ease),
+    transform 0.7s var(--chef-ease);
+}
+
+.about-page [data-reveal].is-pending {
+  opacity: 0.45;
+  transform: translateY(22px);
+}
+
+.about-page h1,
+.about-page h2,
+.about-page h3 {
+  color: var(--chef-text);
+}
+
+/* Portada */
+.about-hero {
+  display: grid;
+  justify-items: start;
+  gap: 4px;
+  padding-top: 28px;
+}
+
+.about-logo {
+  width: 76px;
+  height: 76px;
+  margin-bottom: 18px;
+  border-radius: 18px;
+  box-shadow: 0 12px 28px rgb(0 0 0 / 0.5);
+  animation: chef-rise 0.7s var(--chef-ease) both;
+}
+
+.about-hero h1 {
+  max-width: 17ch;
+  margin: 0;
+  font-size: clamp(34px, 5vw, 58px);
+  font-weight: 650;
+  line-height: 1.06;
+  letter-spacing: -0.03em;
+  animation: chef-rise 0.8s var(--chef-ease) 0.16s both;
+}
+
+.about-hero h1 em {
+  color: var(--chef-green);
+  font-style: normal;
+}
+
+.about-lead {
+  max-width: 60ch;
+  margin: 18px 0 0;
+  color: var(--chef-muted);
+  font-size: 18px;
+  line-height: 1.6;
+  animation: chef-rise 0.8s var(--chef-ease) 0.26s both;
+}
+
+.about-lead strong {
+  color: var(--chef-text);
+  font-weight: 600;
+}
+
+.about-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 28px;
+  animation: chef-rise 0.8s var(--chef-ease) 0.36s both;
+}
+
+.about-button {
+  min-height: 44px;
+  padding: 0 22px;
+  border: 1px solid var(--chef-glass-line);
+  border-radius: 10px;
+  background: var(--chef-glass);
+  color: var(--chef-text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    transform 0.25s var(--chef-ease),
+    border-color 0.25s,
+    background 0.25s;
+}
+
+.about-button:hover {
+  border-color: hsl(var(--chef-hue) calc(70% * var(--chef-sat)) 58% / 0.7);
+  transform: translateY(-2px);
+}
+
+.about-button.is-primary {
+  border-color: transparent;
+  background: var(--chef-green);
+  color: #160a04;
+}
+
+.about-button.is-primary:hover {
+  background: var(--chef-green-soft);
+}
+
+/* Secciones */
+.about-section h2 {
+  max-width: 24ch;
+  margin: 0 0 16px;
+  font-size: clamp(24px, 3vw, 34px);
+  font-weight: 620;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.about-copy {
+  max-width: 64ch;
+  margin: 0 0 24px;
+  color: var(--chef-muted);
+  line-height: 1.65;
+}
+
+.about-section h3 {
+  margin: 0 0 6px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.about-section li p {
+  margin: 0;
+  color: var(--chef-muted);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+/* Cómo funciona */
+.about-steps {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 16px;
+  margin: 24px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.about-steps li {
+  position: relative;
+  padding: 20px;
+  border: 1px solid var(--chef-glass-line);
+  border-radius: 14px;
+  background: var(--chef-glass);
+  backdrop-filter: blur(14px);
+}
+
+.about-step-number {
+  display: inline-grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  margin-bottom: 14px;
+  border: 1px solid hsl(var(--chef-hue) calc(70% * var(--chef-sat)) 58% / 0.6);
+  border-radius: 50%;
+  color: var(--chef-green);
+  font-family: var(--chef-mono);
+  font-size: 13px;
+}
+
+/* Tres niveles de certeza */
+.about-levels {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.about-levels li {
+  padding: 22px;
+  border: 1px solid var(--chef-glass-line);
+  border-radius: 14px;
+  background: var(--chef-glass);
+  backdrop-filter: blur(14px);
+}
+
+.about-levels h3::before {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  margin-right: 10px;
+  border-radius: 50%;
+  background: hsl(var(--chef-hue) calc(35% * var(--chef-sat)) 38%);
+  content: '';
+}
+
+.about-levels li[data-level='2'] h3::before {
+  background: hsl(var(--chef-hue) calc(80% * var(--chef-sat)) 52%);
+}
+
+.about-levels li[data-level='3'] h3::before {
+  background: var(--chef-amber);
+}
+
+.about-page .about-levels .about-example {
+  margin-bottom: 10px;
+  color: var(--chef-text);
+  font-family: var(--chef-mono);
+  font-size: 13px;
+}
+
+/* Capacidades */
+.about-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.about-grid li {
+  padding: 20px 22px;
+  border: 1px solid var(--chef-glass-line);
+  border-radius: 14px;
+  background: var(--chef-glass);
+  backdrop-filter: blur(14px);
+  transition:
+    transform 0.3s var(--chef-ease),
+    border-color 0.3s;
+}
+
+.about-grid li:hover {
+  border-color: hsl(var(--chef-hue) calc(60% * var(--chef-sat)) 50% / 0.55);
+  transform: translateY(-3px);
+}
+
+/* Arquitectura */
+.about-layers {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 30px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.about-layers li {
+  position: relative;
+  display: grid;
+  gap: 6px;
+  padding: 18px 20px;
+  border: 1px solid var(--chef-glass-line);
+  border-radius: 12px;
+  background: var(--chef-glass);
+  backdrop-filter: blur(14px);
+}
+
+.about-layers li:not(:last-child)::after {
+  position: absolute;
+  top: 50%;
+  right: -23px;
+  color: var(--chef-green);
+  content: '→';
+  font-size: 18px;
+  transform: translateY(-50%);
+}
+
+.about-layers strong {
+  color: var(--chef-text);
+  font-size: 15px;
+}
+
+.about-layers span {
+  color: var(--chef-muted);
+  font-family: var(--chef-mono);
+  font-size: 12px;
+}
+
+.about-note {
+  margin: 20px 0 0;
+  color: var(--chef-muted);
+  font-size: 14px;
+}
+
+/* Principios */
+.about-principles {
+  display: grid;
+  gap: 12px;
+  max-width: 70ch;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.about-principles li {
+  position: relative;
+  padding-left: 30px;
+  color: var(--chef-text);
+  line-height: 1.55;
+}
+
+.about-principles li::before {
+  position: absolute;
+  top: 0.5em;
+  left: 4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  background: var(--chef-green);
+  content: '';
+}
+
+/* Estado */
+.about-status {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.about-status > div {
+  padding: 22px;
+  border: 1px solid var(--chef-glass-line);
+  border-radius: 14px;
+  background: var(--chef-glass);
+  backdrop-filter: blur(14px);
+}
+
+.about-status p {
+  margin: 0;
+  color: var(--chef-muted);
+  line-height: 1.6;
+}
+
+/* Créditos */
+.about-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 22px;
+  margin: 0;
+}
+
+.about-links a {
+  color: var(--chef-green-soft);
+}
+
+@media (max-width: 760px) {
+  .about-page {
+    gap: 52px;
+  }
+
+  .about-layers li:not(:last-child)::after {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .about-page [data-reveal] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* Fondo de horno: lienzo fijo bajo toda la pantalla (también bajo la barra). */
+.furnace-stage {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background: #060403;
+  pointer-events: none;
+}
+
+.furnace-stage {
+  overflow: hidden;
+}
+
+.furnace-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Las llamas se difuminan: el filtro CSS es barato y las vuelve volutas. */
+.furnace-flames {
+  bottom: -40px;
+  height: calc(100% + 40px);
+  filter: blur(7px) saturate(1.15);
+}
+
+/* Franja final libre: el brillo y las brasas quedan debajo, sin tapar texto. */
+.furnace-spacer {
+  height: clamp(260px, 42vh, 460px);
+  flex: none;
+}
+
+.about-lead,
+.about-copy,
+.about-page li p {
+  text-wrap: pretty;
+}
+
+/*
+ * Cambio de vista. La vista actual sale rápido (igual para todas) y la nueva
+ * entra con su propia animación: Inicio sube desde las brasas y Reconocimiento
+ * se abre desde el centro, donde además brotan los nodos del mapa.
+ */
+.main-content.is-leaving {
+  animation: chef-leave 0.18s ease-in both;
+  pointer-events: none;
+}
+
+.main-content.is-entering {
+  animation: chef-enter-default 0.45s var(--chef-ease) both;
+}
+
+.main-content.enter-about {
+  animation: chef-enter-ember 0.8s var(--chef-ease) both;
+}
+
+.main-content.enter-recon {
+  animation: chef-enter-recon 0.65s var(--chef-ease) both;
+}
+
+@keyframes chef-leave {
+  to {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes chef-enter-default {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+@keyframes chef-enter-ember {
+  from {
+    opacity: 0;
+    transform: translateY(56px);
+    filter: blur(6px) brightness(1.5);
+  }
+
+  60% {
+    filter: blur(0) brightness(1.15);
+  }
+}
+
+@keyframes chef-enter-recon {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+    filter: blur(5px);
+  }
+}
+
+/* Evidencia: cielo estrellado. */
+.starfield-stage {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  background: #030304;
+  pointer-events: none;
+}
+
+.starfield-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/*
+ * En Evidencia las tarjetas son de vidrio más claro y con poco desenfoque: se
+ * adivinan las estrellas y el resplandor del agujero sin que su forma compita
+ * con el texto.
+ */
+.main-content.evidence-content .snapshot-summary,
+.main-content.evidence-content .export-panel,
+.main-content.evidence-content .event-statistics-panel,
+.main-content.evidence-content .explorer-pane,
+.main-content.evidence-content .legal-notice {
+  background: hsl(var(--chef-hue) calc(12% * var(--chef-sat)) 6% / 0.4);
+  backdrop-filter: blur(0.6px);
+}
+
+/* Hueco de la barra lateral entre la navegación y los comandos. */
+.sidebar-planet {
+  position: relative;
+  min-height: 0;
+  flex: 1 1 0;
+  margin: 6px 0;
+  pointer-events: none;
+}
+
+.sidebar-planet canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Fuentes: circuito de datos. Ajustes: instrumento de anillos. */
+.flow-stage,
+.instrument-stage {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  background: #040405;
+  pointer-events: none;
+}
+
+.flow-canvas,
+.instrument-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/*
+ * Evidencia con muchos activos: los hijos de la columna no se encogen, así la
+ * rejilla crece con su contenido y el aviso de licencia queda siempre debajo
+ * en lugar de pintarse encima de la lista.
+ */
+.main-content.evidence-content > * {
+  flex-shrink: 0;
+}
+
+.main-content.evidence-content .explorer-grid {
+  min-height: 0;
+}
+
+/* Lista de activos: alineada a la izquierda y sin viñetas sueltas. */
+.explorer-pane ul:has(> li > button[aria-pressed]) {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.explorer-pane li > button[aria-pressed] {
+  position: relative;
+  width: 100%;
+  text-align: left;
+  transition:
+    background 0.2s,
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+/*
+ * Activo seleccionado: tinte y borde con el matiz del ambiente (Dune, Dusk,
+ * Ocean…), más una barra lateral que no depende solo del color.
+ */
+.explorer-pane li > button[aria-pressed='true'] {
+  border-color: hsl(var(--chef-hue) calc(75% * var(--chef-sat)) 60% / 0.85);
+  background: hsl(var(--chef-hue) calc(65% * var(--chef-sat)) 46% / 0.22);
+  box-shadow:
+    inset 3px 0 0 hsl(var(--chef-hue) calc(85% * var(--chef-sat)) 66%),
+    0 0 18px hsl(var(--chef-hue) calc(80% * var(--chef-sat)) 55% / 0.22);
+  color: var(--chef-text);
+}

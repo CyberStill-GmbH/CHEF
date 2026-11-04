@@ -45,6 +45,9 @@ describe('App snapshot states', () => {
     };
 
     render(<App client={client} />);
+    await userEvent
+      .setup()
+      .click(screen.getByRole('button', { name: 'Reconocimiento' }));
 
     expect(
       await screen.findByRole('heading', { name: 'Sin assets' }),
@@ -57,6 +60,9 @@ describe('App snapshot states', () => {
     };
 
     render(<App client={client} />);
+    await userEvent
+      .setup()
+      .click(screen.getByRole('button', { name: 'Reconocimiento' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'No se pudo cargar el snapshot.',
@@ -74,6 +80,7 @@ describe('App snapshot states', () => {
     const client: ApiClient = { loadSnapshot };
 
     render(<App client={client} />);
+    await user.click(screen.getByRole('button', { name: 'Reconocimiento' }));
     await user.click(await screen.findByRole('button', { name: 'Reintentar' }));
     await user.click(screen.getByRole('button', { name: 'Evidencia' }));
 
