@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://chef.cyberstill.dev/contracts/correlation-job/v0",
+  "title": "CorrelationJob v0",
+  "description": "Entrada que la API Node envía al motor de correlación Go (ADR 0011). Observaciones ya canónicas y validadas, scope explícito, reloj fijo y versión de reglas. El motor no recibe credenciales, no consulta proveedores ni accede a la base.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "ruleSetVersion",
+    "asOf",
+    "projectScope",
+    "evidence",
+    "observations"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "correlation-job/v0" },
+    "ruleSetVersion": {
+      "type": "string",
+      "pattern": "^v[0-9]+$",
+      "description": "Versión del conjunto de reglas que el motor debe aplicar."
+    },
+    "asOf": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Reloj fijo del trabajo; el motor no lee el reloj del sistema."
+    },
+    "projectScope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "digest",
+        "allowedAddresses",
+        "excludedAddresses",
+        "allowedPorts",
+        "allowedProtocols"
+      ],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "digest": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "allowedAddresses": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "excludedAddresses": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "allowedPorts": {
+          "type": "array",
+          "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+        },
+        "allowedProtocols": {
+          "type": "array",
+          "items": { "enum": ["tcp", "udp"] }
+        }
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/evidence" }
+    },
+    "observations": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/observation" }
+    }
+  },
+  "$defs": {
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "sha256", "source", "locator", "importedAt"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^evidence:[0-9a-f]{64}$" },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "source": { "enum": ["nmap-xml", "common-crawl-index"] },
+        "locator": { "type": "string" },
+        "importedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "address",
+        "protocol",
+        "port",
+        "observedAt",
+        "locator",
+        "evidenceId",
+        "runId",
+        "source",
+        "fact",
+        "confidence"
+      ],
+      "properties": {
+        "id": { "type": "string", "pattern": "^observation:[0-9a-f]{64}$" },
+        "address": { "type": "string", "minLength": 1 },
+        "protocol": { "enum": ["tcp", "udp"] },
+        "port": { "type": "integer", "minimum": 0, "maximum": 65535 },
+        "observedAt": { "type": "string", "format": "date-time" },
+        "locator": { "type": "string" },
+        "evidenceId": {
+          "type": "string",
+          "pattern": "^evidence:[0-9a-f]{64}$"
+        },
+        "runId": { "type": "string", "pattern": "^run:[0-9a-f]{64}$" },
+        "source": { "enum": ["nmap-xml", "common-crawl-index"] },
+        "fact": { "enum": ["open-port", "passive-signal"] },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    }
+  }
+}

@@ -88,6 +88,52 @@ assert.ok(
   ),
   JSON.stringify(validateHttp.errors),
 );
+const correlationJobSchema = JSON.parse(
+  readFileSync('docs/contracts/correlation-job.schema.json', 'utf8'),
+);
+const validateJob = ajv.compile(correlationJobSchema);
+assert.ok(
+  validateJob(
+    JSON.parse(
+      readFileSync('docs/contracts/examples/correlation-job.json', 'utf8'),
+    ),
+  ),
+  JSON.stringify(validateJob.errors),
+);
+assert.ok(
+  !validateJob(
+    JSON.parse(
+      readFileSync(
+        'docs/contracts/examples/correlation-job.invalid.json',
+        'utf8',
+      ),
+    ),
+  ),
+  'correlation-job.invalid.json must fail CorrelationJob v0 validation',
+);
+const correlationResultSchema = JSON.parse(
+  readFileSync('docs/contracts/correlation-result.schema.json', 'utf8'),
+);
+const validateResult = ajv.compile(correlationResultSchema);
+assert.ok(
+  validateResult(
+    JSON.parse(
+      readFileSync('docs/contracts/examples/correlation-result.json', 'utf8'),
+    ),
+  ),
+  JSON.stringify(validateResult.errors),
+);
+assert.ok(
+  !validateResult(
+    JSON.parse(
+      readFileSync(
+        'docs/contracts/examples/correlation-result.invalid.json',
+        'utf8',
+      ),
+    ),
+  ),
+  'correlation-result.invalid.json must fail CorrelationResult v0 validation',
+);
 const sources = JSON.parse(readFileSync('docs/research/sources.json', 'utf8'));
 assert.equal(new Set(sources.map((item) => item.id)).size, sources.length);
 for (const source of sources) {
