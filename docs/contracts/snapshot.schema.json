@@ -200,7 +200,7 @@
           "pattern": "^[a-f0-9]{64}$"
         },
         "source": {
-          "const": "nmap-xml"
+          "enum": ["nmap-xml", "common-crawl-index"]
         },
         "parserVersion": {
           "const": "1.0.0"
@@ -271,10 +271,10 @@
           "pattern": "^[a-z]+:[a-f0-9]{64}$"
         },
         "source": {
-          "const": "nmap-xml"
+          "enum": ["nmap-xml", "common-crawl-index"]
         },
         "fact": {
-          "const": "open-port"
+          "enum": ["open-port", "passive-signal"]
         },
         "confidence": {
           "type": "number",

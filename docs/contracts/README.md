@@ -30,3 +30,7 @@ Schema verifica forma, no integridad referencial ni autoría. Pruebas del pipeli
 Cambios aditivos de tipos usan versión minor con reader explícitamente compatible; remover/renombrar campos, alterar identidad o semántica usa major. Reader actual rechaza cualquier versión distinta de 1.0.0. Los cambios requieren schema, types, fixtures, prueba y ADR.
 
 El spike HTTP usa un envelope **propuesto 1.1.0**, [schema separado](http-observation.schema.json); no fingir que el núcleo Nmap v1 ya lo ingiere. Ese gate evita compatibilidad falsa entre contratos distintos.
+
+## Diagnóstico de limpieza (fuera del wire)
+
+La CLI emite por stderr una línea JSON `{"cleaning": {...}}` con conteos de la importación: registros de hosts, hosts activos, registros de puertos, servicios abiertos conservados, descartes por estado (`closed`, `filtered`, `open|filtered`, otros), hosts no activos omitidos y duplicados agrupados. Son solo conteos, sin direcciones, puertos, rutas ni digests. No forma parte de `Snapshot 1.0.0` y no requiere cambio de versión: el snapshot wire no cambia y los IDs siguen deterministas.

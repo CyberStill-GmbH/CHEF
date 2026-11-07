@@ -1,3 +1,5 @@
+import { useEffect, useRef } from 'react';
+
 import type { AssetDto, SnapshotDto } from '../contracts/snapshot';
 
 interface EvidencePanelProps {
@@ -6,6 +8,15 @@ interface EvidencePanelProps {
 }
 
 export function EvidencePanel({ snapshot, asset }: EvidencePanelProps) {
+  const panelRef = useRef<HTMLElement>(null);
+
+  // Al cambiar el asset seleccionado, mueve el foco al panel para que las
+  // personas que navegan con teclado o lector de pantalla aterricen en el
+  // contenido nuevo en lugar de quedarse en la lista.
+  useEffect(() => {
+    panelRef.current?.focus();
+  }, [asset.id]);
+
   const observationReferences = asset.observationIds.map((observationId) => ({
     observationId,
     observation: snapshot.observations.find(({ id }) => id === observationId),
@@ -29,7 +40,20 @@ export function EvidencePanel({ snapshot, asset }: EvidencePanelProps) {
   );
 
   return (
-    <aside aria-labelledby="evidence-panel-title">
+    <aside
+      ref={panelRef}
+      tabIndex={-1}
+      aria-labelledby="evidence-panel-title"
+      aria-describedby="evidence-panel-description"
+    >
+      <p id="evidence-panel-description" className="visually-hidden">
+        Panel de evidencia del asset seleccionado. Correlación offline y
+        determinista: una vulnerabilidad solo se marca como confirmada cuando
+        existe evidencia que la respalde.
+      </p>
+      <p className="visually-hidden" role="status">
+        Mostrando evidencia del asset {asset.id} ({asset.kind}).
+      </p>
       <section aria-labelledby="evidence-panel-title">
         <h2 id="evidence-panel-title">Asset seleccionado</h2>
         <dl>
@@ -189,7 +213,9 @@ export function EvidencePanel({ snapshot, asset }: EvidencePanelProps) {
                     <dd>{path.assertion}</dd>
                     <dt>Confirmed vulnerability</dt>
                     <dd>
-                      {String(path.isConfirmedVulnerability)} — No confirmada
+                      {path.isConfirmedVulnerability
+                        ? 'Sí, confirmada'
+                        : 'No confirmada'}
                     </dd>
                   </dl>
                 </section>

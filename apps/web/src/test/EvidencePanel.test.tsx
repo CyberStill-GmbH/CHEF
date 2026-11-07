@@ -115,9 +115,7 @@ describe('EvidencePanel', () => {
     renderPanel();
 
     expect(
-      within(namedSection('Paths relacionados')).getByText(
-        'false — No confirmada',
-      ),
+      within(namedSection('Paths relacionados')).getByText('No confirmada'),
     ).toBeInTheDocument();
   });
 
