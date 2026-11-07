@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "chef-bbot-demo-loopback-v1",
+  "allowedAddresses": ["127.0.0.1", "::1"],
+  "excludedAddresses": [],
+  "allowedPorts": [53, 443],
+  "allowedProtocols": ["tcp", "udp"],
+  "maxInputBytes": 2097152,
+  "maxObservations": 10000
+}

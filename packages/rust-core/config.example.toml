@@ -1,0 +1,27 @@
+schema_version = 1
+
+[runtime]
+active_discovery = false
+max_workers = 4
+max_events = 10000
+max_depth = 32
+
+[scope]
+allowed_hosts = ["example.test"]
+excluded_hosts = []
+allowed_ports = [443]
+allowed_protocols = ["tcp"]
+max_scope_distance = 0
+
+[modules]
+import_bbot_events = true
+chef_org_stub_hints = false
+
+[sources.shodan]
+enabled = false
+
+[sources.censys]
+enabled = false
+
+[defectdojo]
+enabled = false
