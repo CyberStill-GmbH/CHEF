@@ -4,11 +4,11 @@
 
 CHEF es un proyecto del **Centro Cultural de Ciberseguridad**. Su objetivo es reducir el trabajo manual de reconocimiento: reunir resultados activos y señales pasivas, quitar duplicados sin perder procedencia y mostrar **por qué** dos observaciones se relacionan. Un servicio abierto es una observación; una relación entre fuentes puede ser una inferencia; ninguno de los dos es por sí mismo una vulnerabilidad confirmada.
 
-La visión de producto es una aplicación web para equipos de pentesting: proyectos separados, mapa interactivo y lista accesible, evidencias fechadas, relaciones observadas o candidatas, y exportaciones reproducibles. La [arquitectura web propuesta](docs/architecture/proposed-web.md) separa React/TypeScript, API Node.js/TypeScript con PostgreSQL/Prisma y GitHub OAuth, y un motor principal de correlación en Go. El propietario confirmó el stack; **ninguna de esas piezas web/Go está implementada todavía**. La [selección OSINT](docs/research/open-osint-selection.md) prioriza Common Crawl, RDAP y RIPEstat con permisos por verificar. Burp Suite vendrá después del producto web.
+La visión de producto es una aplicación web para equipos de pentesting: proyectos separados, mapa interactivo y lista accesible, evidencias fechadas, relaciones observadas o candidatas, y exportaciones reproducibles. La [arquitectura web propuesta](docs/architecture/proposed-web.md) separa React/TypeScript, API Node.js/TypeScript con PostgreSQL/Prisma y GitHub OAuth, y un motor principal de correlación en Go. El propietario confirmó el stack; **solo existe un frontend smoke local; API, PostgreSQL/Prisma, OAuth y motor Go no están implementados**. La [selección OSINT](docs/research/open-osint-selection.md) prioriza Common Crawl, RDAP y RIPEstat con permisos por verificar. Burp Suite vendrá después del producto web.
 
 ## Estado verificable
 
-- **Funciona hoy:** núcleo TypeScript con dominio aislado, importador Nmap XML offline, scope literal, identidad determinista, deduplicación conservadora, relaciones con evidencia y exportación `Snapshot 1.0.0` mediante CLI. Los tests incluyen un control negativo que impide fusionar hosts por hostname compartido y entradas XML hostiles.
+- **Funciona hoy:** núcleo TypeScript con dominio aislado, importador Nmap XML offline, scope literal, identidad determinista, deduplicación conservadora, relaciones con evidencia y exportación `Snapshot 1.0.0` mediante CLI. Los tests incluyen un control negativo que impide fusionar hosts por hostname compartido y entradas XML hostiles. También existe un frontend React smoke local (`apps/web`) que valida el contrato con AJV y explora assets, observaciones y evidencia del snapshot canónico, sin red ni sesiones.
 - **Spike separado:** adaptador Java/Montoya para normalizar requests HTTP seleccionadas. Compila y tiene pruebas de conformidad, pero aún requiere validación manual dentro de Burp y no correlaciona HTTP con Nmap.
 - **En propuesta:** UI React, API Node, PostgreSQL/Prisma, OAuth, motor Go, fuentes pasivas, correlación entre fuentes, mapa/exportación visual y actualización periódica. Ninguno de esos componentes se muestra como entregado por figurar en diagramas o contratos.
 
@@ -22,6 +22,7 @@ Requiere Node.js 24 LTS y npm. Los fixtures son sintéticos, usan loopback y no 
 npm ci
 npm run check
 npm run demo
+npm run web:dev
 ```
 
 Para generar un snapshot JSON con la CLI:
@@ -55,6 +56,6 @@ La idea diferencial es una **hipótesis comprobable**: un analista debería enco
 - [Scrum hasta octubre](docs/proposals/2026-09-scrum-to-oct31.md) · [backlog sugerido](docs/proposals/2026-09-issues.md)
 - [Contribuir y revisar PRs](CONTRIBUTING.md) · [CI y CodeQL](docs/governance/ci-security.md) · [índice documental](docs/README.md) · [skills locales](docs/process/skills-usage.md)
 
-El dominio vive en `packages/domain`, los casos de uso en `packages/application`, los adaptadores en `packages/adapters` y la composición actual en `apps/cli`. `apps/api` y `apps/web` reservan fronteras futuras, sin servidores ni UI funcionales. `extensions/burp` contiene el spike separado. Las reglas del equipo están en [AGENTS.md](AGENTS.md).
+El dominio vive en `packages/domain`, los casos de uso en `packages/application`, los adaptadores en `packages/adapters` y la composición actual en `apps/cli`. `apps/api` reserva una frontera futura sin servidor; `apps/web` contiene el frontend smoke local que consume el snapshot canónico sin red. `extensions/burp` contiene el spike separado. Las reglas del equipo están en [AGENTS.md](AGENTS.md).
 
 Código original de CHEF bajo [MIT](LICENSE); [dependencias y límites de redistribución](docs/governance/licenses.md). CHEF no está afiliado ni aprobado por PortSwigger o Nmap. Solo se trabaja con datos y entornos autorizados; un archivo importado nunca amplía el scope.

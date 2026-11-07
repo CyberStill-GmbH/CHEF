@@ -1,0 +1,14 @@
+node_modules
+dist
+apps/web/dist
+coverage
+artifacts
+.tools
+.git
+.github
+.env
+.env.*
+!.env.example
+*.log
+*.tsbuildinfo
+extensions/burp/target

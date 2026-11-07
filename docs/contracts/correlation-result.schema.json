@@ -1,0 +1,135 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://chef.cyberstill.dev/contracts/correlation-result/v0",
+  "title": "CorrelationResult v0",
+  "description": "Salida del motor de correlación Go para un CorrelationJob v0. Determinista y canónica: el mismo trabajo, en cualquier orden de entrada, produce el mismo resultado. Nunca confirma propiedad, alcance ni vulnerabilidad.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "ruleSetVersion",
+    "asOf",
+    "assets",
+    "relationships",
+    "paths",
+    "metrics"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "correlation-result/v0" },
+    "ruleSetVersion": { "type": "string", "pattern": "^v[0-9]+$" },
+    "asOf": { "type": "string", "format": "date-time" },
+    "assets": { "type": "array", "items": { "$ref": "#/$defs/asset" } },
+    "relationships": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/relationship" }
+    },
+    "paths": { "type": "array", "items": { "$ref": "#/$defs/path" } },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "observationsIn",
+        "assetsOut",
+        "relationshipsOut",
+        "pathsOut",
+        "duplicateObservations"
+      ],
+      "properties": {
+        "observationsIn": { "type": "integer", "minimum": 0 },
+        "assetsOut": { "type": "integer", "minimum": 0 },
+        "relationshipsOut": { "type": "integer", "minimum": 0 },
+        "pathsOut": { "type": "integer", "minimum": 0 },
+        "duplicateObservations": { "type": "integer", "minimum": 0 }
+      }
+    }
+  },
+  "$defs": {
+    "status": { "enum": ["observed", "inferred", "candidate", "conflicted"] },
+    "asset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "key",
+        "firstSeen",
+        "lastSeen",
+        "observationIds"
+      ],
+      "properties": {
+        "id": { "type": "string", "pattern": "^asset:[0-9a-f]{64}$" },
+        "kind": { "enum": ["address", "service"] },
+        "key": { "type": "string", "minLength": 1 },
+        "firstSeen": { "type": "string", "format": "date-time" },
+        "lastSeen": { "type": "string", "format": "date-time" },
+        "observationIds": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^observation:[0-9a-f]{64}$" }
+        }
+      }
+    },
+    "relationship": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "from",
+        "to",
+        "kind",
+        "status",
+        "observationIds",
+        "confidence"
+      ],
+      "properties": {
+        "id": { "type": "string", "pattern": "^relationship:[0-9a-f]{64}$" },
+        "from": { "type": "string", "pattern": "^asset:[0-9a-f]{64}$" },
+        "to": { "type": "string", "pattern": "^asset:[0-9a-f]{64}$" },
+        "kind": { "const": "exposes" },
+        "status": { "$ref": "#/$defs/status" },
+        "observationIds": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^observation:[0-9a-f]{64}$" }
+        },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "path": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "assetIds",
+        "relationshipIds",
+        "ruleId",
+        "ruleVersion",
+        "status",
+        "explanation",
+        "confidence",
+        "isConfirmedVulnerability"
+      ],
+      "properties": {
+        "id": { "type": "string", "pattern": "^path:[0-9a-f]{64}$" },
+        "assetIds": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^asset:[0-9a-f]{64}$" }
+        },
+        "relationshipIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^relationship:[0-9a-f]{64}$"
+          }
+        },
+        "ruleId": { "const": "open-service/v1" },
+        "ruleVersion": { "const": "v1" },
+        "status": { "$ref": "#/$defs/status" },
+        "explanation": { "type": "string", "minLength": 1 },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "isConfirmedVulnerability": {
+          "const": false,
+          "description": "Invariante de seguridad: una regla de superficie nunca confirma una vulnerabilidad. El esquema rechaza cualquier valor distinto de false."
+        }
+      }
+    }
+  }
+}

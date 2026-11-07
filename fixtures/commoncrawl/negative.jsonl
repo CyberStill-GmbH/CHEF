@@ -1,0 +1,6 @@
+{"urlkey":"com,example,93,184,216,34)/","timestamp":"20241115120000","original":"http://93.184.216.34/","mimetype":"text/html","status":"404","digest":"sha256:abc123","length":"0","offset":"0","filename":"CC-MAIN-20241115120000-00000.warc.gz"}
+{"urlkey":"com,example,93,184,216,34)/","timestamp":"20241115120001","original":"http://93.184.216.34/","mimetype":"text/html","status":"500","digest":"sha256:def456","length":"0","offset":"0","filename":"CC-MAIN-20241115120000-00000.warc.gz"}
+{"urlkey":"com,example,93,184,216,34)/","timestamp":"20241115120002","original":"not-a-valid-url","mimetype":"text/html","status":"200","digest":"sha256:ghi789","length":"123","offset":"0","filename":"CC-MAIN-20241115120000-00000.warc.gz"}
+{"urlkey":"com,example,127,0,0,1,9999)/","timestamp":"20241115120003","original":"http://127.0.0.1:9999/","mimetype":"text/html","status":"200","digest":"sha256:jkl012","length":"123","offset":"0","filename":"CC-MAIN-20241115120000-00000.warc.gz"}
+not-valid-json-line
+{"urlkey":"com,example,93,184,216,34)/","timestamp":"20241115120004","original":"http://93.184.216.34/","mimetype":"text/html","status":"200","digest":"sha256:mno345","length":"123","offset":"0","filename":"CC-MAIN-20241115120000-00000.warc.gz"}

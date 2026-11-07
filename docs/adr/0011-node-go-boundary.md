@@ -16,6 +16,8 @@ El contrato propuesto `CorrelationJob v0` tiene `schemaVersion`, `projectScope`,
 
 ## Opciones y consecuencias
 
+Nota de implementación: la rama de integración incorpora el [transporte local Node–Go](../architecture/go-transport.md), con límites y pruebas de conformidad/fallo. Esto no sustituye la revisión humana ni acredita el despliegue o la aceptación del contrato.
+
 - **Solo TypeScript:** menor coste de octubre y reutilización directa del core; descartado para el producto futuro por decisión del propietario. Sigue siendo referencia de conformidad, no segundo motor web.
 - **Go con PostgreSQL/ORM propio:** duplica autorización, transacciones y modelo de datos; descartado. El [cliente Prisma Go está deprecado](https://github.com/prisma/prisma-client-go), así que Prisma se queda en Node.
 - **Node + Go local:** frontera explícita y un único servicio público; coste de empaquetado y ejecución por trabajo. Es la primera hipótesis a probar.
